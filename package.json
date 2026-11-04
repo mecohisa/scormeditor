@@ -41,13 +41,13 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/jarruego/scormeditor.git"
+    "url": "git+https://github.com/mecohisa/scormeditor.git"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "bugs": {
-    "url": "https://github.com/jarruego/scormeditor/issues"
+    "url": "https://github.com/mecohisa/scormeditor/issues"
   },
-  "homepage": "https://github.com/jarruego/scormeditor#readme"
+  "homepage": "https://github.com/mecohisa/scormeditor#readme"
 }
