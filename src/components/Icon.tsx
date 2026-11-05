@@ -351,6 +351,9 @@ const PATHS = {
   'align-left': <path d="M4 5h16M4 10h10M4 15h16M4 20h12" />,
   'align-center': <path d="M4 5h16M7 10h10M4 15h16M6 20h12" />,
   'align-right': <path d="M4 5h16M10 10h10M4 15h16M8 20h12" />,
+  // Sangría de lista: líneas a la derecha + flecha hacia dentro / hacia fuera.
+  indent: <path d="M11 5h9M11 10h9M11 15h9M4 20h16M4 8.5l3.5 2.5L4 13.5" />,
+  outdent: <path d="M11 5h9M11 10h9M11 15h9M4 20h16M7.5 8.5L4 11l3.5 2.5" />,
   chart: (
     <path d="M3.5 20.5h17M6.5 20v-6M12 20V5.5M17.5 20v-9.5" />
   ),

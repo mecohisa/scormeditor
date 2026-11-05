@@ -273,6 +273,8 @@ body {
 .me-prose h3 { font-size: 1.1rem; margin: 1.1rem 0 .4rem; }
 .me-prose ul, .me-prose ol { margin: .6rem 0; padding-left: 1.4rem; }
 .me-prose li { margin: .25rem 0; }
+/* Sublistas (ítems sangrados): sin el margen vertical de la lista de primer nivel. */
+.me-prose li > ul, .me-prose li > ol { margin: .25rem 0 0; }
 /* Bloques destacados (callouts) */
 .me-callout { margin: 1rem 0; padding: .75rem 1rem; border-radius: var(--me-radius);
   border-left: 4px solid var(--me-primary); background: color-mix(in srgb, var(--me-primary) 7%, white); }

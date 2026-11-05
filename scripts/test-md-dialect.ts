@@ -88,6 +88,13 @@ const CANONICAL: string[] = [
   '::: compare\n### Opción A\n- uno\n- dos\n### Opción B\n- tres\n:::',
   '::: dodont\nEntradilla\n### Qué hacer\n- Lavarse las manos\n### Qué evitar\n- Tocarse la cara\n:::',
   '::: compare\nSolo una columna\n### Única\n- sin pareja\n:::',
+  // Sublistas: 2 espacios de sangría por nivel (forma canónica del editor).
+  '- uno\n  - uno.a\n  - uno.b\n- dos',
+  '1. Paso\n  - detalle\n  - otro\n2. Paso dos',
+  '- a\n  - b\n    - c\n- d',
+  '- a\n  1. sub uno\n  2. sub dos\n- e',
+  '- a\n  - b\nPárrafo',
+  '::: tip\n- a\n  - b\n:::',
 ]
 // La cabecera del custom vacío lleva espacios finales que el corpus de arriba
 // no puede expresar sin que el editor los recorte: se comprueba aparte.
@@ -107,7 +114,17 @@ const NORMALIZED: string[] = [
   '::: tip\nsin cierre',
   '::: custom | #F4C910 |  | ',
   '[texto **con negrita** y *cursiva*](https://x.example)',
+  '- a\n    - b con 4 espacios\n- c',
+  '1. a\n   - b con 3 espacios\n2. c',
+  '- a\n\t- b con tabulador',
+  '  - lista sangrada sin padre\n  - sigue',
 ]
+// Sublistas: el HTML de la carcasa anida de verdad la lista dentro del <li>.
+{
+  const html = mdToHtml('- uno\n  - uno.a\n- dos')
+  const want = '<ul><li>uno<ul><li>uno.a</li></ul></li><li>dos</li></ul>'
+  if (html !== want) fail('sublista anidada en la carcasa', `esperado:\n${want}\nobtenido:\n${html}`)
+}
 for (const src of [...CANONICAL, ...NORMALIZED]) {
   const rt = roundtrip(src)
   const a = mdToHtml(src)

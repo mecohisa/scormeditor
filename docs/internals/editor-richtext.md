@@ -22,9 +22,11 @@ un import cruzado (el runtime es HTML/CSS/JS plano sin build, ver `CLAUDE.md`).
 Dos garantías, verificadas por `scripts/test-md-dialect.ts` (`npx tsx
 scripts/test-md-dialect.ts`):
 - **Round-trip exacto**: `jsonToMd(mdToJson(x)) === x` para un corpus canónico de casos
-  (negrita/cursiva anidadas, listas con numeración no consecutiva, callouts con y sin
+  (negrita/cursiva anidadas, listas con numeración no consecutiva, sublistas de varios
+  niveles y mezcla viñeta/número, callouts con y sin
   cierre, imágenes con/sin ancho…). Algunos casos de entrada se **normalizan** de forma
-  aceptada (viñetas con `*`/`•`/`–` → `-`, `1)` → `1.`…): para esos solo se exige
+  aceptada (viñetas con `*`/`•`/`–` → `-`, `1)` → `1.`, sangría de sublista de 3–4
+  espacios o tabulador → 2 espacios por nivel…): para esos solo se exige
   equivalencia de render, no igualdad byte a byte.
 - **Equivalencia de render**: para todos los strings del curso demo
   (`sampleCourse`, `src/schema/sample-course.ts`), el `mdToHtml` **real** de la carcasa
@@ -66,6 +68,13 @@ nodos propios en `src/components/tiptap/`:
   en vez de `<img>` — sin `type` de nodo aparte, `mdDialect.ts` no distingue los dos casos
   (el pie funciona igual para ambos). La barra cambia «Sustituir…» por un `<input>` con
   el enlace (editable, para corregirlo sin borrar y reinsertar).
+- **Sublistas**: el `listItem` de StarterKit (`paragraph block*`) admite listas anidadas;
+  se crean con los botones **Aumentar/Reducir sangría** de la barra (iconos `indent`/
+  `outdent`, comandos `sinkListItem`/`liftListItem`, deshabilitados cuando no aplican) o
+  con **Tab / Mayús+Tab** (atajos nativos de TipTap). `mdDialect.ts` las lee y escribe con
+  una pila por sangría (2 espacios por nivel al serializar) — misma regla que la carcasa.
+  Si un ítem acabara con varios párrafos (el dialecto no tiene «párrafo dentro de ítem»),
+  se unen en su línea con un espacio: el serializador nunca descarta contenido.
 - **`TextAlignExtension`** (`TextAlignExtension.ts`): no es un nodo, es una `Extension`
   con `addGlobalAttributes` sobre `heading`/`paragraph` (atributo `textAlign`,
   `null`/`'center'`/`'right'`) — reimplementación propia y mínima de

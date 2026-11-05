@@ -202,12 +202,42 @@ function paragraph(text: string, align?: string | null): JsonNode {
   return node
 }
 
+/** Sangría de una línea en espacios (un tabulador cuenta 2, como en renderer.js). */
+function indentOf(s: string): number {
+  return /^[ \t]*/.exec(s)![0].replace(/\t/g, '  ').length
+}
+
 function parseBlocks(lines: string[]): JsonNode[] {
   const out: JsonNode[] = []
-  let list: JsonNode | null = null // lista abierta (bulletList | orderedList)
-  let lastOlNum = 0
+  // Listas abiertas, de fuera hacia dentro, con su sangría (misma pila que
+  // renderer.js): un ítem más sangrado que el anterior abre una sublista dentro
+  // del último listItem; uno menos sangrado vuelve al nivel que le corresponde.
+  let lists: { node: JsonNode; indent: number; lastNum: number }[] = []
   const closeList = () => {
-    list = null
+    lists = []
+  }
+  const addItem = (type: 'bulletList' | 'orderedList', indent: number, text: string, num = 0) => {
+    const item: JsonNode = { type: 'listItem', content: [paragraph(text)] }
+    while (lists.length && lists[lists.length - 1].indent > indent) lists.pop()
+    const top = lists[lists.length - 1]
+    // Solo se agrupan números CONSECUTIVOS: así "3. / 5." o "1. / 1." se
+    // conservan tal cual al serializar (la carcasa honra el número escrito).
+    if (top && top.indent === indent && top.node.type === type && (type === 'bulletList' || num === top.lastNum + 1)) {
+      top.node.content!.push(item)
+      top.lastNum = num
+      return
+    }
+    if (top && top.indent === indent) lists.pop() // mismo nivel: lista hermana nueva
+    const node: JsonNode =
+      type === 'orderedList' ? { type, attrs: { start: num }, content: [item] } : { type, content: [item] }
+    const parent = lists[lists.length - 1]
+    if (parent) {
+      const items = parent.node.content!
+      items[items.length - 1].content!.push(node)
+    } else {
+      out.push(node)
+    }
+    lists.push({ node, indent, lastNum: num })
   }
   for (let i = 0; i < lines.length; i++) {
     let ln = lines[i]
@@ -251,17 +281,7 @@ function parseBlocks(lines: string[]): JsonNode[] {
 
     const ol = RE_OL_ITEM.exec(ln)
     if (ol) {
-      const num = parseInt(ol[1], 10)
-      const item: JsonNode = { type: 'listItem', content: [paragraph(ol[2])] }
-      // Solo se agrupan números CONSECUTIVOS: así "3. / 5." o "1. / 1." se
-      // conservan tal cual al serializar (la carcasa honra el número escrito).
-      if (list && list.type === 'orderedList' && num === lastOlNum + 1) {
-        list.content!.push(item)
-      } else {
-        list = { type: 'orderedList', attrs: { start: num }, content: [item] }
-        out.push(list)
-      }
-      lastOlNum = num
+      addItem('orderedList', indentOf(ln), ol[2], parseInt(ol[1], 10))
       continue
     }
 
@@ -277,13 +297,7 @@ function parseBlocks(lines: string[]): JsonNode[] {
 
     const ul = RE_UL_ITEM.exec(ln)
     if (ul) {
-      const item: JsonNode = { type: 'listItem', content: [paragraph(ul[1])] }
-      if (list && list.type === 'bulletList') {
-        list.content!.push(item)
-      } else {
-        list = { type: 'bulletList', content: [item] }
-        out.push(list)
-      }
+      addItem('bulletList', indentOf(ln), ul[1])
       continue
     }
 
@@ -383,11 +397,8 @@ function serializeBlock(n: JsonNode): string {
       return alignPrefix(n.attrs) + '#'.repeat(level) + ' ' + serializeInline(n.content ?? [])
     }
     case 'bulletList':
-      return (n.content ?? []).map((it) => '- ' + serializeListItem(it)).join('\n')
-    case 'orderedList': {
-      const start = Number(n.attrs?.start ?? 1) || 1
-      return (n.content ?? []).map((it, k) => `${start + k}. ${serializeListItem(it)}`).join('\n')
-    }
+    case 'orderedList':
+      return serializeList(n, '')
     case 'imageFigure': {
       const alt = String(n.attrs?.alt ?? '').replace(/[\]|]/g, '')
       const w = n.attrs?.width
@@ -406,9 +417,32 @@ function serializeBlock(n: JsonNode): string {
   }
 }
 
-/** Un listItem contiene un párrafo (el esquema del editor lo restringe). */
-function serializeListItem(item: JsonNode): string {
-  return (item.content ?? []).map((p) => serializeInline(p.content ?? [])).join(' ')
+const isList = (n: JsonNode) => n.type === 'bulletList' || n.type === 'orderedList'
+
+/**
+ * Lista (y sus sublistas) -> líneas de ítem; cada nivel de anidamiento suma 2
+ * espacios de sangría. Un listItem lleva su párrafo y, opcionalmente, sublistas.
+ * Si el editor dejara varios párrafos en un ítem (el dialecto no tiene «párrafo
+ * dentro de ítem»), se unen con un espacio en la línea del ítem: nunca se pierde
+ * texto (antes las sublistas se descartaban aquí al guardar).
+ */
+function serializeList(list: JsonNode, indent: string): string {
+  const ordered = list.type === 'orderedList'
+  const start = Number(list.attrs?.start ?? 1) || 1
+  return (list.content ?? [])
+    .map((item, k) => {
+      const kids = item.content ?? []
+      const text = kids
+        .filter((c) => !isList(c))
+        .map((p) => serializeInline(p.content ?? []))
+        .join(' ')
+      const subs = kids
+        .filter(isList)
+        .map((sub) => '\n' + serializeList(sub, indent + '  '))
+        .join('')
+      return `${indent}${ordered ? `${start + k}.` : '-'} ${text}${subs}`
+    })
+    .join('\n')
 }
 
 /** Documento ProseMirror (JSON) -> markdown ligero del proyecto. */

@@ -131,10 +131,30 @@
     return blocksToHtml(String(text).split(/\r?\n/));
   }
   function blocksToHtml(lines) {
-    var html = '', inUl = false, inOl = false, i;
-    function closeLists() {
-      if (inUl) { html += '</ul>'; inUl = false; }
-      if (inOl) { html += '</ol>'; inOl = false; }
+    var html = '', i;
+    // Listas, con anidamiento por SANGRÍA: cada línea de ítem abre una sublista
+    // si está más sangrada que la anterior (el editor escribe 2 espacios por
+    // nivel; se admite cualquier sangría: 3–4 espacios o tabuladores también).
+    // Pila de listas abiertas, cada una con su <li> abierto: {tag, indent}.
+    var lists = [];
+    function closeListsTo(depth) {
+      while (lists.length > depth) html += '</li></' + lists.pop().tag + '>';
+    }
+    function closeLists() { closeListsTo(0); }
+    function indentOf(s) { return /^[ 	]*/.exec(s)[0].replace(/	/g, '  ').length; }
+    function listItem(tag, indent, openAttrs, liOpen) {
+      while (lists.length && lists[lists.length - 1].indent > indent) closeListsTo(lists.length - 1);
+      var top = lists[lists.length - 1];
+      if (top && top.indent === indent && top.tag === tag) {
+        html += '</li>';
+      } else {
+        // Mismo nivel pero otro tipo (viñeta ↔ número): se cierra esa lista y
+        // se abre la nueva en el mismo sitio (dentro del <li> padre si lo hay).
+        if (top && top.indent === indent) closeListsTo(lists.length - 1);
+        html += '<' + tag + openAttrs + '>';
+        lists.push({ tag: tag, indent: indent });
+      }
+      html += liOpen;
     }
     for (i = 0; i < lines.length; i++) {
       var ln = lines[i];
@@ -176,12 +196,10 @@
       }
       var oli = /^\s*(\d+)[.)]\s+(.*)/.exec(ln);
       if (oli) {
-        if (inUl) { html += '</ul>'; inUl = false; }
         // Honra el número que escribió el autor (value="N"): así, aunque haya
-        // párrafos o sublistas entre los ítems y la lista se "parta" en varios
-        // <ol>, la numeración sigue siendo 1, 2, 3 y no se reinicia a 1.
-        if (!inOl) { html += '<ol start="' + oli[1] + '">'; inOl = true; }
-        html += '<li value="' + oli[1] + '">' + inline(oli[2]) + '</li>';
+        // párrafos entre los ítems y la lista se "parta" en varios <ol>, la
+        // numeración sigue siendo 1, 2, 3 y no se reinicia a 1.
+        listItem('ol', indentOf(ln), ' start="' + oli[1] + '"', '<li value="' + oli[1] + '">' + inline(oli[2]));
         continue;
       }
       // Imagen en línea propia: ![alt](assets/… | http(s)://…), con ancho
@@ -215,9 +233,7 @@
       // aparecer en PDF/DOC), para que las listas no queden como párrafo corrido.
       var uli = /^\s*[-*•·–—]\s+(.*)/.exec(ln);
       if (uli) {
-        if (inOl) { html += '</ol>'; inOl = false; }
-        if (!inUl) { html += '<ul>'; inUl = true; }
-        html += '<li>' + inline(uli[1]) + '</li>';
+        listItem('ul', indentOf(ln), '', '<li>' + inline(uli[1]));
         continue;
       }
       closeLists();

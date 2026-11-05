@@ -96,17 +96,25 @@ export function mdToHtml(text: string, resolve: AssetResolver = (s) => s): strin
 
 function blocksToHtml(lines: string[], resolve: AssetResolver): string {
   let html = ''
-  let inUl = false
-  let inOl = false
-  const closeLists = () => {
-    if (inUl) {
-      html += '</ul>'
-      inUl = false
+  // Listas anidadas por sangría, misma pila que renderer.js de la carcasa:
+  // cada lista abierta conserva su <li> abierto para poder anidar dentro.
+  const lists: { tag: 'ul' | 'ol'; indent: number }[] = []
+  const closeListsTo = (depth: number) => {
+    while (lists.length > depth) html += `</li></${lists.pop()!.tag}>`
+  }
+  const closeLists = () => closeListsTo(0)
+  const indentOf = (s: string) => /^[ \t]*/.exec(s)![0].replace(/\t/g, '  ').length
+  const listItem = (tag: 'ul' | 'ol', indent: number, openAttrs: string, liOpen: string) => {
+    while (lists.length && lists[lists.length - 1].indent > indent) closeListsTo(lists.length - 1)
+    const top = lists[lists.length - 1]
+    if (top && top.indent === indent && top.tag === tag) {
+      html += '</li>'
+    } else {
+      if (top && top.indent === indent) closeListsTo(lists.length - 1)
+      html += `<${tag}${openAttrs}>`
+      lists.push({ tag, indent })
     }
-    if (inOl) {
-      html += '</ol>'
-      inOl = false
-    }
+    html += liOpen
   }
   for (let i = 0; i < lines.length; i++) {
     const ln = lines[i]
@@ -136,15 +144,7 @@ function blocksToHtml(lines: string[], resolve: AssetResolver): string {
     }
     const oli = /^\s*(\d+)[.)]\s+(.*)/.exec(ln)
     if (oli) {
-      if (inUl) {
-        html += '</ul>'
-        inUl = false
-      }
-      if (!inOl) {
-        html += `<ol start="${oli[1]}">`
-        inOl = true
-      }
-      html += `<li value="${oli[1]}">${rich(oli[2])}</li>`
+      listItem('ol', indentOf(ln), ` start="${oli[1]}"`, `<li value="${oli[1]}">${rich(oli[2])}`)
       continue
     }
     const im = /^\s*!\[([^\]|]*)(?:\|(\d{1,3}))?\]\((assets\/[^\s)]+|https?:\/\/[^\s)]+)\)\s*$/.exec(ln)
@@ -159,15 +159,7 @@ function blocksToHtml(lines: string[], resolve: AssetResolver): string {
     }
     const uli = /^\s*[-*•·–—]\s+(.*)/.exec(ln)
     if (uli) {
-      if (inOl) {
-        html += '</ol>'
-        inOl = false
-      }
-      if (!inUl) {
-        html += '<ul>'
-        inUl = true
-      }
-      html += `<li>${rich(uli[1])}</li>`
+      listItem('ul', indentOf(ln), '', `<li>${rich(uli[1])}`)
       continue
     }
     closeLists()

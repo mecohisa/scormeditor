@@ -144,6 +144,9 @@ function RichTextAreaBody({ editor, rows }: { editor: Editor; rows: number }) {
       h3: editor.isActive('heading', { level: 3 }),
       bulletList: editor.isActive('bulletList'),
       orderedList: editor.isActive('orderedList'),
+      // Sangría de ítems de lista (sublistas): mismos comandos que Tab / Mayús+Tab.
+      canSink: editor.can().sinkListItem('listItem'),
+      canLift: editor.isActive('listItem') && editor.can().liftListItem('listItem'),
       link: editor.isActive('link'),
       alignCenter: editor.isActive({ textAlign: 'center' }),
       alignRight: editor.isActive({ textAlign: 'right' }),
@@ -299,6 +302,14 @@ function RichTextAreaBody({ editor, rows }: { editor: Editor; rows: number }) {
         <span className="ed-rta-sep" aria-hidden="true" />
         <button type="button" className={active.bulletList ? 'is-on' : ''} onClick={() => editor.chain().focus().toggleBulletList().run()} title="Lista con viñetas">• Lista</button>
         <button type="button" className={active.orderedList ? 'is-on' : ''} onClick={() => editor.chain().focus().toggleOrderedList().run()} title="Lista numerada">1. Lista</button>
+        <button type="button" disabled={!active.canLift} onClick={() => editor.chain().focus().liftListItem('listItem').run()}
+          title="Reducir sangría: sube el elemento un nivel (Mayús+Tab)" aria-label="Reducir sangría">
+          <Icon name="outdent" size={13} />
+        </button>
+        <button type="button" disabled={!active.canSink} onClick={() => editor.chain().focus().sinkListItem('listItem').run()}
+          title="Aumentar sangría: convierte el elemento en sublista del anterior (Tab)" aria-label="Aumentar sangría">
+          <Icon name="indent" size={13} />
+        </button>
         <button type="button" className={active.link ? 'is-on' : ''} onClick={openLinkEditor}
           title={active.link ? 'Editar el enlace donde está el cursor' : 'Insertar enlace'}>
           <Icon name="link" size={13} /> {active.link ? 'Editar enlace' : 'Enlace'}

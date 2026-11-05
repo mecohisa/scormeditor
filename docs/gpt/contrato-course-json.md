@@ -368,7 +368,10 @@ editor SCORMEditor lo renderiza. Sintaxis admitida:
 
 - `## ` y `### ` encabezados (el `#`/H1 se reserva al título de pantalla).
 - `**negrita**`, `*cursiva*`, `[texto](url)` (http(s) o mailto).
-- `- ` listas con viñetas; `1. ` listas numeradas.
+- `- ` listas con viñetas; `1. ` listas numeradas. **Sublistas**: el ítem hijo va en su
+  propia línea con **2 espacios** delante por cada nivel (`- Padre
+  - Hijo`); se pueden
+  mezclar viñetas y números entre niveles.
 - Imagen `![alt](ruta)`: **el GPT NUNCA la usa**. Esa sintaxis es del editor humano.
   Toda imagen que generes va como `visual_resource` (§5), **máximo una por
   pantalla**; si un apartado trae varias figuras, una pantalla por punto (§5). Si el

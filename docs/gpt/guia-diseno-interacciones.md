@@ -152,7 +152,8 @@ ni cajitas de «lo importante»: eso ensucia y repite. Solo el contenido.
   suspensivos.
 - **Listas**: cada elemento en **su propia línea**, empezando por `- ` (guion +
   espacio). No pongas la lista en una sola línea (`a • b • c`) ni con viñeta `•`: el
-  editor la mostraría como un párrafo corrido. Numeradas: `1. `, `2. `…
+  editor la mostraría como un párrafo corrido. Numeradas: `1. `, `2. `… Para un
+  sub-elemento, la misma línea con **2 espacios** delante por nivel (`  - detalle`).
 - **Encabezados**: el título de un apartado va con `## ` o `### ` en una línea con
   **solo el título** (el cuerpo, en la línea siguiente). **No** metas el título dentro
   del párrafo («TítuloTexto que sigue…»), ni el cuerpo en la misma línea del `##`

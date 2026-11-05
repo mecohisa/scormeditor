@@ -90,6 +90,13 @@ Sintaxis soportada:
 - `- ` listas con viñetas (también acepta `*`, `•`, `·`, `–`, `—` al inicio de línea,
   porque los PDF/DOC suelen usarlos); `1. ` / `1) ` listas numeradas (honra el número
   escrito con `<ol start>`/`<li value>` cuando no van consecutivos).
+- **Sublistas por sangría**: un ítem más sangrado que el anterior abre una lista anidada
+  dentro del `<li>` previo (viñeta o número, mezclables); uno menos sangrado vuelve al
+  nivel que le corresponde. El editor escribe **2 espacios por nivel**, pero se admite
+  cualquier sangría (3–4 espacios, tabulador = 2) porque es lo que traen los textos
+  pegados o generados. `blocksToHtml` lleva una pila de listas abiertas `{tag, indent}`,
+  cada una con su `<li>` abierto; el exportador `.elpx` (`src/interop/elpx/mdToHtml.ts`)
+  replica la misma pila.
 - **Alineación** de un encabezado o párrafo: prefijo de línea `{center}`/`{right}`
   (izquierda es el default implícito, nunca `{left}`) → `style="text-align:…"` en el
   `<h2>`/`<h3>`/`<p>` resultante. Se despoja ANTES de probar el resto de sintaxis de la
