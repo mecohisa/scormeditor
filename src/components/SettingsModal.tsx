@@ -51,7 +51,7 @@ export function SettingsWindow({
 /** Ventana «Ajustes del curso (SCORM y finalización)». */
 export function CourseSettingsModal({ onClose }: { onClose: () => void }) {
   return (
-    <SettingsWindow title="AJUSTES DEL CURSO (SCORM Y FINALIZACIÓN)" onClose={onClose}>
+    <SettingsWindow title="Ajustes del curso (SCORM y finalización)" onClose={onClose}>
       <CourseSettingsSection />
     </SettingsWindow>
   )
