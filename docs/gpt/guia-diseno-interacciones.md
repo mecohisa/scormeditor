@@ -71,7 +71,9 @@ de más abajo, escanea el texto en busca de marcas `{{alias}}…{{/alias}}` que 
 documento pueda traer (ver `marcas-autoria.md`): una `{{diapositiva}}` fija el
 **contenido exacto** de una fila (ni se parte ni se fusiona con lo vecino, aunque
 incumpla otras reglas de estructura); una marca de interactividad (`{{acordeon}}`,
-`{{opcion_unica}}`…) fija su **tipo**, anidada o no dentro de una `{{diapositiva}}`.
+`{{opcion_unica}}`…) fija su **tipo**, anidada o no dentro de una `{{diapositiva}}`; una
+marca de destacado (`{{consejo}}`, `{{cifras}}`…) solo da forma de callout a su texto,
+sin crear fila ni interacción.
 La tabla de abajo solo decide las filas que quedan **sin marca**. Si el documento no
 trae ninguna, este paso no cambia nada del criterio habitual.
 

@@ -100,7 +100,7 @@ El contenido de los cursos **no se teclea a mano**: lo genera un **GPT de ChatGP
     Distinto de la herramienta determinista `scripts/moodle-import/` (mapeo literal sin
     enriquecer, ver más abajo): son dos vías paralelas para el mismo tipo de fuente.
   - `marcas-autoria.md` (jul 2026): capa **opcional y aditiva** sobre la ingesta
-    automática, con dos familias de marca `{{alias}}…{{/alias}}` (alias en español).
+    automática, con tres familias de marca `{{alias}}…{{/alias}}` (alias en español).
     **Marca de corte** `{{diapositiva}}`: fija el contenido EXACTO de una pantalla —
     ni se parte ni se fusiona con lo vecino, y **manda incluso sobre reglas de
     estructura** normalmente estrictas (evaluable siempre en pantalla propia,
@@ -112,7 +112,16 @@ El contenido de los cursos **no se teclea a mano**: lo genera un **GPT de ChatGP
     en el doc): fijan el tipo, no el límite de pantalla — pueden ir anidadas dentro de
     una `{{diapositiva}}` (como mucho una, por el límite de un `interaction` por
     pantalla; con más de una, solo la primera cuenta y el resto se saca a una pantalla
-    automática con nota) o sueltas en el texto. El GPT escanea ambas antes de montar
+    automática con nota) o sueltas en el texto; algunas admiten un formato literal
+    (opciones con `*`, comentario tras ` — `, guion `[n] Nombre: … → m` / `FINAL BUENO:`
+    de la conversación, `Dato = valor` / `¿Resultado? = operación` del cálculo). **Marcas
+    de destacado** (`consejo`, `atencion`, `importante`, `sabias_que`, `informacion`,
+    `cifras`, `comparativa`, `que_hacer`): el texto va literal a un callout o bloque con
+    estructura del `student_text`; no crean interacción ni cuentan para el ritmo, y
+    caben varias dentro de una `{{diapositiva}}`. La versión para autores (sin
+    tecnicismos, con capturas) es `docs/guia-marcas-para-autores.md` → `.docx`/`.pdf`
+    con `scripts/guia-marcas/` (regenerar al cambiar marcas o el aspecto de un tipo).
+    El GPT escanea todas antes de montar
     el guion de pantallas (paso 0): cada una fija su fila; el resto del guion se sigue
     rellenando con el criterio automático de siempre (**aditivo, no sustituye**:
     documento sin marcas = comportamiento idéntico al anterior). Cuentan para el

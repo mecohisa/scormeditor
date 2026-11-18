@@ -8,7 +8,7 @@ del resto del documento. Si el documento no trae ninguna marca, el comportamient
 **exactamente el actual**: todo se decide con el criterio automático de
 `guia-diseno-interacciones.md`.
 
-Hay **dos familias** de marca, con sintaxis idéntica pero función distinta:
+Hay **tres familias** de marca, con sintaxis idéntica pero función distinta:
 
 - **Marca de corte** (`{{diapositiva}}…{{/diapositiva}}`, §2): fija el **contenido
   exacto de una pantalla**. El autor decide dónde empieza y acaba, y el GPT no puede
@@ -17,6 +17,9 @@ Hay **dos familias** de marca, con sintaxis idéntica pero función distinta:
   tipo de interactividad** debe salir de un bloque, sin decidir por sí solas los
   límites de la pantalla que la contiene (eso lo sigue decidiendo el criterio
   automático, salvo que estén anidadas dentro de una marca de corte, §4).
+- **Marcas de destacado** (`{{consejo}}`, `{{cifras}}`, `{{que_hacer}}`… §3 bis): fijan
+  que un trozo de texto vaya, **literal**, en un callout o bloque con estructura
+  (contrato §4.1) dentro del `student_text`. No crean interacción ni fijan límites.
 
 ## 1. Sintaxis común
 
@@ -139,7 +142,36 @@ El texto marcado con cualquiera de estos alias **desaparece como prosa corrida**
 interactividades automáticas, el texto que usan sus ítems va también **duplicado en
 `transcript`** (nada se pierde para el cálculo de cobertura del ratio ≥0.95).
 
-## 4. Anidamiento entre las dos familias
+## 3 bis. Marcas de destacado: alias → callout / bloque con estructura
+
+El texto marcado va **literal** (Regla Nº1) como cuerpo de un bloque `::: keyword` …
+`:::` en el `student_text` de la pantalla donde cae, en su sitio dentro del texto. No
+crea interacción, no cuenta para el ritmo de interactividades y no fija los límites de
+la pantalla (salvo que esté dentro de una `{{diapositiva}}`).
+
+| Alias | Bloque |
+|---|---|
+| `consejo` | `::: tip` |
+| `atencion` | `::: warn` |
+| `importante` | `::: important` |
+| `sabias_que` | `::: fact` |
+| `informacion` | `::: info` |
+| `cifras` | `::: stats` (lista `- ` con la cifra en **negrita inicial**) |
+| `comparativa` | `::: compare` (2-3 encabezados `### `, uno por columna) |
+| `que_hacer` | `::: dodont` (dos `### `: qué hacer y qué evitar) |
+
+- Si al bloque le falta la estructura que su tipo espera (`cifras` sin lista,
+  `comparativa`/`que_hacer` sin sus `### `), dásela **sin cambiar el texto**: convierte
+  los párrafos en puntos de lista o añade los encabezados mínimos («Qué hacer» / «Qué
+  evitar», o el nombre de cada enfoque tal como aparece en el bloque). Si no es posible
+  sin reescribir, emite el callout tal cual (se verá como caja normal) y anótalo.
+- Varias marcas de destacado en la misma pantalla son válidas, pero **no dos del mismo
+  tipo** (contrato §4.1): si el autor marca dos iguales seguidas, fusiónalas en un solo
+  bloque; si están separadas por otro contenido, reparte en pantallas y anótalo.
+- `reflect` y `case` no tienen alias: esas intenciones van por `{{reflexion}}` y
+  `{{caso_practico}}`.
+
+## 4. Anidamiento entre las familias
 
 - **`{{diapositiva}}` puede contener, anidada dentro, COMO MUCHO una marca de
   interactividad** (§3) — el esquema solo admite un `interaction` por pantalla. Esa
@@ -174,6 +206,11 @@ interactividades automáticas, el texto que usan sus ítems va también **duplic
   `editor_notes`.
 - **`{{diapositiva}}` no se anida dentro de otra `{{diapositiva}}`**: si aparece,
   la interior se ignora como texto literal (queda dentro de la exterior) y se anota.
+- **`{{diapositiva}}` puede contener varias marcas de destacado** (además de, como
+  mucho, una de interactividad): todas van a su `student_text`, en su sitio.
+- **Una marca de destacado NUNCA va dentro de una de interactividad** (los campos de
+  interacción no admiten callouts, contrato §6): ignora sus delimitadores, deja el texto
+  como parte del contenido de la interactividad y anótalo.
 - Dos marcas de interactividad anidadas entre sí (fuera de un corte, `{{acordeon}}`
   con un `{{opcion_unica}}` dentro, etc.): tampoco válido: la interior gana, la
   exterior se recorta a lo que quede fuera, con `editor_notes`.
@@ -185,28 +222,48 @@ feedback a partir del bloque marcado, igual que hace con un checkpoint automáti
 autor solo decide tipo y lugar). Si el autor **ya** escribe el contenido en un formato
 reconocible, el GPT lo usa **literal** en vez de inventarlo:
 
+- `{{acordeon}}`/`{{pestañas}}`/`{{tarjetas_imagen}}`: cada ítem abre con `### título` y
+  su texto debajo es el `body`/`text`. `{{tarjetas_volteables}}`/`{{tarjetas_repaso}}`:
+  `### ` = `front`, texto de debajo = `back`. `{{linea_tiempo}}`: `### etiqueta · título`
+  (la parte antes de `·` es el `label`, opcional).
 - `{{opcion_unica}}`/`{{decision}}`: una línea de enunciado + opciones en líneas `- `;
   la opción correcta lleva `*` delante (`- *CO2`). Sin `*`, el GPT decide la correcta
-  por el contenido.
+  por el contenido. Texto tras ` — ` en la línea de una opción = su `feedback`. En
+  `{{decision}}`, lo que va antes del enunciado es `config.scenario`.
 - `{{verdadero_falso}}`: el enunciado, y opcionalmente `(V)`/`(F)` al final para fijar
   la respuesta; si no está, el GPT la decide.
 - `{{parejas}}`/`{{clasificar}}`: líneas `término → correspondencia` (una por línea);
   sin ese formato, el GPT arma las parejas/categorías del bloque.
 - `{{ordenar}}`: líneas `- ` ya en el orden correcto (el orden de escritura ES la
-  respuesta).
+  respuesta). Texto tras ` — ` = `explanation` de ese paso.
 - `{{huecos}}`: si el autor ya marca la palabra a ocultar con `[[palabra]]` (mismo
   marcador que usa el propio `course.json` para huecos, contrato §6), el GPT respeta
   esos huecos tal cual; si no hay ninguno, elige términos clave del bloque como
   siempre. Con la nota `{{huecos: escribir}}` el hueco se escribe en vez de elegirse
   (`config.mode: "type"`), y `[[a|b]]` da varias respuestas válidas.
-- `{{caso_decisiones}}`: cada decisión como un `{{opcion_unica}}` literal (enunciado +
-  opciones `- `, la correcta con `*`), una tras otra en el orden del caso; el
-  comentario de cada opción, tras ` — ` en su misma línea si el autor lo escribe.
+- `{{caso_decisiones}}`: una línea opcional `Caso: …` (= `config.scenario`) y cada
+  decisión como un `{{opcion_unica}}` literal (enunciado + opciones `- `, la correcta con
+  `*`), separadas por línea en blanco, en el orden del caso; el comentario de cada
+  opción, tras ` — ` en su misma línea si el autor lo escribe (si falta, redáctalo: es
+  obligatorio en este tipo).
 - `{{reto_numerico}}`/`{{calculadora}}`: datos en líneas `Etiqueta = valor unidad` y
-  lo que se pide en `¿Etiqueta? = fórmula` si el autor ya da la operación; si no, el
-  GPT plantea la fórmula a partir del procedimiento del bloque (y la comprueba).
-- `{{conversacion}}`: sin mini-sintaxis; el GPT monta el árbol (contrato §6) a partir
-  del diálogo o la situación marcada.
+  lo que se pide en `¿Etiqueta (unidad)? = fórmula` si el autor ya da la operación; si
+  no, el GPT plantea la fórmula a partir del procedimiento del bloque (y la comprueba).
+  La fórmula del autor viene en palabras (las etiquetas, `×`, `/`, `+`, `−`): tradúcela
+  a la gramática de `formula` (ids, `*`, punto decimal) — `¿Dosis total (mg)? = Peso de
+  la persona × Dosis prescrita` → `"formula": "peso * dosis_kg"`, `"unit": "mg"`.
+- `{{conversacion}}`: guion opcional. `Personajes: Nombre (papel), …` → `characters`.
+  Cada momento `[n] Nombre: texto` → nodo (`[n] texto` sin nombre = narración, sin
+  `speaker`); `[1]` es el primero de `nodes`. Debajo, respuestas `- texto → m` →
+  `choices` con `to` = el nodo `[m]`. Un momento con `FINAL BUENO:` / `FINAL MALO:` /
+  `FINAL NEUTRO:` + comentario es un final (`outcome` `good`/`bad`/`neutral`,
+  `feedback`). Respeta textos y grafo tal cual; si el guion tiene un ciclo, un `→` a un
+  número inexistente o ningún final bueno, corrige lo mínimo y anótalo. Sin guion, el
+  GPT monta el árbol (contrato §6) a partir del diálogo o la situación marcada.
+- `{{caso_practico}}`: líneas `- ` tras `Criterios:` → `config.rubric` (`label`).
+- `{{sopa_letras}}`: una palabra por línea → `config.words`. `{{crucigrama}}`: líneas
+  `PALABRA → pista` → `config.entries`. `{{rosco}}`: líneas `Respuesta → pista` →
+  `config.items` (`answer`/`clue`).
 
 Si el bloque no sigue ninguna de estas convenciones, se comporta exactamente como un
 checkpoint automático: el GPT redacta todo a partir del texto marcado.
@@ -288,7 +345,7 @@ correcta es literal («Extintor de CO2»).
 
 Añade a `quality_checklist`: `"Marcas de interactividad del documento respetadas":
 true` cuando el documento traía alguna marca (de corte y/o de interactividad) y se
-han seguido todas (límites exactos, tipo y contenido literal si lo había). Cualquier
+han seguido todas (límites exactos, tipo, destacados y contenido literal si lo había). Cualquier
 marca que haya caído en un caso especial (vetada, sin cierre, alias no reconocido,
 anidamiento no válido, regla de estructura saltada por una `{{diapositiva}}`) debe
 quedar reflejada en `editor_notes`, no solo en el checklist.
