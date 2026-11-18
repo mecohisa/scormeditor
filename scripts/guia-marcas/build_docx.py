@@ -122,7 +122,7 @@ def image(name, caption):
     from PIL import Image
     w, h = Image.open(path).size
     width = Cm(14.5)
-    if h / w * 14.5 > 11: width = Cm(11 * w / h)  # limitar la altura
+    if h / w * 14.5 > 9.5: width = Cm(9.5 * w / h)  # limitar la altura
     p = doc.add_paragraph(); p.alignment = WD_ALIGN_PARAGRAPH.CENTER
     p.paragraph_format.keep_with_next = True; p.paragraph_format.space_before = Pt(4)
     p.add_run().add_picture(path, width=width)
@@ -201,6 +201,45 @@ while i < len(lines):
         flush(); i += 1; continue
     para.append(ln); i += 1
 flush()
+
+# ---------- Paginación: cada apartado entero en una página ----------
+# Cada encabezado abre un grupo (título, banda, texto, código, captura y pie). Todos sus
+# párrafos (también los de dentro de las tablas) llevan «conservar con el siguiente»
+# salvo el último, así Word salta de página antes que partir el apartado. Un encabezado
+# de sección (##/###) se pega además al primer apartado que le sigue. Si un grupo no
+# cabe en una página, Word lo parte igualmente (no hay alternativa).
+from docx.text.paragraph import Paragraph
+def _heading_level(p):
+    ps = p.find(qn('w:pPr') + '/' + qn('w:pStyle'))
+    v = ps.get(qn('w:val')) if ps is not None else ''
+    m = re.match(r'Heading(\d)', v or '')
+    return int(m.group(1)) if m else 0
+def _is_break(p):
+    return any(br.get(qn('w:type')) == 'page' for br in p.iter(qn('w:br')))
+groups = [[]]
+for el in doc.element.body.iterchildren():
+    if el.tag == qn('w:p'):
+        if _is_break(el): groups.append([]); continue
+        if _heading_level(el): groups.append([])
+        groups[-1].append(el)
+    elif el.tag == qn('w:tbl'):
+        for tr in el.iter(qn('w:tr')):
+            trPr = tr.find(qn('w:trPr'))
+            if trPr is None: trPr = OxmlElement('w:trPr'); tr.insert(0, trPr)
+            if trPr.find(qn('w:cantSplit')) is None: trPr.append(OxmlElement('w:cantSplit'))
+        groups[-1].append(el)
+groups = [g for g in groups if g]
+for gi, g in enumerate(groups):
+    paras = []
+    for el in g:
+        paras.extend([el] if el.tag == qn('w:p') else list(el.iter(qn('w:p'))))
+    lvl = _heading_level(g[0]) if g[0].tag == qn('w:p') else 0
+    nxt = groups[gi + 1][0] if gi + 1 < len(groups) else None
+    glue_last = lvl in (1, 2) and nxt is not None and nxt.tag == qn('w:p') and _heading_level(nxt) > lvl
+    for k, p in enumerate(paras):
+        pf = Paragraph(p, doc).paragraph_format
+        pf.keep_together = True
+        pf.keep_with_next = glue_last or k < len(paras) - 1
 
 doc.core_properties.title = title
 doc.core_properties.author = 'SCORMEditor'
