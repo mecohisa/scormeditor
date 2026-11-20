@@ -6,7 +6,7 @@ Se activa **solo** cuando el usuario adjunta un backup Moodle (`.tar.gz`/`.tgz`/
 resto del contrato**: `contrato-course-json.md`, `guia-diseno-interacciones.md` y
 `flujo-factoria-unidades.md` se aplican tal cual — este documento solo sustituye el
 **paso de extracción** (`extract_text_markdown` → `extract_moodle_backup`, más abajo) y
-añade unas pocas reglas propias de esta fuente (numeradas 1, 1.1 y 2 más abajo). Todo
+añade unas pocas reglas propias de esta fuente (numeradas 1 a 4 más abajo). Todo
 lo demás (guion de pantallas,
 interactividades, checkpoints, callouts, objetivos, portada/resumen, glosario,
 bibliografía, empaquetado `.scormproj`, `validate_course`/`build_scormproj`) se
@@ -18,8 +18,10 @@ mantiene **sin cambios**.
 > PDF/Word — portada, objetivos, interactividades variadas, checkpoints, cierre.
 
 ## Alcance
-Solo interesan las actividades **`lesson`** (páginas de contenido, sin ramificar) y
-**`quiz`** (preguntas `multichoice`/`truefalse` de un banco simple). Cualquier otra
+Solo interesan las actividades **`lesson`** (páginas de contenido, sin ramificar) y,
+únicamente si el usuario pide el test dentro del SCORM, **`quiz`** (preguntas
+`multichoice`/`truefalse` de un banco simple; por defecto el test se queda en Moodle,
+ver «Quiz y foros»). Cualquier otra
 actividad (`forum`, `label`, `page`, `resource`, `customcert`…) se ignora: no tiene
 equivalente en el modelo de SCORMEditor.
 
@@ -45,11 +47,15 @@ La regla correcta:
   cada punto de una enumeración). En ese caso, **trátalas como una unidad de sentido
   única** (mismo criterio que con un PDF: «una idea y UNA acción mental por pantalla;
   pantalla nueva al cambiar la intención») y decide tú, con tu criterio pedagógico
-  normal, en cuántas pantallas se reparte esa unidad — puede ser una sola pantalla con
-  el listado completo, o una interactividad (`accordion`/`tabs`) con **todos** los
-  puntos como ítems (nunca un `accordion`/`tabs` de un único ítem: si solo tienes un
-  punto en esa página, no es una lista, es contenido normal). Lo único que no debes
-  hacer es perder alguno de los puntos que traían las páginas fusionadas.
+  normal y el **criterio de corte** de la guía («Corte: pantalla propia o
+  desplegable»), en cuántas pantallas se reparte esa unidad: si cada punto es solo un
+  rótulo o una frase breve, una sola pantalla con el listado completo o una
+  interactividad (`accordion`/`tabs`) con **todos** los puntos como ítems (nunca un
+  `accordion`/`tabs` de un único ítem); si cada punto trae su párrafo de desarrollo o
+  su propia imagen, **una pantalla índice** con la lista + **una pantalla por punto**,
+  titulada con él. Lo único que no debes hacer es perder alguno de los puntos que
+  traían las páginas fusionadas, ni dejar varias pantallas casi idénticas con el mismo
+  título.
 - Sí puedes también **dividir** una página larga en varias pantallas si mezcla ideas
   distintas, o **insertar** pantallas nuevas alrededor (portada del tema, objetivos,
   checkpoints, cierre) — el guion de pantallas de siempre decide, exactamente igual
@@ -64,12 +70,12 @@ Moodle seguidas, todas tituladas «1.4 Diversidad de formatos», cada una con **
 formato** (`## Formatos más habituales` + 1-2 frases) y **su propia imagen**
 (`[IMG src="2. Infografía..." ]`, `[IMG src="3. Relato narrativo..."]`…). La versión
 anterior de la regla generó 5 pantallas de contenido casi idénticas (mismo `title`,
-un párrafo cada una). **Lo correcto**: reconocer que son 5 ítems de una misma
-enumeración → **una** pantalla con interactividad `image_cards` (cada página aporta
-una tarjeta: imagen + título del formato + su texto), o si las imágenes no son
-esenciales, `accordion`/`tabs` con los 5 formatos como ítems. Título de la pantalla:
-algo específico derivado del contenido («Formatos de recogida de la historia de
-vida»), nunca el `title` de Moodle repetido.
+un párrafo cada una). **Lo correcto**: reconocer que son 5 elementos de una misma
+enumeración, cada uno con su texto y su imagen → **una pantalla índice** («Formatos
+de la historia de vida»: una frase de entrada + la lista de los 5 formatos) y **una
+pantalla por formato**, titulada con su nombre («Relato narrativo», «Línea de
+vida»…), con su texto y su imagen debajo (`layout: "bottom"`). Nunca el `title` de
+Moodle repetido en las cinco.
 
 ## Regla nueva 1.1 — un título es una ETIQUETA, nunca una copia de una frase del origen
 **Corregida por segunda vez (jul 2026)**: la primera corrección de esta regla solo
@@ -105,25 +111,20 @@ seguidas, todas con `## Formatos más habituales`, cada una con un formato disti
 {"id": "s29", "title": "Formatos más habituales", "student_text": "## Formatos más habituales\n\n- **Documento estructurado: **(Ejemplo: ficha o registro...)"},
 {"id": "s30", "title": "Formatos más habituales", "student_text": "## Formatos más habituales\n\n- **Relato narrativo: **(Ejemplo: historia contada...)"}
 ```
-✅ Correcto — una pantalla consolidada, el epígrafe compartido va DENTRO como `##` una
-sola vez (o se omite, ya que es el propio título), cada formato es un ítem con SU
-etiqueta:
+✅ Correcto — una pantalla índice y una pantalla por formato, cada una con SU título
+(cada formato trae su párrafo y su imagen, así que no va en un desplegable):
 ```json
-{
-  "id": "s29", "title": "Formatos de la historia de vida", "student_text": "La historia de vida puede recogerse de diferentes maneras. No hay un único formato válido.",
-  "interaction": { "type": "accordion", "prompt": "Explora los formatos más habituales para recoger una historia de vida.",
-    "config": { "items": [
-      {"title": "Documento estructurado", "body": "Ficha o registro en el centro con apartados como datos personales, gustos, hábitos..."},
-      {"title": "Relato narrativo", "body": "Historia contada de forma continua donde la persona relata su vida con sus propias palabras..."},
-      {"title": "Línea de vida", "body": "..."}, {"title": "Material gráfico", "body": "..."}, {"title": "Formatos digitales", "body": "..."}
-    ] } }
-}
+{"id": "s29", "title": "Formatos de la historia de vida", "student_text": "La historia de vida puede recogerse de diferentes maneras. No hay un único formato válido. Los más habituales son:\n- Documento estructurado\n- Relato narrativo\n- Línea de vida\n- Material gráfico\n- Formatos digitales"},
+{"id": "s30", "title": "Documento estructurado", "student_text": "Ficha o registro en el centro con apartados como datos personales, gustos, hábitos...", "visual_resource": {"kind": "image", "src": "assets/img/s30_documento.png", "alt": "...", "layout": "bottom", "media_align": "center"}},
+{"id": "s31", "title": "Relato narrativo", "student_text": "Historia contada de forma continua donde la persona relata su vida con sus propias palabras..."}
 ```
-(`item.title` = el nombre del formato, 1-3 palabras, que SÍ puede coincidir con una
-frase corta del origen si esa frase ya era el nombre propio del concepto —«Documento
-estructurado» es el nombre del formato, no un resumen de su primera frase—, pero nunca
-la primera cláusula genérica de la explicación como «Por ejemplo» o «Un aspecto clave
-del modelo actual».)
+(El título de cada pantalla = el nombre del formato, 1-3 palabras, que SÍ puede
+coincidir con una frase corta del origen si esa frase ya era el nombre propio del
+concepto —«Documento estructurado» es el nombre del formato, no un resumen de su
+primera frase—, pero nunca la primera cláusula genérica de la explicación como «Por
+ejemplo» o «Un aspecto clave del modelo actual». Si los formatos fueran solo rótulos
+con una frase cada uno y sin imagen, entonces sí: una pantalla con un `accordion` de
+cinco ítems.)
 
 ## Recordatorio de formato — integridad de `**` y `:::` al fusionar/reescribir texto
 Al consolidar contenido de varias páginas (Regla nueva 1) es fácil desemparejar
@@ -191,16 +192,35 @@ el origen llevaba la marca «(MODIFICAR)», revisar contenido."` y pon
 Una lección entera `(BORRAR)` (plantilla, relleno de prueba): **ignórala por
 completo**, no generes pantallas de ella.
 
-## Quiz de la sección → preguntas del tema
-Cada `quiz` de la sección aporta su `question_bank` (mismo shape del contrato §7:
-`single_choice`/`true_false`, banco simple `multichoice`/`truefalse` de Moodle). Sigue
-la convención de siempre: por defecto, **una unidad = una sección de Moodle con
-lección(es) + quiz = un `.scormproj`** (como en «Genérame el curso completo, un
-`.scormproj` por unidad» de `flujo-factoria-unidades.md`) con
-`assessments.final_test` (nunca `assessments.unit_tests[]` en el `.scormproj`
-individual — mismo criterio de siempre, un test calificable por SCO). Si el usuario
-pide un único `.scormproj` con todas las secciones, usa `merge_unit` con
-`score_source='unit_tests'` (un test por unidad, ya soportado).
+## Quiz y foros de la sección → se quedan en Moodle
+Por defecto, **una unidad = una sección de Moodle con lección(es) = un `.scormproj`**
+(como en «Genérame el curso completo, un `.scormproj` por unidad» de
+`flujo-factoria-unidades.md`). Los `quiz` y los `forum` de la sección **no** entran en
+el paquete: el test y los foros viven en Moodle (contrato §2, reglas SCORM por
+defecto: `final_test: null`, `score_source: "unit_tests"`, `completion_mode:
+"screens"`). Si el usuario pide expresamente el test dentro del SCORM, cada `quiz`
+aporta su `question_bank` (mismo shape del contrato §7: `single_choice`/`true_false`,
+banco simple `multichoice`/`truefalse` de Moodle) y se vuelca en
+`assessments.final_test` (`merge_unit(..., test_in_scorm=True)` si se fusionan
+varias secciones).
+
+## Regla nueva 4 — limpieza propia de cada tipo de copia
+- **Copia con lecciones (HTML)**: limpia también las **portadas**, no solo los
+  títulos de pantalla («Unidad 1 - TEMA 1. LA PREVENCIÓN DE CAÍDAS» → `cover` con
+  «Tema 1. La prevención de caídas»: sin el prefijo de gestión y sin mayúsculas
+  sostenidas). Una página que **solo repite el título** del tema se convierte en la
+  **portada del tema**, no en una pantalla de contenido vacía. Las **reflexiones
+  abiertas** del original («Piensa en…», «Reflexiona sobre…» sin respuesta única) van
+  en pantalla propia («Actividad: …») como callout `reflect` con sus **preguntas
+  numeradas** (`1. `…), tal cual: sin inventar rúbricas ni convertirlas en
+  `case_practice`.
+- **Copia con SCORM (Captivate/Storyline)**: los títulos de tema se quedan sin el
+  soporte («Tema 3. Vídeo: Movilización segura» → «Tema 3. Movilización segura»; igual
+  con «Presentación:», «Animación:»…). Lo dudoso (texto de diapositiva ilegible,
+  interacción del original sin equivalente, orden incierto, audio sin transcripción)
+  se marca para revisión con `review` (`{"flagged": true, "note": "…"}`, contrato §4)
+  y una nota concreta de **qué** revisar («Diapositiva 12 de Captivate: el arrastre
+  original tenía 6 elementos y solo se leen 4»).
 
 ## `extract_moodle_backup` (Code Interpreter, Python estándar — sin dependencias)
 
@@ -597,7 +617,7 @@ Con esta forma, trata las reglas numeradas del prompt reforzado (más abajo) com
 
 > Adjunto el backup de Moodle (.tar.gz). Genera **todos los `.scormproj` COMPLETOS**
 > del curso en modo factoría autónomo: un `.scormproj` por cada sección de Moodle que
-> tenga lecciones + quiz (una por unidad). Encadena inventario → unidades → fusión sin
+> tenga lecciones (una por unidad). Encadena inventario → unidades → fusión sin
 > preguntarme nada entre unidades. Si te quedas sin espacio, guarda parciales y di
 > solo «continúa».
 >
@@ -612,9 +632,12 @@ Con esta forma, trata las reglas numeradas del prompt reforzado (más abajo) com
 > 2. **Nunca pierdas ni reordenes contenido de página** (el orden real es el enlazado
 >    `prevpageid`/`nextpageid`, nunca el título), pero el número de pantallas NO tiene
 >    que ser 1:1 con el número de páginas: si varias páginas seguidas repiten el mismo
->    `title` o son fragmentos de una misma lista/idea, FUSIÓNALAS en una pantalla o
->    interactividad bien formada con todos los puntos (ver el caso «Diversidad de
->    formatos» en `ingesta-moodle.md`) — igual que decidirías con un PDF.
+>    `title` o son fragmentos de una misma lista/idea, trátalas como una unidad: lista
+>    o desplegable si son rótulos o frases breves; pantalla índice + una pantalla por
+>    punto si cada uno trae su párrafo o su imagen (ver el caso «Diversidad de
+>    formatos» en `ingesta-moodle.md`) — igual que decidirías con un PDF. Limpia
+>    también las portadas y convierte en portada la página que solo repite el título
+>    (regla 4).
 > 2b. Cada `title`/`prompt`/`item.title` **representa el contenido con tus propias
 >     palabras** (sentido común editorial, no un recorte de la frase que tengas más a
 >     mano: ni el `title` de página de Moodle, ni un `##` repetido, ni el arranque del
@@ -636,9 +659,10 @@ Con esta forma, trata las reglas numeradas del prompt reforzado (más abajo) com
 >    del título visible, pero deja rastro en `editor_notes` + `status: "borrador"`.
 >    Una lección `(BORRAR)` entera: ignórala.
 > 5. Los ejercicios prácticos (`case_practice`, `reflection`, `::: case`, `::: reflect`)
->    van en SU PROPIA pantalla, solo con el enunciado. La «Resolución propuesta» /
->    «Clave de reflexión» va en `feedback.explanation`, NUNCA visible en
->    `student_text`.
+>    van en SU PROPIA pantalla («Actividad: …»), solo con el enunciado. La «Resolución
+>    propuesta» / «Clave de reflexión» va en `feedback.explanation`, NUNCA visible en
+>    `student_text`. Una reflexión abierta sin solución: callout `reflect` con sus
+>    preguntas numeradas, sin rúbrica inventada.
 > 6. Nunca dos callouts del mismo tipo en una pantalla: eso son dos pantallas. Sin
 >    rótulos («Actividad práctica», «Idea clave:»…).
 > 7. Antes de producir cada unidad, monta el guion de pantallas (guía) **por unidad de
@@ -646,17 +670,20 @@ Con esta forma, trata las reglas numeradas del prompt reforzado (más abajo) com
 >    divídelas según la idea, regla 2), con chequeo de ritmo: informativa ~1 de cada
 >    3-4 pantallas, checkpoint
 >    aplicado cada 4-5, tipos variados, ninguna pantalla de más de ~800 caracteres sin
->    interactividad informativa.
-> 8. Toda evaluable o pregunta directa en SU PROPIA pantalla, alternando todo el
->    repertorio (choice, V/F, huecos, parejas, clasificar, ordenar, escenario, caso
->    por decisiones, conversación, reto numérico si hay cálculo, caso).
->    Cierre de cada unidad: Tarjetas de repaso + una lúdica (alterna entre unidades).
+>    revisar (dividir por donde cambia la idea).
+> 8. Toda evaluable o pregunta directa en SU PROPIA pantalla titulada «Actividad: …»,
+>    después de todo lo que evalúa, con `attempts: 3`, alternando el repertorio
+>    (choice, V/F, huecos, clasificar, escenario, caso por decisiones, conversación,
+>    reto numérico si hay cálculo, caso; parejas con moderación; nunca ordenar
+>    pasos). Cierre de cada unidad: tarjetas de repaso o rosco + «Síntesis del tema».
 >    Nunca hotspots, before_after, hidden_image, puzzle, vídeo interactivo ni
 >    html_embed.
 > 9. Máximo UNA imagen por pantalla y siempre como `visual_resource` (resuelta con
->    `resolve_image`), nunca `![...]` en `student_text`.
-> 10. El quiz de cada sección va en `assessments.final_test` de SU `.scormproj` (nunca
->     `assessments.unit_tests[]`, nunca una pantalla `unit_quiz` con el test escrito).
+>    `resolve_image`), debajo del texto (`layout: "bottom"`), nunca `![...]` en
+>    `student_text`.
+> 10. El quiz y los foros de cada sección se quedan en Moodle: `final_test: null`,
+>     `score_source: "unit_tests"`, `completion_mode: "screens"`, `min_score: 50`,
+>     `auto_return: true` (nunca una pantalla `unit_quiz` con el test escrito).
 > 11. IDs únicos en todo cada curso. `authoring_entity` = «MECOHISA S.L.» pero
 >     `shell.brand` VACÍO. El preflight `validate_course` (contrato §11) a CERO
 >     errores y CERO avisos antes de empaquetar cada `.scormproj`.
@@ -673,7 +700,7 @@ Con esta forma, trata las reglas numeradas del prompt reforzado (más abajo) com
 > revisión de fidelidad (cada página de Moodle con su(s) pantalla(s), mismo orden) Y
 > `check_moodle_titles` a CERO WARN (regla 12).
 > En el informe final: por unidad — nº de páginas Moodle origen, nº de pantallas
-> generadas, % de cobertura, nº de preguntas del quiz incluidas, y el resultado de
+> generadas, % de cobertura, y el resultado de
 > `check_moodle_titles` (0 WARN, o la lista de falsos positivos anotados).
 
 **Análisis previo (sin generar nada)**, **con guion previo** y **paso a paso**: mismo

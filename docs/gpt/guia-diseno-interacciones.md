@@ -17,7 +17,9 @@ coherentes (partir una frase larga, añadir un titular o una frase puente, resol
 donde ayuden (introducir una actividad, enlazar con el apartado anterior, cerrar un
 bloque), para que el curso fluya natural y no «suene a PDF». Siempre **añadidas** al
 texto fuente, nunca sustituyéndolo ni parafraseándolo (por eso el ratio puede superar
-1.0). Ante la duda, **más pantallas** antes que recortar.
+1.0). Ante la duda, **más pantallas** antes que recortar. **Nunca resumas un apartado
+(del documento o de la copia de Moodle) en una frase**: si su texto se reparte entre
+varias pantallas o ítems, se reparte **entero**.
 
 **Método obligatorio (con Code Interpreter):**
 1. **Extrae el texto CON su formato**, no en plano: el texto plano pierde negritas y
@@ -35,16 +37,17 @@ texto fuente, nunca sustituyéndolo ni parafraseándolo (por eso el ratio puede 
    ejemplo), NO una frase suelta. Un **encabezado va SIEMPRE junto al texto que
    introduce** (título + subtítulo + cuerpo = una pantalla, no tres). Referencia de
    densidad: apunta a **pantallas de varios párrafos** (del orden de ~250-400
-   caracteres de media, como mínimo); **evita micro-diapositivas** (una frase). Salen
-   las pantallas que el contenido pida (típico: **1-2 por epígrafe**), no el doble.
+   caracteres de media, como mínimo); **evita micro-diapositivas** (una frase suelta,
+   un trozo sin entidad propia). Salen las pantallas que el contenido pida.
    - **Nunca una pantalla diminuta ni vacía** (una frase, o solo un título). Si un
      encabezado o un fragmento no da para pantalla propia, **únelo** al contenido
      contiguo.
    - **Nunca partas un título/subtítulo de su contenido** en pantallas distintas.
-3. Para presentar contenido **denso o estructurado** (listas, sub-apartados, bloques
-   paralelos), **usa una interactividad informativa** (accordion/tabs/flip_cards): así
-   la pantalla queda rica sin ser un muro de texto **y sin trocear de más**. Preferir
-   esto a partir el mismo contenido en muchas pantallas pequeñas.
+3. **Enumeraciones de apartados: pantalla propia por elemento con entidad** (ver
+   «Corte: pantalla propia o desplegable», más abajo). Si cada elemento tiene título
+   propio, un párrafo de desarrollo o su propia imagen, va en **su propia pantalla**,
+   precedida de una **pantalla índice**; desplegables, pestañas y tarjetas quedan para
+   listas **cortas** de rótulos o frases breves.
 4. Cada pantalla lleva su trozo del texto **casi literal**, **visible** en
    `student_text` y/o dentro de una interactividad informativa, y **además duplicado
    íntegro en `transcript`**. Nada de contenido queda solo en `transcript`.
@@ -53,9 +56,8 @@ texto fuente, nunca sustituyéndolo ni parafraseándolo (por eso el ratio puede 
 `transcript`, sin contar el duplicado) debe **cubrir ~100%** de la prosa de origen de
 ese tema (**mínimo ≥ 0.95**, ideal ≈ 1.0; puede pasar de 1.0 por las frases puente). Si
 sale por debajo, **estás resumiendo**: recupera lo omitido. **Ojo**: cubrir el 100% NO
-significa muchas pantallas diminutas — se logra con pantallas **sustanciales** y con
-interactividades **informativas que contienen** el texto. Menos pantallas y más densas
-> muchas micro-pantallas.
+significa muchas pantallas diminutas — se logra con pantallas **sustanciales** (una por
+apartado con entidad propia), no con frases sueltas en pantallas separadas.
 
 **Marca el control** en `quality_checklist`:
 `"Contenido del documento trazado sin pérdidas": true`.
@@ -91,10 +93,10 @@ adivinar el «objetivo cognitivo»:
 |---|---|
 | Prosa de desarrollo | `content` con texto (+ imagen si el fuente la trae; máx. una) |
 | Serie de puntos, cada uno con su figura | una pantalla por punto: texto + su imagen (`visual_resource`), titulada con **su** punto |
-| 5+ ítems paralelos con desarrollo | `accordion` |
-| 2-4 bloques cortos paralelos | `tabs` o `flip_cards` (alterna entre ambos) |
+| Enumeración de apartados con título propio y párrafo de desarrollo (o imagen propia) | **pantalla índice** (lista de los apartados) + **una pantalla por apartado**, titulada con él |
+| Lista corta de rótulos o frases breves paralelas (1-3 frases por elemento) | `accordion`, o `tabs`/`flip_cards` si son ≤4 (alterna) |
 | 3+ ejemplos paralelos con correspondencia clara (dato→interpretación, observación→ajuste, valor→objetivo) | `flip_cards` (≤4) o `accordion` |
-| Proceso o secuencia de pasos | `sort_steps` (checkpoint) o `timeline` (informativa) |
+| Proceso o secuencia de pasos | `timeline` (informativa); para comprobarlo, `scenario_steps` o `single_choice` (no `sort_steps`) |
 | Cronología / evolución histórica | `timeline` |
 | Caso o situación que admite decisión | `scenario_decision` (checkpoint) |
 | Caso aplicado con varias decisiones encadenadas (qué haces primero, y después…) | `scenario_steps` (checkpoint) |
@@ -104,36 +106,40 @@ adivinar el «objetivo cognitivo»:
 | Dos o tres enfoques, modelos u opciones contrapuestos | `::: compare` en `student_text` |
 | Recomendaciones junto a errores que evitar | `::: dodont` en `student_text` |
 | Ejercicio/actividad propuesta en el fuente | pantalla propia `case_practice`/`reflection` |
+| Reflexión abierta sin respuesta única | pantalla propia con callout `reflect` y sus preguntas numeradas (sin rúbrica inventada) |
 | Pares término→definición, concepto→ejemplo | `flip_cards` (≤4) o glosario |
 | Caja destacada del fuente | callout `::: tipo` dentro de la pantalla de su texto |
 | Enlace a vídeo de YouTube | pantalla con `visual_resource` `video_youtube` (ID en `src`), no enlace de texto |
-| Cierre de tema | `flashcards` + una lúdica: `word_search`/`crossword`/`az_quiz` (alterna entre temas) |
+| Cierre de tema | repaso con `flashcards` o `az_quiz` (`word_search`/`crossword` solo si hay vocabulario técnico que fijar) y pantalla `summary` «Síntesis del tema» |
 
 **Chequeo de ritmo sobre el guion** (corrige la TABLA antes de producir: corregir el
 guion es barato; regenerar pantallas, no):
-- **Informativas: ~1 de cada 3-4 pantallas de desarrollo.** Regla dura: **nunca más de
+- **Informativas: ~1 de cada 3-4 pantallas de desarrollo**, donde el fuente traiga
+  listas cortas paralelas o ejemplos con correspondencia. Regla dura: **nunca más de
   3 pantallas seguidas de «solo texto»** (sin interacción, sin imagen y sin callout).
   Si un tramo de prosa lo supera, busca su **estructura latente** (enumeraciones
-  implícitas, ejemplos, contrastes, pasos) que sí admita una informativa; si de verdad
-  no la hay, rompe el tramo con una imagen o un callout del propio fuente.
+  breves, ejemplos, contrastes, cifras) que admita una informativa o un bloque con
+  estructura (`::: stats`/`::: compare`/`::: dodont`); si de verdad no la hay, rompe el
+  tramo con una imagen o un callout del propio fuente. **Nunca metas párrafos de
+  desarrollo en un desplegable para cumplir el ritmo**: el corte manda (ver «Corte»).
 - **Checkpoints evaluables: uno cada 4-5 pantallas** (mínimo ⌈N/5⌉ en un tema de N
-  pantallas), repartidos —no acumulados al final—, cada uno tras un bloque aplicable
-  y **en pantalla propia** (fila propia del guion, sin teoría). **Alterna todo el
-  repertorio** (`single_choice`, `true_false`, `fill_blanks`, `match_pairs`,
-  `classification`, `sort_steps`, `scenario_decision`, `scenario_steps`,
-  `decision_tree`, `case_practice`, y `calculator` si hay cálculo) sin repetir
-  tipo dos veces seguidas: decidir, clasificar u ordenar engancha y enseña más que
+  pantallas), repartidos —no acumulados al final—, cada uno **después de todas las
+  pantallas que evalúa** y **en pantalla propia** (fila propia del guion, sin teoría).
+  **Alterna el repertorio** (`single_choice`, `true_false`, `fill_blanks`,
+  `classification`, `scenario_decision`, `scenario_steps`, `decision_tree`,
+  `case_practice`, y `calculator` si hay cálculo; `match_pairs` con moderación) sin
+  repetir tipo dos veces seguidas: decidir o clasificar engancha y enseña más que
   reconocer una opción. Ante la duda, uno **de más** (borrar en SCORMEditor es fácil).
-- **Cierre de tema**: `flashcards` (repaso) **+ una lúdica** — `word_search`,
-  `crossword` o `az_quiz`, **alternando entre temas** y con `scored: false`.
-- **Ninguna pantalla larga sin interactividad informativa.** El nº de caracteres es
-  una **alarma secundaria**, no el criterio de división: la segmentación se decide
-  por **unidad de sentido**, cambio de intención pedagógica, carga visual y esfuerzo
-  mental (ver «Principio rector»). Si una fila supera **~800 caracteres** y no lleva
-  informativa, revísala: o vuelca parte del texto en una que lo **contenga**
-  (accordion/tabs, sin resumir), o divide la pantalla **por donde cambia la idea** —
-  nunca con un corte mecánico de longitud. Si lleva imagen (y por tanto no admite
-  interacción, ver regla estructural), divídela.
+- **Cierre de tema**: repaso con `flashcards` o `az_quiz` (rosco), `scored: false`, y
+  la pantalla `summary` «Síntesis del tema». La sopa de letras y el crucigrama no son
+  de cierre por sistema (ver «Juegos»).
+- **Ninguna pantalla larga sin estructura.** El nº de caracteres es una **alarma
+  secundaria**, no el criterio de división: la segmentación se decide por **unidad de
+  sentido**, cambio de intención pedagógica, carga visual y esfuerzo mental (ver
+  «Principio rector»). Si una fila supera **~800 caracteres**, revísala: divide la
+  pantalla **por donde cambia la idea** (o por apartados, con su pantalla índice) —
+  nunca con un corte mecánico de longitud—; solo si el texto es una lista de frases
+  breves paralelas, vuélcalo en una informativa que lo **contenga**.
 - **Variedad**: no repitas el mismo tipo (informativo o evaluable) dos veces seguidas.
 - **Filas fijadas por marca (paso 0)**: cuentan para este chequeo igual que una
   automática (una `{{acordeon}}` ya cubre el hueco de informativa de su tramo); el
@@ -163,7 +169,10 @@ ni cajitas de «lo importante»: eso ensucia y repite. Solo el contenido.
   ni como una línea suelta en negrita.
 - **Negrita** `**así**`, **cursiva** `*así*`. **Conserva las negritas del documento
   fuente**: si una palabra o frase va en negrita en el original, mantenla en negrita
-  (`**...**`). No inventes negritas donde no las hay.
+  (`**...**`). **Medida: 1-3 ideas clave por pantalla**, pegada a la palabra; si el
+  original sobrecarga una pantalla de negritas, deja las 1-3 más importantes. En las
+  pantallas de contenido, la **idea-fuerza final** (la frase que recoge lo esencial de
+  la pantalla) va en negrita. Nada de negrita de adorno en frases sueltas.
 - **Enlaces externos**: detéctalos en el origen y **presérvalos** como `[texto](url)`
   (http/https o mailto). En un PDF los enlaces son **anotaciones**, no texto:
   `extract_text_markdown` (contrato §11) ya los captura (`page.get_links()`) y los
@@ -177,8 +186,9 @@ ni cajitas de «lo importante»: eso ensucia y repite. Solo el contenido.
 
 ### El `title` de la pantalla (cabecera): corto y descriptivo
 El campo `title` se muestra como cabecera (`<h1>`) de la diapositiva. Es un **rótulo
-corto** (2-6 palabras) de lo que trata la pantalla: `"Qué información recoger"`,
-`"Áreas clave de la historia de vida"`. **NO** un fragmento del contenido cortado a
+corto** (2-6 palabras) de lo que trata la pantalla, preferiblemente **nominal**:
+`"Información que se recoge"`, `"Áreas clave de la historia de vida"` (criterio
+completo en el contrato §4, «Títulos: criterio editorial»). **NO** un fragmento del contenido cortado a
 mitad de frase (errores reales: `title = "Se va elaborando:"`, `title = "Pero para
 poder diseñar apoyos realmente pers…"`, `title = "- Religión"`).
 - **No dupliques el `title` en el contenido.** El `title` ya sale como cabecera; el
@@ -194,18 +204,24 @@ poder diseñar apoyos realmente pers…"`, `title = "- Religión"`).
   «Relato narrativo», «Línea de vida», «Material gráfico»), titúlala con **ese
   elemento**, no repitas el rótulo genérico del epígrafe («Formatos de registro») en
   todas: el título informativo orienta más en el índice y en la navegación.
-- **Numeración de epígrafes: todo o nada (coherencia).** Si el documento numera los
-  apartados (`3.1`, `3.2`…), **decídelo una vez para toda la unidad**: o **conservas la
-  numeración en TODOS** los `title` o la **quitas en TODOS**. Nunca mezcles (unos con
-  `3.1` y otros sin número, o saltar de `3.1` a `3.8`). **Por defecto, quítala**: el
-  `title` es un rótulo corto y limpio (`"Evaluación y ajuste"`, no `"3.8 Evaluación y
-  ajuste"`); el orden ya lo da la secuencia de pantallas.
-- **Nunca titules una interacción `"Checkpoint"`, `"Checkpoint de…"`, `"Actividad"` ni
-  similar.** El `title` de una pantalla con interacción es **el del tema que se trabaja**
-  (`"Áreas clave"`, `"Formatos de recogida"`), igual que una de contenido. La app antepone
-  **automáticamente** `"Actividad: "` al título en la Vista estudiante cuando la
-  interacción puntúa (además de colorear la pantalla), así que **no** hace falta
-  anunciarlo en el `title` que generas.
+- **Desde documento (.docx/PDF): el `title` es el epígrafe literal, con su
+  numeración** (`"3.2. Detección de necesidades"`), tal cual lo escribe el documento, y
+  se **repite igual** en todas las pantallas que ocupa ese epígrafe. Coherencia: con
+  número en **todos** los `title` que salen de un epígrafe numerado, nunca unos sí y
+  otros no. Las pantallas que no salen de un epígrafe (portada, objetivos, actividades,
+  síntesis) no llevan número. En otros orígenes (Moodle) se quita la numeración de
+  gestión de la copia (ver `ingesta-moodle.md`).
+- **Títulos de ítems sin prefijos de enumeración**: los `title` de los ítems de
+  `accordion`/`tabs`/`flip_cards`/`timeline` no llevan «a)», «b)», «1.», «2.»… Si el
+  fuente enumera así una lista, en `student_text` va como viñetas `- ` o como lista
+  numerada markdown `1. `, nunca con la letra o el número dentro del texto del ítem.
+- **Toda pantalla de actividad se titula «Actividad: …»** (`"Actividad: detección de
+  necesidades"`), sea evaluable o no: preguntas, clasificaciones, casos, prácticas de
+  varios pasos, `case_practice`, reflexiones con tarea y juegos de repaso. Nunca
+  «Caso:», «Comprueba:», «Reto:», «Practica:», «Completa:», «Repaso:» ni
+  «Checkpoint…». Las informativas (`accordion`/`tabs`/`flip_cards`/`timeline`) no son
+  actividad: llevan el título del contenido. La carcasa detecta el prefijo y en las
+  evaluables solo añade su icono (no lo duplica).
 
 ### Imágenes: máximo UNA por pantalla, siempre como `visual_resource`
 - **NUNCA incrustes imágenes con `![alt](ruta)` dentro de `student_text`**: esa
@@ -226,64 +242,81 @@ poder diseñar apoyos realmente pers…"`, `title = "- Religión"`).
   muestra y como prosa quedan frases colgadas sin sentido. Lo esencial va en
   `alt`/`caption` y, si procede, en `transcript`.
 
-Coloca cada imagen según su forma, para que el texto respire (SCORMEditor ya lo
-soporta; al extraer del PDF conoces `width`/`height`, calcula el ratio):
-- **Apaisada** (ancho > alto, ratio ≳ 1.2) → `"layout": "top"` (o `"bottom"`): encima o
-  debajo del texto, a lo ancho.
-- **Cuadrada o vertical** (alto ≥ ancho) → `"layout": "right"` con `"media_width": "50"`
-  (o `"33"` si es muy vertical): la imagen al lado y el texto a su izquierda.
+Colocación de la imagen (detalle en el contrato §5):
+- **Pantallas de contenido: imagen DEBAJO del texto** (`"layout": "bottom"`). Si es
+  estrecha (más estrecha que la columna de texto, ≲ 800 px) o cuadrada/vertical, añade
+  `"media_align": "center"`. Al extraer del PDF conoces `width`/`height`: úsalos para
+  decidir el centrado.
+- **Portadas (`cover`)**: imagen arriba (`"layout": "top"`) a todo el ancho
+  (`"media_full": true`). Los vídeos de YouTube pueden ir arriba (`top`).
 
 **Regla estructural (imagen + texto + interacción):** si una pantalla ya lleva **imagen
 + texto de desarrollo**, NO añadas **ninguna** interacción en ella — **tampoco
 informativa** (tabs/timeline/accordion: fallos reales en «Entrevista y conversación»,
 «Cuándo recoger» y «Documentación útil»). Entiende el texto y la imagen y compón **dos
-pantallas** con el **mismo `title`**: (1) el texto con su recurso visual (o solo el
-recurso) y (2) la interactividad, con una breve **frase introductoria** en
-`student_text` si hace falta para entenderla — nada más.
+pantallas**: (1) el texto con su recurso visual (o solo el recurso) y (2) la
+interactividad (mismo `title` si es informativa; «Actividad: …» si es actividad), con
+una breve **introducción** en `student_text` si hace falta para entenderla — nada más.
+
+### Corte: pantalla propia o desplegable
+Lo que más remaqueta el equipo editorial es el contenido de desarrollo escondido en
+desplegables. El criterio:
+- **No metas párrafos de desarrollo dentro de desplegables, pestañas ni tarjetas.** Si
+  cada elemento de una enumeración es un **apartado con título propio**, lleva **un
+  párrafo de desarrollo** o **su propia imagen**, cada uno va en **su propia pantalla**
+  (titulada con él), precedida de una **pantalla índice** que presenta la lista de
+  apartados (una frase de entrada + viñetas con sus nombres).
+- **Desplegables y pestañas, solo para listas cortas** de rótulos o frases (cada ítem,
+  su rótulo y 1-3 frases), sin excesivo contenido dentro. Si al montar el desplegable
+  un ítem pide varios párrafos, eso da para una pantalla.
+- **Al convertir un desplegable en pantallas**, cambia la entradilla «Despliega cada…»
+  /«Pulsa en cada…» por una **transición** natural («Veamos cada uno de estos
+  factores.»).
+- Las **micro-pantallas** siguen siendo un fallo cuando son **trozos sin entidad
+  propia** (una frase suelta, la mitad de un párrafo): un apartado con su título y su
+  desarrollo no es una micro-pantalla aunque sea breve.
 
 ### Presentar el texto de forma amena (interactividades informativas)
-**Úsalas de forma habitual** para el contenido denso o estructurado: son la forma de
-tener pantallas ricas sin muros de texto ni trocear de más. Meten el texto fuente en un
-formato ameno (**lo contienen**, no lo resumen). Un tema suele llevar **varias**: el
-ritmo del guion pide ~1 de cada 3-4 pantallas de desarrollo (en una unidad de ~80
-pantallas, del orden de ~20 informativas además de los checkpoints). **No las elimines
-convirtiéndolas en pantallas de texto pequeñas.** Cuándo:
-- **`accordion`**: sub-apartados o lista de puntos con desarrollo → cada `item` = un
-  apartado con su texto original. **Es la opción por defecto cuando hay muchos ítems**
-  (5+) o textos largos: crece hacia abajo y siempre cabe.
+Úsalas para lo que **sí** es una lista corta paralela: meten el texto fuente en un
+formato ameno (**lo contienen**, no lo resumen) y rompen tramos de solo texto. El ritmo
+del guion pide ~1 de cada 3-4 pantallas de desarrollo **cuando el contenido trae esa
+forma**; nunca a costa del corte de arriba. Cuándo:
+- **`accordion`**: lista de puntos breves paralelos (rótulo + 1-3 frases) → cada
+  `item` = un punto con su texto original. Es la opción cuando hay **5 o más** ítems:
+  crece hacia abajo y siempre cabe.
 - **`tabs`**: **solo para 2-4** bloques paralelos y **cortos** (tipos, fases, enfoques)
-  → una pestaña por bloque. Con **más de 4 ítems o textos largos, NO uses tabs** (no
-  caben en horizontal): usa `accordion`.
+  → una pestaña por bloque. Con **más de 4 ítems, NO uses tabs** (no caben en
+  horizontal): usa `accordion`.
 - **`flip_cards`**: pares término→definición, concepto→ejemplo → `front`/`back`.
   Igual que `tabs`, **solo con 4 o menos elementos** y textos cortos. Detecta también
   los **ejemplos paralelos con correspondencia clara** (un dato, valor u observación →
   su interpretación, objetivo o actuación): tres o más de esos pares piden tarjetas
   (o `accordion`, si son más de 4 o largos) antes que párrafos repetitivos.
 - **`timeline`**: evolución histórica, fases de un proceso con fechas/etapas →
-  `milestones` en orden con `label` (fecha/fase), `title` y `body`. Ideal cuando el
-  fuente narra cronología o secuencia de hitos.
+  `milestones` en orden con `title` y `body`, y `label` **solo si es una fecha, una
+  fase o un plazo** («1995», «Fase 2», «En 24 h»); nunca un número de orden («1»,
+  «2»): la línea ya marca la secuencia. Ideal cuando el fuente narra cronología o
+  secuencia de hitos, y la opción para presentar un **proceso** paso a paso.
 El texto de cada `item`/`tab`/`card`/hito es el **texto fuente** de esa parte. En
 `transcript` va igualmente el trozo completo.
 
-**Varía los tipos informativos.** No conviertas cada bloque estructurado en un
-`accordion` por inercia: si el contenido lo permite (2-4 ítems cortos → `tabs` o
-`flip_cards`; secuencia/fases → `timeline`), **alterna** para que la unidad no repita
-siempre el mismo patrón. El `accordion` es el comodín para ítems largos o numerosos
-(5+), no la única opción.
+**Varía los tipos informativos.** No conviertas cada lista en un `accordion` por
+inercia: si el contenido lo permite (2-4 ítems cortos → `tabs` o `flip_cards`;
+secuencia/fases → `timeline`), **alterna** para que la unidad no repita siempre el
+mismo patrón.
 
-**Detrás del clic debe haber sustancia.** El sentido de un desplegable es descubrir un
-desarrollo: el cuerpo de cada ítem (`body` del accordion/tab/hito, `back` de la tarjeta)
-debe ser claramente **más extenso y descriptivo que el título que se clica** — varias
-frases del texto fuente, nunca una frase que repite o parafrasea lo que ya dice el
-rótulo (clicar para leer lo mismo frustra y resta credibilidad al curso). Si el fuente
-solo da una lista de rótulos sin desarrollo (nombres, etiquetas de un esquema), **no hay
-nada que desplegar**: preséntala como lista `- ` en `student_text` (o como callout) y
-reserva la informativa para un bloque que sí tenga contenido detrás. Este criterio manda
-sobre el ritmo del guion: mejor una pantalla de texto de más que un desplegable hueco.
+**Detrás del clic debe haber algo, pero breve.** El cuerpo de cada ítem (`body` del
+accordion/tab/hito, `back` de la tarjeta) debe aportar **más que el título que se
+clica** — 1-3 frases del texto fuente, nunca una frase que repite o parafrasea el
+rótulo (clicar para leer lo mismo frustra). Si el fuente solo da una lista de rótulos
+sin desarrollo (nombres, etiquetas de un esquema), **no hay nada que desplegar**:
+preséntala como lista `- ` en `student_text`. Y si lo que hay detrás son párrafos de
+desarrollo, son **pantallas** (ver «Corte»). Ambos criterios mandan sobre el ritmo del
+guion.
 
 **Una interacción = UNA pantalla, con TODOS sus ítems.** No la partas en varias
-pantallas: un accordion «Áreas clave» con 8 apartados es **un** accordion en **una**
-pantalla, no «Áreas clave (1)» / «(2)». Lo mismo con `tabs`/`flip_cards`. Dentro de un
+pantallas: un accordion «Señales de alerta» con 6 puntos breves es **un** accordion en
+**una** pantalla, no «Señales de alerta (1)» / «(2)». Lo mismo con `tabs`/`flip_cards`. Dentro de un
 `item`/`tab`/`card`, si hay una lista, cada elemento en **su propia línea** con `- `
 (el editor la renderiza como lista dentro del bloque).
 
@@ -292,16 +325,26 @@ introducción breve.** Vale para **toda** interacción, también las informativa
 si en la misma pantalla compiten una explicación larga (varios párrafos, apartados
 o listas en `student_text`) y una interacción debajo, **sepáralas** — primero la
 pantalla de explicación, después la de exploración o práctica. En la pantalla de la
-interacción, el `student_text` lleva como mucho una **introducción breve y natural
-(1-2 frases: qué va a hacer el alumno y para qué)**, sin repetir la explicación.
-(Recuerda: una informativa que **contiene** el texto fuente es ella misma el cuerpo
-de la pantalla — eso no es «texto + interacción», es la forma correcta.)
+interacción, el `student_text` lleva solo la **introducción**, sin repetir la
+explicación. (Recuerda: una informativa que **contiene** el texto fuente es ella misma
+el cuerpo de la pantalla — eso no es «texto + interacción», es la forma correcta.)
+
+**La introducción de cada actividad (y la entradilla de una informativa): 2-3 frases.**
+(1) Contexto y para qué sirve lo que va a hacer («Proteger la información no exige ser
+especialista: basta con unos hábitos sencillos.»); (2) si hace falta, un dato o aviso
+(«La situación es ficticia, pero habitual.»); y (3) **al final, la instrucción de
+acción en negrita**, con el verbo del gesto («**Toca cada tarjeta para descubrir cómo
+aplicarlo.**», «**Lee la situación y decide cómo actuarías.**»). Los enunciados de un
+escenario, en frase completa («Eres gerocultora y estás en el turno de tarde.», no
+«Gerocultora, turno de tarde.»). **Nunca** la instrucción genérica por defecto («Une
+cada elemento con su pareja y pulsa Comprobar»).
 
 **`prompt` e `instructions`: dicen cosas distintas y, si no aportan, van vacíos.**
 - `prompt` (enunciado) = **la tarea o la pregunta** para este contenido concreto
   («¿Qué hacer ante un paciente con…?»). `instructions` = **solo la mecánica** del
-  componente, y solo si no es evidente («Arrastra cada pieza a su lugar y pulsa
-  Comprobar»).
+  componente, y solo si no es evidente y no la dice ya la instrucción en negrita de la
+  introducción (en `match_pairs`/`classification` sí hace falta, ver «Elegir la
+  interacción»).
 - **Nunca** el mismo mensaje dicho dos veces con otras palabras entre ambos campos, ni
   repetir el `title` de la pantalla o su `student_text`. Mejor **vacío** (`""`) que
   relleno: en `accordion`/`tabs`/`flip_cards`/`timeline`/`image_cards` el `prompt` va
@@ -329,10 +372,11 @@ y luego el desarrollo (también ajustable en el editor).
 
 **Toda interactividad evaluable o de pregunta directa, en pantalla propia.** No
 mezcles teoría en `student_text` con una evaluable (`single_choice`, `true_false`,
-`fill_blanks`, `match_pairs`, `classification`, `sort_steps`, `scenario_decision`…):
-el desarrollo va en su pantalla y la pregunta en la **siguiente** (mismo `title`),
-cuyo `student_text` lleva como mucho una frase de contexto — el enunciado ya va en
-`prompt`/`instructions`. Lo mismo con los ejercicios prácticos: `case_practice`,
+`fill_blanks`, `match_pairs`, `classification`, `scenario_decision`…): el desarrollo va
+en su pantalla y la pregunta en una pantalla **posterior** titulada «Actividad: …»,
+cuyo `student_text` lleva solo la introducción — el enunciado ya va en
+`prompt`/`instructions`. **Cada actividad va DESPUÉS de todas las pantallas cuyo
+contenido evalúa**: nunca una pregunta sobre algo que el alumno aún no ha visto. Lo mismo con los ejercicios prácticos: `case_practice`,
 `reflection` y los callouts con tarea (`::: case`, `::: reflect` que proponen un
 ejercicio al alumno) no se pegan al final de una pantalla de contenido: el ejercicio
 va en la **siguiente**, con solo su enunciado/introducción. Una pantalla «lista de
@@ -345,21 +389,23 @@ rótulos («**Actividad práctica**», «**Resolución propuesta:**»…).
 ### Cadencia de interactividades
 El ritmo se fija en el **guion** (ver arriba), no improvisando pantalla a pantalla:
 - **Informativas** (accordion/tabs/flip_cards/timeline) a razón de **~1 de cada 3-4
-  pantallas de desarrollo**; nunca más de 3 seguidas de solo texto (**no las suprimas**
-  en favor de micro-pantallas de texto).
+  pantallas de desarrollo**, donde el contenido traiga listas cortas paralelas; nunca
+  más de 3 seguidas de solo texto (ni las fuerces metiendo desarrollo dentro, ver
+  «Corte»).
 - **Aplicadas y evaluables** (`scenario_decision`, `scenario_steps`, `decision_tree`,
-  `classification`, `sort_steps`, `single_choice`, `case_practice`) como **checkpoints repartidos a lo largo del tema,
+  `classification`, `single_choice`, `case_practice`) como **checkpoints repartidos a lo largo del tema,
   uno cada 4-5 pantallas** de contenido. Es **obligatorio el reparto**: **NO las
   acumules al final**. Regla práctica: un tema de N pantallas lleva **al menos ⌈N/5⌉
   checkpoints** intercalados (un tema de 30 → ~6, hacia las pantallas 5, 10, 15, 20,
   25, 30), no dos seguidas en la 28-29. **Si con las que salen no llegas a esa
   densidad, añade más** donde el contenido se pueda aplicar/decidir (cada checkpoint,
-  tras un bloque aplicable), **en pantalla propia** (sin teoría) y **alternando todo
-  el repertorio evaluable** (`single_choice`, `true_false`, `fill_blanks`,
-  `match_pairs`, `classification`, `sort_steps`, `scenario_decision`,
-  `scenario_steps`, `decision_tree`, `case_practice`, y `calculator` si hay cálculo)
-  sin repetir tipo dos veces seguidas — decidir/clasificar/ordenar
-  antes que reconocer una opción. Ante la duda, genera un checkpoint **de más**: en
+  tras un bloque aplicable), **en pantalla propia** (sin teoría) y **alternando el
+  repertorio evaluable** (`single_choice`, `true_false`, `fill_blanks`,
+  `classification`, `scenario_decision`, `scenario_steps`, `decision_tree`,
+  `case_practice`, `calculator` si hay cálculo y, con moderación, `match_pairs`)
+  sin repetir tipo dos veces seguidas — decidir/clasificar
+  antes que reconocer una opción. Las evaluables llevan **3 intentos**
+  (`"attempts": 3`). Ante la duda, genera un checkpoint **de más**: en
   SCORMEditor retocar o borrar es fácil; crear desde cero, no.
 - **Una sola interacción por pantalla** (contrato): el checkpoint es su propia
   pantalla. Y si una interacción **repite conceptos** ya vistos, llévala a la
@@ -378,8 +424,9 @@ Cada pantalla desarrolla **una idea/apartado completo** (varios párrafos, su li
 ejemplo). Divide una pantalla **solo** cuando mezcle **dos ideas distintas** o el
 cuerpo sea **realmente largo** (más de lo que se lee cómodo de una vez). **No** dividas
 por dividir: un apartado corto pero completo es **una** pantalla, no tres frases en
-tres pantallas. Si un apartado es denso o va en lista, preséntalo con una interactividad
-informativa antes que trocearlo.
+tres pantallas. Si un apartado es una lista de puntos breves, preséntalo con una
+interactividad informativa; si es una enumeración de sub-apartados con desarrollo,
+pantalla índice + una pantalla por sub-apartado (ver «Corte»).
 
 **Una pantalla = una sola acción mental.** Además de una sola idea, cada pantalla debe
 exigir al alumno **una única acción**: comprender, explorar, practicar, decidir o
@@ -417,11 +464,12 @@ interacción **informativa** —accordion/tabs/flip_cards— sea el cuerpo de la
 imagen aparte.)
 
 Ritmo recomendado por tema: portada → objetivos → ruta → pantallas de desarrollo
-**sustanciales** (intercalando informativas y checkpoints) → casos → **repaso lúdico**
-(`flashcards` + `word_search`/`crossword`/`az_quiz`) → resumen →
-autoevaluación → glosario/bibliografía (en sus arrays raíz). Las pantallas las manda el
-contenido, pero **densas**: como referencia, el resultado buscado tenía ~80 pantallas
-en una unidad, no ~160.
+**sustanciales** (intercalando informativas y checkpoints) → casos → **repaso**
+(`flashcards` o `az_quiz`) → «Síntesis del tema» → glosario/bibliografía (en sus
+arrays raíz). El test y los foros van en Moodle, fuera del SCORM: ni la hoja de ruta
+ni la síntesis anuncian un test dentro del paquete ni dan una duración estimada. Las
+pantallas las manda el contenido: un apartado con entidad propia es una pantalla, pero
+nunca un trozo de frase.
 
 ## Objetivos de aprendizaje: pocos, derivados y compartidos
 Define los objetivos **antes** de trocear en pantallas, a partir de tres fuentes:
@@ -467,6 +515,10 @@ mapeo:
 
 Pautas:
 - No fuerces callouts: un párrafo normal de desarrollo va como texto, no como caja.
+  Pero un aviso, un dato llamativo, una idea que recordar o una pregunta para pensar
+  que en el texto va **suelta** («Es importante recordar que…», «Ojo:…», «¿Sabías
+  que…?») va en su **callout tipado** (`important`/`warn`/`fact`/`reflect`), no como
+  párrafo más.
 - **Nunca un callout vacío**: `::: fact` seguido de `:::` sin cuerpo es un error real
   observado; si no tienes el texto de la caja, no emitas la caja (el editor lo marca
   con el aviso `CALLOUT_EMPTY`).
@@ -490,32 +542,52 @@ rápido para elegir el tipo:
 |---|---|---|
 | Recordar/identificar | `single_choice`, `true_false` | Sí |
 | Recordar terminología en contexto | `fill_blanks` (huecos `[[...]]`; `mode: "type"` para escribir sin pista) | Sí |
-| Comprender relaciones | `match_pairs`, `classification` | Sí |
-| Ordenar un proceso | `sort_steps` (con `explanation` por paso si el fuente da el porqué) | Sí |
+| Comprender relaciones | `classification`; `match_pairs` con moderación | Sí |
+| Conocer un proceso | `timeline` (presentarlo); `scenario_steps` o `single_choice` (comprobarlo) | No / Sí |
 | Cronología / evolución por fases | `timeline` | No |
 | Aplicar a un caso / decidir | `scenario_decision`, `case_practice` | Sí / abierta |
 | Aplicar a un caso con varias decisiones seguidas | `scenario_steps` | Sí (parcial) |
 | Practicar una conversación difícil | `decision_tree` | Sí |
 | Aplicar un cálculo del procedimiento | `calculator` (`challenge`; `tool` = calculadora sin nota) | Sí / No |
 | Explorar información densa | `accordion`, `tabs`, `flip_cards` | No |
-| Repasar al cierre del tema | `flashcards` + una lúdica: `word_search`/`crossword`/`az_quiz` | No |
+| Repasar al cierre del tema | `flashcards` o `az_quiz` (rosco) | No |
+| Fijar vocabulario técnico concreto | `word_search` o `crossword` (pocas veces, ver «Juegos») | No |
 
 Reglas de oro:
 - **Máximo una interacción por pantalla.**
 - Las informativas (`accordion`, `tabs`, `flip_cards`, `timeline`, `case_practice`),
-  las `flashcards` y las lúdicas de cierre (`word_search`/`crossword`/`az_quiz`)
+  las `flashcards` y los juegos de repaso (`az_quiz`, `word_search`, `crossword`)
   llevan `scored: false`.
 - Las evaluables llevan respuesta correcta + `feedback` (acierto/error) +
-  `explanation`. Siempre `source_refs` (el objetivo lo pone la pantalla: la
-  interacción no lleva `learning_objective` propio).
-- No abuses de `single_choice`: si puedes pedir **clasificar, ordenar o decidir**,
-  el aprendizaje es más profundo que reconocer una opción.
+  `explanation` y **3 intentos** (`"attempts": 3`). Siempre `source_refs` (el objetivo
+  lo pone la pantalla: la interacción no lleva `learning_objective` propio).
+- No abuses de `single_choice`: si puedes pedir **clasificar o decidir**, el
+  aprendizaje es más profundo que reconocer una opción.
+- **Evita `sort_steps` (ordenar pasos)**: no funciona bien y no es intuitiva para el
+  alumnado. Para un proceso, `timeline` informativa para presentarlo y
+  `scenario_steps` o `single_choice` («¿Qué haces primero?») para comprobarlo.
+- **`match_pairs` y `classification` (arrastrar), con moderación**: en el móvil son
+  poco intuitivas. Úsalas solo cuando relacionar o agrupar sea de verdad la tarea, y
+  **siempre con la instrucción explícita de cómo se responde**, también en táctil: se
+  arrastra cada elemento a su casilla **o se toca el elemento y después la casilla**
+  (su pareja o su grupo); al terminar, Comprobar. Ejemplo de instrucción en negrita:
+  «**Toca cada situación y después el grupo al que pertenece (o arrástrala); cuando
+  termines, pulsa Comprobar.**».
+- **Clasificación de dos grupos con opciones «Sí…»/«No…»** (¿se debe hacer o no?):
+  los grupos se llaman **«Correcto»** e **«Incorrecto»**, no «Sí»/«No».
 - **Tipos reservados al editor humano — NO los generes**: `hotspots`, `before_after`,
   `hidden_image`, `puzzle`, `video` (vídeo interactivo con preguntas) y `html_embed`
   (código a medida): piden elegir y ajustar a mano una imagen, un medio o un código;
   el humano los añade desde SCORMEditor si procede. Ojo a la distinción: los vídeos
   de YouTube del fuente **sí** van, pero como `visual_resource` `video_youtube`, no
   como interacción `video`.
+
+### Juegos: sopa de letras, crucigrama y rosco
+- **Rosco (`az_quiz`) y `flashcards`**: los de cierre de tema (repaso de conceptos).
+- **Sopa de letras (`word_search`) y crucigrama (`crossword`)**: se usan **poco** y
+  solo con sentido didáctico — cuando el tema trae **vocabulario técnico que hay que
+  fijar** (nombres de equipos, términos normativos, siglas). No van por sistema en
+  cada cierre de tema ni para rellenar el ritmo.
 
 ### Prácticas de varios pasos: cuándo sí y cuándo no
 `scenario_steps`, `decision_tree` y `calculator` son solo texto (sin imágenes ni
@@ -542,13 +614,24 @@ contenido los pide, no por variar.
   mismo tipo). En un tema, como mucho uno o dos de estos tres: son intensos.
 
 ## De reflexión pasiva a actividad corregible
-Convierte «reflexiona sobre…» en algo accionable siempre que puedas:
+Convierte «reflexiona sobre…» en algo accionable cuando el fuente lo permita:
 - ¿Hay una respuesta razonable y defendible? → `scenario_decision` con feedback.
-- ¿Es debate humano sin respuesta única? → pantalla `reflection` o `forum_prompt`,
-  y nota en `editor_notes` de que el foro va como actividad Moodle externa.
-- ¿Respuesta abierta con criterios? → `case_practice` con `config.rubric`.
+- ¿Es una reflexión abierta del original, sin respuesta única? → pantalla propia
+  («Actividad: …») con un callout `reflect` y sus **preguntas numeradas** (`1. `…),
+  tal cual: **no inventes rúbricas** ni la conviertas en `case_practice`.
+- ¿Es un debate o foro? → va en **Moodle**, fuera del SCORM: no generes pantalla
+  `forum_prompt`; anota en `editor_notes` de la pantalla vecina qué foro proponía el
+  fuente, para montarlo en Moodle.
+- ¿Respuesta abierta con criterios que el fuente da? → `case_practice` con
+  `config.rubric` (solo con los criterios del fuente).
 
 ## Diseño de la autoevaluación (`assessments.final_test`)
+**Por defecto no hay test dentro del SCORM**: el test final (y los foros) van en
+Moodle, y el paquete se completa al recorrerlo (reglas SCORM por defecto en el contrato
+§2: `final_test: null`, `score_source: "unit_tests"`). Si el fuente trae un test,
+entrégalo **aparte** (en el informe final o como fichero de preguntas, para montar el
+cuestionario en Moodle), no dentro de `assessments`. Lo que sigue aplica **solo** si el
+usuario pide expresamente el test dentro del paquete:
 - Solo `single_choice` o `true_false` (el test usa selección única).
 - Prioriza **comprensión y aplicación** sobre memorización: pregunta por casos,
   consecuencias y decisiones, no por definiciones literales.
@@ -561,6 +644,55 @@ Convierte «reflexiona sobre…» en algo accionable siempre que puedas:
   (ni otra) con el test como texto: saldría duplicado (texto + interactivo). El runtime
   añade solo la pantalla interactiva del test **y** una **pantalla de Resultados**
   (nota + APTO/NO APTO); **no** crees tú una pantalla de resultados/calificaciones.
+
+## Estilo y lenguaje del texto visible
+- **Vocabulario del sector**: «persona usuaria» o «persona residente» (no «el
+  usuario», «el residente», «el anciano»), «centro» o «centro sociosanitario» (no
+  «residencia»), «equipo gerocultor» (no «los gerocultores»). Genéricos inclusivos
+  («el personal», «el equipo», «la familia») en vez del masculino genérico. **Nunca**
+  se retoca una cita literal ni el nombre oficial de una norma.
+- **Conjunción «e» ante palabra que empieza por i- o hi-** («rápida e intensa»,
+  «orden e higiene»), también si esa palabra va en negrita («orden e **higiene**», no
+  «orden y **higiene**»). Excepción de la RAE: «y» ante hie-/hia- («agua y hielo»).
+- **Nada de notas internas ni relleno en el texto visible** (`student_text`,
+  `prompt`, `instructions`, ítems): ni «Explora el contenido del apartado», ni consejos
+  para el tutor o la guía didáctica, ni «según el documento fuente», «en este SCO»,
+  «esta pantalla». Lo que sea para el equipo va en `editor_notes` o en la nota de
+  revisión (`review.note`).
+- **Fuentes como enlace con nombre**: `*Fuente:* [Nombre de la entidad o del
+  documento](url)`, nunca la URL desnuda. Las **normas se enlazan al BOE** (o al
+  boletín autonómico que corresponda): `[Real Decreto 486/1997](https://www.boe.es/…)`.
+- **Actualizaciones normativas en su sitio**: si una norma, dato o procedimiento del
+  fuente está desfasado y se actualiza, el texto nuevo **sustituye** al desfasado en
+  la misma pantalla donde estaba. No dupliques el original junto a la versión nueva
+  ni añadas sufijos tipo «(actualizada)» al título. Marca la pantalla para revisión
+  con nota de qué se actualizó y con qué fuente (ver «Reglas por origen»).
+
+## Reglas por origen del contenido
+El origen cambia cómo se corta y qué se respeta. Las marcas de revisión usan
+`screen.review` (`{"flagged": true, "note": "…"}`, contrato §4): la nota dice
+**qué** revisar en concreto («Objetivos redactados por la IA: comprobar que encajan con
+la ficha del curso», no «Revisar»). Ojo: una pantalla marcada **no se exporta** hasta
+que el equipo la desmarca.
+- **Documento (.docx/PDF)**: texto literal (Regla Nº1); `title` = epígrafe literal con
+  su numeración, repetido si ocupa varias pantallas. **Marca para revisión todo lo que
+  no sale del documento** (objetivos, hoja de ruta, actividades, casos, juegos de
+  repaso, actualizaciones), cada pantalla con su nota concreta.
+- **Documento redactado por la propia IA** (curso nuevo sin fuente): **prosa
+  completa**, frases de 15-25 palabras que explican también el porqué; nada
+  telegráfico ni en notas sueltas.
+- **Copia de Moodle con lecciones**: además de los títulos de pantalla, limpia las
+  portadas («Unidad 1 - TEMA 1. MAYÚSCULAS» → «Tema 1. Título en minúsculas»); una
+  página que solo repite el título se convierte en la **portada del tema**; las
+  reflexiones abiertas del original van como callout `reflect` con preguntas
+  numeradas (sin rúbricas inventadas ni `case_practice`). Detalle en
+  `ingesta-moodle.md`.
+- **Copia de Moodle con SCORM (Captivate/Storyline)**: títulos de tema sin el soporte
+  («Tema 3. Vídeo: Movilización segura» → «Tema 3. Movilización segura»); marca para
+  revisión lo dudoso (texto ilegible, diapositiva sin equivalente, orden incierto) con
+  nota concreta de qué revisar.
+- **Tras una revisión humana**, antes de entregar otra versión: relectura
+  ortotipográfica completa (erratas, tildes, concordancias) del texto visible.
 
 ## Accesibilidad (no negociable)
 - Toda imagen con `alt` descriptivo (no «imagen» ni el nombre del fichero).
@@ -579,19 +711,21 @@ Convierte «reflexiona sobre…» en algo accionable siempre que puedas:
 - Inventar claves (`metadata`, `risks`, `compliance`…) → solo las del contrato.
 - `quality_checklist` como array → es **objeto** de booleanos.
 - `bibliography` con `reference` → la clave es **`ref`**.
-- Usar `retries` pensando en intentos del editor: el contrato usa `retries`
-  (`0` = ilimitados); no mezcles con otros nombres.
+- Usar `retries` para los intentos: está **en desuso**; los intentos van en
+  `attempts` (`3` en las evaluables; `0` = ilimitados).
 - Tipos inexistentes: `match_to_category`/`classify` → `classification`;
   `decision` → `scenario_decision`; `reflection_note` → `case_practice` o pantalla
   `reflection`; `*_acknowledgement` → omitir.
 - Notas internas («este SCO», «esta pantalla») dentro de `student_text`/`transcript`.
 - Dejar un `visual_resource.src` apuntando a una imagen que **no** está en el ZIP.
 - **Fallos de análisis estructural** (frecuentes, evítalos):
-  - **Micro-diapositivas**: trocear en pantallas de una frase. Cada pantalla es un
-    apartado con su desarrollo (varios párrafos); menos pantallas y más densas.
-  - **Eliminar interactividades informativas** convirtiendo un accordion/tabs en varias
-    pantallas de texto pequeñas: al revés, **unifica** el contenido denso EN un
-    accordion/tabs.
+  - **Micro-diapositivas**: trocear en pantallas de una frase o en trozos sin entidad
+    propia. Cada pantalla es un apartado con su desarrollo.
+  - **Desarrollo escondido en desplegables**: párrafos de desarrollo dentro de
+    `accordion`/`tabs`/tarjetas, o apartados con título propio o imagen propia metidos
+    como ítems. Cada uno va en su pantalla, tras una pantalla índice (ver «Corte»).
+  - **Prefijos de enumeración en los ítems** («a) …», «1. …» en el `title` de un ítem):
+    fuera; las enumeraciones del texto, como viñetas o lista numerada markdown.
   - Pantalla **vacía o diminuta**: solo un título, o una frase suelta.
   - **Aislar un encabezado** en su propia pantalla y el cuerpo en otra: van juntos.
   - **Partir título + subtítulo + contenido en 3 pantallas**: son **una** pantalla.
@@ -602,10 +736,14 @@ Convierte «reflexiona sobre…» en algo accionable siempre que puedas:
   - **Partir una actividad/reflexión/caso** (`case_practice`, `reflection`,
     `forum_prompt`) en varias pantallas: la actividad completa (tareas + cómo
     realizarla + preguntas) es **una sola** pantalla, aunque sea larga.
-  - **Titular una interacción `"Checkpoint…"`** (o `"Actividad"`): el `title` es el del
-    tema; la app ya rotula el tipo de ejercicio.
+  - **Titular una actividad `"Caso:"`, `"Comprueba:"`, `"Reto:"`, `"Repaso:"`,
+    `"Checkpoint…"`**: toda actividad se titula «Actividad: …».
   - **Numeración de epígrafes inconsistente** en los `title` (unos con `3.1`, otros sin
-    número, saltos como `3.1`→`3.8`): o en todos o en ninguno (por defecto, en ninguno).
+    número): desde documento, todos los que salen de un epígrafe llevan su número.
+  - **Cierre titulado «Mapa del tema»** o similar: es «Síntesis del tema» (o «Síntesis
+    de la unidad»).
+  - **`sort_steps` para un proceso**, o sopa de letras/crucigrama en cada cierre por
+    sistema: ver «Elegir la interacción» y «Juegos».
   - **Texto + imagen + interacción en la misma pantalla**: separa el desarrollo con
     imagen (una pantalla) de la interacción (otra).
   - **Dos sub-epígrafes con desarrollo (`3.8` y `3.9`) en una sola pantalla**: uno por
@@ -620,7 +758,11 @@ Convierte «reflexiona sobre…» en algo accionable siempre que puedas:
     como lista en `student_text`, no como interacción.
   - **Interacción tras un muro de texto**: varios párrafos, apartados o listas en
     `student_text` con la interacción debajo. Separa: explicación (una pantalla) y
-    exploración/práctica (la siguiente, con 1-2 frases de introducción).
+    exploración/práctica (la siguiente, con su introducción de 2-3 frases e
+    instrucción final en negrita).
+  - **Instrucción genérica por defecto** («Une cada elemento con su pareja y pulsa
+    Comprobar», «Despliega cada apartado»): la introducción da contexto y para qué, y
+    la instrucción de acción es concreta.
   - **Markdown no soportado en campos de interacción**: `## `, `::: tipo` o listas en
     `prompt`/`instructions`/opciones/feedback/`front`/`back` salen **literales**. Ahí
     solo negrita, cursiva y enlaces; el markdown completo, en `student_text` y en los

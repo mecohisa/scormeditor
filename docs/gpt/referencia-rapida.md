@@ -25,17 +25,21 @@ objetivos, conceptos clave, actividades, interacciones posibles, casos, glosario
 bibliografía, carencias, duración y pantallas estimadas.
 
 ## Estructura didáctica de un tema
-Portada → objetivos → ruta → desarrollo (tantas pantallas como ideas tenga el
-documento) → checkpoints intercalados → casos → resumen → autoevaluación. Todo en
-`modules[].units[].screens[]`; glosario y bibliografía en sus arrays raíz.
+Portada → objetivos → ruta → desarrollo (tantas pantallas como apartados con entidad
+tenga el documento) → actividades intercaladas, cada una tras lo que evalúa → casos →
+repaso → «Síntesis del tema». Todo en `modules[].units[].screens[]`; glosario y
+bibliografía en sus arrays raíz. El test y los foros van en Moodle: la ruta y la
+síntesis no anuncian test ni dan duración estimada.
 
 ## Valores de producción por defecto
-- SCORM `1.2`; navegación `mixed`; nota mínima `70`; `2` intentos; `allow_resume true`;
-  `min_required_screens_pct 100`; `require_interactions true`.
-- **`score_source`**: por defecto **`mixed`** (`mixed_final_weight: 70` → 70 % test
-  final + 30 % actividades evaluables), coherente con que el tema lleva checkpoints
-  `scored: true`. Usa `final_test` **solo** si todos los checkpoints van
-  `scored: false` (si no, el editor avisa `SCORM_ACTIVITIES_IGNORED`: no puntúan).
+- **Test final y foros en Moodle, fuera del SCORM** (contrato §2): `completion_mode
+  "screens"`, `min_score 50` (`mastery_score 50`), `require_interactions true`,
+  `auto_return true`, `score_source "unit_tests"` (= nota de las actividades
+  evaluables de las pantallas, no de `assessments.unit_tests`), `final_test null`;
+  **`attempts: 3`** en cada interacción evaluable. Con test dentro (solo si se pide):
+  `mixed` si los checkpoints puntúan, `final_test` si van todos `scored: false`.
+- SCORM `1.2`; navegación `mixed`; `attempts_allowed 2`; `allow_resume true`;
+  `min_required_screens_pct 100`.
 - `min_time_seconds: 0` en **todas** las pantallas: el tiempo mínimo lo fija a mano
   el editor humano en SCORMEditor; no lo estimes.
 - **Marca**: `authoring_entity` = **«MECOHISA S.L.»** (metadato de autoría) salvo que
@@ -44,19 +48,19 @@ documento) → checkpoints intercalados → casos → resumen → autoevaluació
   distintos.
 - Unidad completa → modo factoría → un único `.scormproj` (o un SCORM por tema si lo
   piden expresamente).
-- Test de unidad en el documento: conserva las preguntas como base, reformulando solo
-  si mejora la comprensión sin alterar el sentido. Evita preguntas memorísticas.
-- Foro/debate en el documento: incluye una pantalla `forum_prompt` (no calificable) y
-  anota en `editor_notes` que el foro va como actividad Moodle externa si se desea
-  participación trazable.
+- Test de unidad en el documento: entrégalo **aparte** para el cuestionario de Moodle
+  (no dentro del `course.json`), conservando las preguntas como base y reformulando
+  solo si mejora la comprensión sin alterar el sentido. Evita preguntas memorísticas.
+- Foro/debate en el documento: va en Moodle; sin pantalla `forum_prompt`, anota en
+  `editor_notes` de la pantalla vecina qué foro proponía el fuente.
 
 ## Evaluación
-Test calificable en `assessments.final_test` (`single_choice`/`true_false`). Cada
-pregunta: respuesta correcta, feedback de acierto y error, explicación, objetivo
-vinculado, puntuación y `source_refs`. Prioriza comprensión, aplicación y análisis de
-casos sobre preguntas memorísticas. Cubre todos los objetivos del tema. Con
-`score_source: "mixed"` (default), los checkpoints `scored: true` también puntúan
-(su peso = `100 − mixed_final_weight`); no dupliques las preguntas del test como
+Dentro del SCORM evalúan las **actividades** de las pantallas (`scored: true`, 3
+intentos), cada una después de lo que evalúa; cada objetivo, con al menos una. El test
+calificable es el de Moodle. Si se pide el test dentro: `assessments.final_test`
+(`single_choice`/`true_false`), cada pregunta con respuesta correcta, feedback de
+acierto y error, explicación, objetivo vinculado, puntuación y `source_refs`;
+comprensión y aplicación antes que memoria; sin duplicar las preguntas como
 checkpoints.
 
 ## Accesibilidad y trazabilidad
@@ -79,15 +83,34 @@ Cada tema es SCO independiente: indícalo solo en campos internos (`subtitle`,
 - Cada pantalla con `objective` (la interacción evalúa el de su propia pantalla, no
   lleva uno propio); preguntas evaluables con respuesta correcta, feedback y
   `source_refs`.
-- `final_test` presente si `score_source=final_test`; `glossary`/`bibliography` no
-  vacíos; `quality_checklist` es objeto de booleanos.
+- Reglas SCORM por defecto (test en Moodle: `final_test null`, `score_source
+  unit_tests`, `completion_mode screens`, `min_score 50`, `auto_return true`,
+  `attempts: 3` en las evaluables); `glossary`/`bibliography` no vacíos;
+  `quality_checklist` es objeto de booleanos.
 - Imágenes con `alt`; audio/vídeo con `transcript` y subtítulos; `scorm.identifier` no
-  vacío.
-- **Títulos** (contrato §4, «Títulos: criterio editorial»): los del fuente se conservan;
-  los que generes, **descriptivos sin `¿?`** («Qué es la escucha activa»); pregunta
-  directa con signos solo si interpela de verdad al alumno («¿Qué harías ante una
-  caída?»); varía las estructuras (no todo «Cómo…/Qué…»); tilde en «qué/cómo/por qué»
-  también sin signos.
+  vacío. **Imagen de contenido debajo del texto** (`layout "bottom"`, `media_align
+  "center"` si es estrecha o cuadrada); portada arriba a todo el ancho (`top` +
+  `media_full`).
+- **Títulos** (contrato §4, «Títulos: criterio editorial»): los del fuente se conservan
+  (también sus `¿?`); desde documento, `title` = **epígrafe literal con su número**
+  («3.2. Detección de…»), repetido si ocupa varias pantallas; los que generes,
+  **nominales** («Objetivos de la unidad», «Actuación ante una caída»), sin
+  interrogativas indirectas dudosas («Qué vas a aprender»); pregunta directa con
+  signos solo si interpela de verdad al alumno; **toda actividad, «Actividad: …»**
+  (nunca «Caso:», «Comprueba:», «Reto:», «Repaso:»…); cierre **«Síntesis del tema»**;
+  ítems de desplegable/pestaña **sin «a)»/«1.»**; hitos de `timeline` con `label` solo
+  si es fecha, fase o plazo.
+- **Estilo** (guía, «Estilo y lenguaje»): negrita en 1-3 ideas clave e idea-fuerza
+  final en negrita; avisos y datos sueltos → callout tipado; «persona usuaria/
+  residente», «centro» (no «residencia»), «equipo gerocultor», genéricos inclusivos,
+  «e» ante i-/hi-; sin notas internas ni relleno visibles («Explora el contenido»,
+  «según el documento fuente»); fuentes como `*Fuente:* [Nombre](url)` y normas
+  enlazadas al BOE; actualizaciones en su sitio, sustituyendo lo desfasado.
+- **Por origen** (guía, «Reglas por origen»): lo que no sale del documento, marcado
+  con `review` y nota concreta; curso redactado por la IA, prosa completa (15-25
+  palabras por frase); copia de Moodle, portadas limpias y reflexiones abiertas como
+  callout `reflect` numerado; SCORM Captivate/Storyline, títulos sin el soporte
+  («Vídeo:»). Tras una revisión humana, relectura ortotipográfica.
 - **Formato**: sin rótulos por diapositiva (`Idea clave:`, `Claves:`, `Objetivo:`,
   `Resumen:`, `Actividad práctica`, `Resolución propuesta:`); sin `…`/`...` de
   truncado; listas con `- ` (un ítem por línea, **sin línea en blanco entre ítems**);
@@ -146,14 +169,22 @@ Cada tema es SCO independiente: indícalo solo en campos internos (`subtitle`,
   punto);
   **pantalla con texto+imagen sin interacción** (ni informativa: la interactividad
   va en la pantalla siguiente, con solo una frase introductoria);
-  **toda interactividad evaluable o de pregunta directa en pantalla propia** (sin
-  teoría en `student_text`: solo una frase de contexto; el desarrollo, en la pantalla
-  anterior con el mismo `title`); ejercicios prácticos
+  **toda interactividad evaluable o de pregunta directa en pantalla propia**
+  («Actividad: …», sin teoría en `student_text`: solo su introducción de 2-3 frases con
+  la instrucción de acción final en negrita, nunca la genérica; **después de todas las
+  pantallas que evalúa**); **sin párrafos de desarrollo dentro de desplegables,
+  pestañas o tarjetas** (apartado con título propio, desarrollo o imagen propia → su
+  pantalla, tras una pantalla índice; al quitar un desplegable, «Despliega cada…» →
+  transición); ejercicios prácticos
   (`case_practice`/`reflection`, `::: case`/`::: reflect`) igual, en
   **pantalla propia**, no pegados tras el contenido, con la **solución en
   `feedback.explanation`** (nunca «Resolución propuesta» visible en `student_text`);
-  **cierre de cada tema**: `flashcards` + una lúdica (`word_search`/`crossword`/
-  `az_quiz`, alternando entre temas, `scored: false`); **tipos reservados al editor
+  **cierre de cada tema**: repaso con `flashcards` o `az_quiz` (`scored: false`) y
+  «Síntesis del tema»; sopa de letras y crucigrama, pocas veces y solo para fijar
+  vocabulario técnico; **sin `sort_steps`** (proceso → `timeline` + `scenario_steps`/
+  `single_choice`); `match_pairs`/`classification` con moderación y con la instrucción
+  de cómo responder también en táctil (tocar el elemento y luego su casilla);
+  clasificación «sí/no» → grupos «Correcto»/«Incorrecto»; **tipos reservados al editor
   humano, nunca generados**: `hotspots`, `before_after`, `hidden_image`, `puzzle`,
   `video` (vídeo interactivo) y `html_embed`; **prácticas de varios pasos sí**, solo
   donde el contenido las pide: `scenario_steps` (caso con varias decisiones
@@ -166,9 +197,9 @@ Cada tema es SCO independiente: indícalo solo en campos internos (`subtitle`,
   `bibliography[]` (la carcasa la muestra sola; sin pantalla «Referencias»), una
   entrada por referencia con **formato homogéneo** (`Autor/Entidad (año). Título.
   Fuente.`); interacciones informativas **variadas** (no todo `accordion`;
-  `tabs`/`flip_cards` solo con ≤4 ítems) y **con sustancia tras el clic** (el cuerpo de
-  cada ítem/tarjeta/hito claramente más extenso que su título, nunca un eco del rótulo;
-  solo rótulos sin desarrollo → lista en `student_text`, no desplegable).
+  `tabs`/`flip_cards` solo con ≤4 ítems) y **con algo tras el clic, pero breve** (1-3
+  frases por ítem, más que su título, nunca un eco del rótulo; solo rótulos sin
+  desarrollo → lista en `student_text`; párrafos de desarrollo → pantallas).
 - **Contenido íntegro (Regla Nº1)**: texto conservado ~100% (ratio ≥0.95);
   `quality_checklist`: `"Contenido del documento trazado sin pérdidas": true`.
 - **Negritas (check automático, OBLIGATORIO)**: si el PDF fuente tiene texto en negrita
@@ -181,12 +212,13 @@ Cada tema es SCO independiente: indícalo solo en campos internos (`subtitle`,
   bloque→pantalla→interacción de la guía, con el **nº de caracteres** por pantalla;
   adjunto al informe, y aprobado por el usuario si la orden pedía «enséñame el
   guion») y su **ritmo** cumplido: informativa ~1 de cada 3-4 pantallas de desarrollo
-  (**nunca >3 seguidas de solo texto**); **ninguna pantalla de >~800 caracteres sin
-  interactividad informativa** (repartir el texto en una que lo contenga, o dividir);
-  checkpoint aplicado cada 4-5 pantallas (mín. ⌈N/5⌉, no acumulados al final),
-  **alternando todo el repertorio evaluable** sin repetir tipo dos veces seguidas y
-  prefiriendo decidir/clasificar/ordenar a `single_choice`; ante la duda, un
-  checkpoint de más (borrar en SCORMEditor es fácil; crear, no).
+  donde el contenido traiga listas cortas (**nunca >3 seguidas de solo texto**);
+  **ninguna pantalla de >~800 caracteres sin revisar** (dividir por donde cambia la
+  idea; a una informativa solo si son frases breves paralelas); checkpoint aplicado
+  cada 4-5 pantallas (mín. ⌈N/5⌉, no acumulados al final), **alternando el repertorio
+  evaluable** sin repetir tipo dos veces seguidas y prefiriendo decidir/clasificar a
+  `single_choice`; ante la duda, un checkpoint de más (borrar en SCORMEditor es fácil;
+  crear, no).
 - **Marcas de autoría** (`{{alias}}…{{/alias}}`, `marcas-autoria.md`) si el documento
   las trae: `{{diapositiva}}` con su contenido EXACTO (sin partir ni fusionar, aunque
   salte otra regla de estructura — anotado en `editor_notes`); el resto, con su tipo

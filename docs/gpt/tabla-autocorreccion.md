@@ -45,6 +45,7 @@ informe de revisión.
 | `UNIT_NO_SUMMARY` | ⚠ | Unidad sin `summary` ni pantalla `summary` | Redacta el `summary` a partir del cierre del tema en el texto fuente | GPT |
 | `UNIT_NO_ACTIVITY` | ⚠ | Unidad sin ninguna interacción ni test | Añade checkpoints evaluables según el ritmo de la guía (cada 4-5 pantallas) | GPT |
 | `EDITOR_NOTE` | ℹ | Nota editorial — es el **canal previsto** para dejar tareas al humano | No es un defecto: no corregir. Solo actúa si el usuario aporta el material que la nota pide | Editor |
+| `REVIEW_PENDING` | ⚠ | Hay pantallas marcadas «pendiente de revisión» (`screen.review.flagged`): no se incluirán en el SCORM exportado | Esperado en lo que el GPT marca a propósito (contenido que no sale de la fuente, actualizaciones, lo dudoso): **no quites la marca** para silenciar el aviso. Comprueba solo que cada marca lleva una `note` concreta de qué revisar. La desmarca el equipo tras revisar | Editor |
 | `GLOSSARY_EMPTY` | ⚠ | `glossary` vacío | Extrae términos y definiciones del texto fuente (`{term, definition, source_refs}`) | GPT |
 | `BIBLIO_EMPTY` | ⚠ | `bibliography` vacía | Vuelca las referencias del fuente: una entrada por referencia, formato homogéneo (`Autor/Entidad (año). Título. Fuente.`) | GPT |
 | `ATTACHMENT_NOT_PDF` | ✖ | Un documento de `attachments` no apunta a un PDF del proyecto (`assets/…pdf`) | No generes `attachments`: los PDF los adjunta el autor en el editor (Materiales → Documentos) | Editor |
@@ -151,13 +152,13 @@ editor.
 
 | Código | Sev | Causa raíz | Corrección canónica | Quién |
 |---|:-:|---|---|:-:|
-| `SCORM_NO_FINAL` | ⛔ | `score_source:"final_test"` sin preguntas en `assessments.final_test` | Genera el test final (preguntas `single_choice`/`true_false` con correcta y feedback). **Nunca** como pantalla de texto | GPT |
-| `SCORM_NO_ACTIVITIES` | ⛔ | `score_source:"unit_tests"` sin interacciones `scored` | Marca `scored:true` en las evaluables o cambia `score_source` | GPT |
+| `SCORM_NO_FINAL` | ⛔ | `score_source:"final_test"` sin preguntas en `assessments.final_test` | Por defecto el test va en Moodle: cambia a `score_source:"unit_tests"` (contrato §2). Solo si el usuario pidió el test dentro, genéralo (preguntas `single_choice`/`true_false` con correcta y feedback). **Nunca** como pantalla de texto | GPT |
+| `SCORM_NO_ACTIVITIES` | ⛔ | `score_source:"unit_tests"` sin interacciones `scored` (con `completion_mode:"evaluation"`) | Marca `scored:true` (y `attempts:3`) en las evaluables, o pon `completion_mode:"screens"` (regla por defecto, contrato §2) | GPT |
 | `SCORM_MIXED_EMPTY` | ⛔ | Nota mixta sin test final ni actividades evaluables | Genera ambos bloques | GPT |
-| `SCORM_MIXED_NO_FINAL` | ⚠ | Nota mixta sin test final | Genera el test final (o propón cambiar `score_source` a `"unit_tests"`) | GPT |
+| `SCORM_MIXED_NO_FINAL` | ⚠ | Nota mixta sin test final | Cambia `score_source` a `"unit_tests"` (el test va en Moodle, contrato §2); genera el test final solo si el usuario lo pidió dentro | GPT |
 | `SCORM_MIXED_NO_ACTIVITIES` | ⚠ | Nota mixta sin actividades evaluables | Marca `scored:true` en los checkpoints (o añádelos) | GPT |
 | `SCORM_ACTIVITIES_IGNORED` | ⚠ | Hay actividades `scored` pero la nota sale solo del test final: no contarán | Decisión del autor: propón `score_source:"mixed"` y aplica lo que él decida | Según |
-| `SCORM_UNGRADED` | ℹ | `completion_mode:"screens"` sin test final ni actividades evaluables: se completa al llegar al final y no envía nota (sustituye a `SCORM_NO_FINAL`/`SCORM_MIXED_EMPTY`/`SCORM_NO_ACTIVITIES`) | Nada si es intencionado (bienvenida, presentación); si el curso debía evaluar, genera el test final | Según |
+| `SCORM_UNGRADED` | ℹ | `completion_mode:"screens"` sin test final ni actividades evaluables: se completa al llegar al final y no envía nota (sustituye a `SCORM_NO_FINAL`/`SCORM_MIXED_EMPTY`/`SCORM_NO_ACTIVITIES`) | Nada si es intencionado (bienvenida, presentación, curso cuyas actividades no puntúan porque el test está en Moodle); si el SCORM debía dar nota, marca `scored:true` en las evaluables | Según |
 | `SCORM_NO_ID` | ⛔ | `scorm.identifier` vacío | Genera uno estable a partir de `course.id` (MAYÚSCULAS y guiones bajos) | GPT |
 | `LAYOUT_CHANGED` | ℹ | La estructura actual (pantallas/interacciones/preguntas del test final) ya no coincide con la última versión exportada como SCORM | Informativo, no es un error de contenido: al exportar de nuevo se registra una versión más en el historial (Ajustes del curso → «Versiones publicadas»), para que los alumnos con progreso guardado no lo pierdan | Editor |
 | `LAYOUT_IDS_REPLACED` | ⚠ | Menos de la mitad de los ids de la última versión publicada siguen existiendo en el curso actual | Decisión del autor: si el reordenamiento/borrado masivo fue intencionado, exporta con normalidad; si no, revisa qué se movió o eliminó sin querer antes de publicar | Editor |

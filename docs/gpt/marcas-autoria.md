@@ -106,6 +106,11 @@ todo este texto, tal cual, es UNA pantalla — ni se parte ni se fusiona
 | `conversacion` | `decision_tree` |
 | `reto_numerico` | `calculator` con `mode: "challenge"` |
 
+Una marca `ordenar`, `parejas`, `sopa_letras` o `crucigrama` se respeta porque es
+decisión del autor, aunque el criterio automático de la guía evite `sort_steps` y use
+poco las demás; en `parejas`/`clasificar`, la introducción explica igualmente cómo se
+responde en táctil.
+
 **Abierta** (sin puntuar, ver «De reflexión pasiva a actividad corregible» de la
 guía): `reflexion` → pantalla `reflection`, o `scenario_decision`/`case_practice` si
 el propio contenido marcado admite una respuesta defendible o una rúbrica.
@@ -126,7 +131,7 @@ familia según la forma del bloque, tabla de `guia-diseno-interacciones.md`):
 |---|---|
 | `interactividad` | informativa |
 | `evaluacion` | evaluable |
-| `cierre` | lúdica |
+| `cierre` | lúdica (por defecto `flashcards` o `az_quiz`) |
 
 **Vetadas — el GPT las reconoce pero NUNCA las genera** (reservadas al editor
 humano, ver contrato §6 y `guia-diseno-interacciones.md`): `puntos_calientes`

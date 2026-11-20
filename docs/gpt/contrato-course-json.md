@@ -96,34 +96,55 @@ Reglas que NO se pueden romper:
   "version": "1.2",
   "identifier": "PAI_U01_T01",
   "title": "Tema 1 - PAI",
-  "mastery_score": 70,
+  "mastery_score": 50,
   "rules": {
+    "completion_mode": "screens",
     "min_required_screens_pct": 100,
     "require_interactions": true,
-    "min_score": 70,
+    "min_score": 50,
     "attempts_allowed": 2,
-    "score_source": "final_test",
+    "score_source": "unit_tests",
     "navigation": "mixed",
-    "allow_resume": true
+    "allow_resume": true,
+    "auto_return": true
   }
 }
 ```
 
-- `score_source`: `"final_test"` | `"unit_tests"` | `"mixed"`.
+**Reglas por defecto: el test final y los foros van en Moodle, fuera del SCORM.** El
+paquete se completa al recorrerlo, sus actividades evaluables dan una nota informativa
+y la evaluación calificable la hace el cuestionario de Moodle. Por eso, salvo que el
+usuario pida expresamente el test dentro del paquete: `completion_mode: "screens"`,
+`min_score: 50` (y `mastery_score: 50`), `require_interactions: true`,
+`auto_return: true`, `score_source: "unit_tests"`, `assessments.final_test: null` y
+`assessments.unit_tests: []`; y **3 intentos** (`attempts: 3`) en cada interacción
+evaluable (§6).
+
+- `score_source`: `"final_test"` | `"unit_tests"` | `"mixed"`. **Ojo al nombre**:
+  `"unit_tests"` significa en el runtime «**actividades evaluables de las pantallas**»
+  (interacciones con `scored: true`), **no** los objetos `assessments.unit_tests`
+  (que la carcasa no muestra). Es el valor coherente cuando no hay test dentro: la nota
+  sale de las actividades evaluables. Sin test final, `"mixed"` provoca el aviso
+  `SCORM_MIXED_NO_FINAL` y `"final_test"` el error `SCORM_NO_FINAL`. Si además ninguna
+  interacción puntúa, con `completion_mode: "screens"` el paquete se completa al llegar
+  al final y no envía nota (aviso informativo `SCORM_UNGRADED`, correcto).
+  Con test dentro (solo si se pide): `"mixed"` si los checkpoints puntúan,
+  `"final_test"` si todos van `scored: false`.
 - `mixed_final_weight` (opcional, def. `70`): solo con `score_source:"mixed"`, peso (%)
   del test final en la nota; la práctica pesa el resto. Cada bloque se calcula sobre su
   propio total (no por suma de puntos). También editable en «Ajustes del curso».
 - `navigation`: `"free"` | `"sequential"` | `"mixed"` (usa el nombre en inglés).
-- `attempts_allowed`: `0` = ilimitados.
-- `auto_return` (opcional, def. `false`): **omítelo**. Es un ajuste del editor humano
-  (volver solo a la página del curso en Moodle al cerrar la sesión).
-- `completion_mode` (opcional, def. `"evaluation"`): `"evaluation"` = completado clásico
-  (pantallas + interacciones obligatorias si `require_interactions` + nota mínima).
-  `"screens"` = completa con solo llegar al final (`min_required_screens_pct`), ignorando
-  interacciones obligatorias y nota mínima para el estado SCORM — la nota y el APTO/NO APTO
-  se siguen calculando y mostrando en Resultados, pero de forma informativa. Usar `"screens"`
-  solo si el documento fuente pide explícitamente que el curso se dé por completado con solo
-  recorrerlo, aunque tenga actividades evaluables.
+- `attempts_allowed`: `0` = ilimitados (intentos del paquete en el LMS; los intentos de
+  cada actividad van en `interaction.attempts`, §6).
+- `auto_return` (def. del esquema `false`; **pon `true`**): al cerrar la sesión, vuelve
+  sola a la página del curso en Moodle tras una cuenta atrás.
+- `completion_mode` (def. del esquema `"evaluation"`; **pon `"screens"`**): `"screens"` =
+  completa con solo llegar al final (`min_required_screens_pct`), ignorando interacciones
+  obligatorias y nota mínima para el estado SCORM — la nota y el APTO/NO APTO se siguen
+  calculando y mostrando en Resultados, de forma informativa (y el paquete no declara
+  `masteryscore`). `"evaluation"` = completado clásico (pantallas + interacciones
+  obligatorias si `require_interactions` + nota mínima): solo si el usuario pide que el
+  SCORM califique por sí mismo.
 
 ```json
 "shell": {
@@ -239,19 +260,17 @@ Reglas que NO se pueden romper:
     `"1.2 Comunicación con la familia"` para la unidad — no `title:
     "Comunicación con la familia"` a secas): sin el número delante, el árbol
     del editor y el menú del alumno pierden la referencia a qué tema/subtema
-    del documento original es cada uno. Esto es la EXCEPCIÓN a «quita la
-    numeración de epígrafes» de §4 — esa regla sigue aplicando tal cual a
-    encabezados, ítems y cuerpo de las pantallas (nivel 3 en adelante,
-    `1.1.1`… incluido: se funden en la unidad sin arrastrar su numeración,
-    ver el punto siguiente); solo el `title` de módulo y de unidad de estos
-    dos niveles reales es la excepción.
+    del documento original es cada uno. Por debajo de esos dos niveles se
+    aplica el criterio de numeración de §4 (el `title` de cada pantalla es su
+    epígrafe literal con número; los ítems de interacción, sin número).
     - **Un tercer nivel (`1.1.1`, `2.3.1`…) NUNCA crea un tercer contenedor**
       (el esquema no lo tiene, y es deliberado: el árbol del editor y el menú
       del alumno solo distinguen dos niveles, para no complicar la navegación
       ni la miga de pan). Ese tercer nivel se funde **dentro** de las
       pantallas de la unidad de nivel 2 que le corresponde — como encabezados
       `### ` hermanos si es solo un matiz del mismo punto, o como pantallas
-      sucesivas si tiene desarrollo propio (misma unidad, más pantallas).
+      sucesivas si tiene desarrollo propio (misma unidad, más pantallas, cada
+      una titulada con su epígrafe `1.1.1. …`).
     - Si el documento usa vocabulario propio para los dos niveles («Tema»/
       «Subtema», «Unidad»/«Tema», «Bloque»/«Apartado»…), refléjalo en
       `course.module_label`/`course.unit_label` (por defecto `"Módulo"`/
@@ -314,8 +333,17 @@ Reglas que NO se pueden romper:
   ejercicio. **La solución, NUNCA visible**: si el original trae «Resolución propuesta»,
   «Clave de reflexión» o una respuesta modelo, va en el `feedback.explanation` de la
   interacción (`case_practice`/`reflection`), no en `student_text` (el alumno la vería
-  antes de hacer la tarea). Y sin rótulos de actividad («**Actividad práctica**»,
-  «**Resolución propuesta:**»…): el tipo de pantalla/interacción ya lo indica.
+  antes de hacer la tarea). Y sin rótulos de actividad dentro del texto
+  («**Actividad práctica**», «**Resolución propuesta:**»…): lo que identifica la
+  actividad es su `title` «Actividad: …» (ver «Títulos»).
+- `review` (opcional): **marca de revisión pendiente**, `{"flagged": true, "note":
+  "…"}`. Ponla en toda pantalla cuyo contenido **no sale de la fuente** (objetivos,
+  hoja de ruta, actividades y casos redactados por ti, actualizaciones normativas) o
+  que sea dudosa, con una `note` **concreta** de qué revisar («Caso redactado por la IA:
+  comprobar que el protocolo coincide con el del centro»). La pantalla marcada se ve en
+  la Vista estudiante con borde rojo y la nota, pero **no se incluye en el SCORM
+  exportado** hasta que el equipo la desmarca: no dejes solo en una pantalla marcada
+  un dato o enlace que deba llegar al alumno. Sin marca, omite la clave.
 - `objective`: texto libre (NO `objective_id`). Si tu herramienta maneja
   micro‑objetivos por id, **vuelca aquí el texto del objetivo**. Los objetivos del
   curso forman un **conjunto reducido y controlado**: derívalos del contenido real, de
@@ -345,21 +373,34 @@ Aplica a los `title` que **generes o reformules** tú (curso, módulos, unidades
 pantallas, apartados `## `/`### `, ítems de interacciones). Si el título viene del
 documento fuente y no se ha autorizado cambiarlo, **consérvalo tal cual** (Regla Nº1).
 Antes de escribirlo, decide su función:
-- **Presenta, describe u organiza contenido → título descriptivo, sin signos de
+- **Presenta, describe u organiza contenido → título nominal, sin signos de
   interrogación** (es lo normal: se lee mejor en índice, menú y miga de pan):
-  «Cómo utilizar esta unidad», «Por qué es importante comunicarse bien», «Qué es la
-  escucha activa», «Estrategias para mejorar la comunicación».
+  «Objetivos de la unidad», «Actuación ante una caída», «La escucha activa»,
+  «Importancia de una buena comunicación», «Estrategias para mejorar la
+  comunicación».
+- **Evita las interrogativas indirectas** («Qué vas a aprender», «Cómo actuar ante una
+  caída», «Por qué es importante…»): crean la duda de si les faltan los `¿?`. Dales
+  forma nominal: «Qué vas a aprender» → «Objetivos de la unidad»; «Cómo actuar ante una
+  caída» → «Actuación ante una caída».
 - **Plantea una pregunta real** al alumno (reflexión, curiosidad, problema,
-  participación) → **pregunta directa con sus signos**: «¿Qué harías ante una caída?»,
-  «¿Cómo actuarías en esta situación?».
-- **No conviertas títulos en preguntas solo para hacerlos atractivos**: para exponer un
-  procedimiento, «Cómo prevenir las úlceras por presión», no «¿Cómo podemos prevenir
-  las úlceras por presión?».
-- **Varía las estructuras**: no abuses de «Cómo…», «Qué…», «Por qué…»; altérnalas con
-  títulos nominales («La comunicación no verbal», «Factores de riesgo y prevención»).
-- **Ortografía**: las interrogativas indirectas sin signos **conservan la tilde**
+  participación) → **pregunta directa con sus signos**: «¿Qué harías ante una caída?».
+  No conviertas títulos en preguntas solo para hacerlos atractivos.
+- **Respeta los `¿?` de los títulos originales** del fuente: si el epígrafe es una
+  pregunta, se conserva tal cual.
+- **Actividades: «Actividad: …»** en el `title` de toda pantalla de actividad,
+  evaluable o no (preguntas, clasificaciones, casos, prácticas de varios pasos,
+  `case_practice`, reflexiones con tarea, juegos de repaso): «Actividad: detección de
+  necesidades». Nunca «Caso:», «Comprueba:», «Reto:», «Practica:», «Completa:»,
+  «Repaso:» ni «Checkpoint». Las informativas (`accordion`/`tabs`/`flip_cards`/
+  `timeline`) llevan el título del contenido. La carcasa reconoce el prefijo y en las
+  evaluables solo añade su icono, sin duplicarlo.
+- **Cierre del tema: «Síntesis del tema»** (o «Síntesis de la unidad»), no «Mapa del
+  tema», «Resumen» ni similares.
+- **Ítems de interacción sin prefijos de enumeración**: el `title` de un ítem de
+  `accordion`/`tabs`/`flip_cards`/`timeline` no lleva «a)», «b)», «1.»…
+- **Varía las estructuras** y no cambies títulos que ya sean correctos y adecuados.
+- **Ortografía**: si una interrogativa indirecta es inevitable, **conserva la tilde**
   («qué», «cómo», «cuándo», «dónde», «por qué»).
-- No cambies títulos que ya sean correctos y adecuados.
 
 ### 4.1 Markdown ligero y bloques destacados (callouts) en `student_text`
 
@@ -462,11 +503,16 @@ Reglas de formato (para que el editor lo renderice bien):
   ya es la cabecera; si el original repite el epígrafe al abrir el cuerpo, elimínalo).
   Si un apartado se parte en varias pantallas, todas mantienen el mismo `title`
   (continuación).
-- **Quita la numeración de epígrafes del PDF** (`1.3`, `1.3.1`, `1.4.2`…) en **todo el
-  texto**, no solo en el `title`: también en encabezados `##`/`###`, en los **títulos de
-  los ítems** de `accordion`/`tabs`/`flip_cards` y en la primera línea del cuerpo. Es
-  rótulo de maquetación del documento, no contenido. (Criterio «todo o nada»; por
-  defecto, **fuera**.)
+- **Numeración de epígrafes (origen documento)**: el `title` de una pantalla que sale
+  de un epígrafe es el **epígrafe literal con su numeración** (`"3.2. Detección de
+  necesidades"`), repetido igual en todas las pantallas que ocupa; con número en
+  **todos** los `title` que salen de un epígrafe numerado (nunca unos sí y otros no).
+  Un sub-epígrafe numerado que va como `###` dentro de la pantalla conserva también su
+  número. Donde **no** va la numeración: en los **títulos de los ítems** de
+  `accordion`/`tabs`/`flip_cards`/`timeline` (ni «1.» ni «a)»), en la primera línea del
+  cuerpo (que no repite el `title`) y en las pantallas que no salen de un epígrafe
+  (portada, objetivos, actividades, síntesis). Excepción de dos niveles reales: §3. En
+  una copia de Moodle, la numeración de gestión se quita (`ingesta-moodle.md`).
 - **Epígrafes hermanos, mismo nivel de encabezado.** Si un apartado tiene una serie de
   sub-epígrafes paralelos (p. ej. tres «momentos»: desde el ingreso / de forma
   progresiva / en el día a día), **todos** llevan el mismo marcado (`###`). No dejes
@@ -478,10 +524,18 @@ Reglas de formato (para que el editor lo renderice bien):
   y ajuste»). Si ese contenido tiene entidad propia, dale **su propia pantalla previa**
   con su `title`; si no, ciérralo en la pantalla a la que pertenece.
 - **Pantallas sustanciales, ninguna vacía ni diminuta.** Cada pantalla = un apartado
-  con su desarrollo (varios párrafos), no una frase. Un encabezado + su subtítulo + su
-  cuerpo van en **una** pantalla, no en tres. **Evita micro-diapositivas** y **no
-  elimines interactividades** informativas convirtiéndolas en varias pantallas de
-  texto: unifica el contenido denso en un `accordion`/`tabs`.
+  con su desarrollo, no una frase. Un encabezado + su subtítulo + su cuerpo van en
+  **una** pantalla, no en tres. **Evita micro-diapositivas** (trozos sin entidad
+  propia).
+- **Sin párrafos de desarrollo dentro de desplegables, pestañas o tarjetas.** Si cada
+  elemento de una enumeración tiene título propio, un párrafo de desarrollo o su propia
+  imagen, va en **su propia pantalla**, precedida de una **pantalla índice** con la
+  lista. `accordion`/`tabs` solo para listas cortas de rótulos o frases breves (criterio
+  completo en `guia-diseno-interacciones.md`, «Corte»).
+- **Negrita en 1-3 ideas clave por pantalla** y, en las de contenido, la idea-fuerza
+  final en negrita; avisos, datos e ideas que recordar sueltos en el texto, como
+  callout tipado (`important`/`warn`/`fact`/`reflect`). Estilo, vocabulario y fuentes:
+  guía, «Estilo y lenguaje del texto visible».
 - **Conserva las negritas del documento fuente** (`**...**`) y los **bloques marcados**
   (Importante, ¿Sabías que?, Consejo…) como callouts (§4.1). Extrae con formato, no en
   plano: el texto plano pierde negritas y cajas.
@@ -505,23 +559,27 @@ Reglas de formato (para que el editor lo renderice bien):
   "poster": "",
   "tracks": [],
   "has_voice": false,
-  "layout": "top",
-  "media_width": "50"
+  "layout": "bottom",
+  "media_align": "center"
 }
 ```
 
 - `kind`: `"none"` | `"image"` | `"video_youtube"` | `"video_file"` | `"audio"`.
 - Si `kind="image"` → `alt` **obligatorio y no vacío**.
-- **`layout` según la proporción de la imagen** (`layout`: `top`|`bottom`|`left`|
-  `right`, def. `top`; `media_width`: `33`|`50`|`66`, solo aplica en `left`/`right`).
-  **Nunca emitas `""` en estos enums**: si no aplica, **omite la clave** (el editor
-  pone el default); `"media_width": ""` rompía la validación al cargar:
-  - Imagen **apaisada** (ancho > alto, ratio ≳ 1.2) → `"layout": "top"` (o `"bottom"`):
-    encima/debajo del texto, a lo ancho.
-  - Imagen **cuadrada o vertical** (alto ≥ ancho) → `"layout": "right"` con
-    `"media_width": "50"` (o `"33"` si es muy vertical), para que el texto quede al lado.
-  - Al extraer del PDF ya conoces las dimensiones (`extract_image` da `width`/`height`);
-    calcula el ratio y fija `layout` en consecuencia.
+- **Colocación** (`layout`: `top`|`bottom`|`left`|`right`, def. `top`; `media_align`:
+  `left`|`center`, def. `left`, solo en `top`/`bottom`; `media_full`: booleano, estira
+  al 100 % del ancho en `top`/`bottom`; `media_width`: `33`|`50`|`66`, solo en
+  `left`/`right`). **Nunca emitas `""` en estos enums**: si no aplica, **omite la
+  clave** (el editor pone el default); `"media_width": ""` rompía la validación al
+  cargar:
+  - **Pantalla de contenido → imagen DEBAJO del texto**: `"layout": "bottom"`. Si la
+    imagen es estrecha (más que la columna de texto, ≲ 800 px de ancho) o cuadrada/
+    vertical, añade `"media_align": "center"`. No uses `left`/`right` de serie.
+  - **Portada (`cover`) → imagen arriba a todo el ancho**: `"layout": "top"` +
+    `"media_full": true`.
+  - **Vídeo de YouTube**: puede ir arriba (`top`, el default).
+  - Al extraer del PDF ya conoces las dimensiones (`extract_image` da `width`/`height`):
+    úsalas para decidir el centrado.
 - **Texto + imagen = UNA pantalla.** Un párrafo o apartado acompañado de una figura se
   entrega como **una sola pantalla de contenido** con `student_text` visible **y** su
   `visual_resource`. **No** conviertas ese texto expositivo en un `accordion`/`tabs`, ni
@@ -529,14 +587,15 @@ Reglas de formato (para que el editor lo renderice bien):
   contenido y lo empobrece. Reserva `accordion`/`tabs` para conjuntos de **ítems
   paralelos** (lista de herramientas, categorías…), no para prosa corrida. Si varias
   figuras ilustran sub-puntos distintos, empareja **cada figura con su texto** en su
-  pantalla (mismo `title`), en vez de una ristra de imágenes sin texto.
+  pantalla (titulada con su punto), en vez de una ristra de imágenes sin texto.
 - **Máximo UNA imagen por pantalla, siempre en `visual_resource`** (nunca `![...]`
   dentro de `student_text`, §4.1). Un apartado con varias figuras (un formato, un
-  ejemplo, un paso por figura) = **una pantalla por punto**, mismo `title`.
+  ejemplo, un paso por figura) = **una pantalla por punto**, titulada con **su** punto
+  y precedida de una pantalla índice si los puntos son apartados con título propio.
 - **Pantalla con texto + imagen → SIN interacción** (tampoco informativa:
   tabs/timeline/accordion). La interactividad va en la **pantalla siguiente** (mismo
-  `title`), cuyo `student_text` lleva como mucho una **frase introductoria** para que
-  se entienda.
+  `title` si es informativa; «Actividad: …» si es actividad), cuyo `student_text` lleva
+  solo su **introducción**.
 - Si `kind="video_youtube"` → `src` = **ID de YouTube** (no la URL completa). Opcional
   `media_ratio` (`"16x9"` def. | `"4x3"` | `"1x1"` | `"9x16"`): proporción del marco del
   vídeo; omite la clave si no la conoces (nunca `""`).
@@ -575,7 +634,7 @@ Estructura común a TODAS:
   "feedback": { "correct": "Texto de acierto.", "incorrect": "Texto de error.", "explanation": "Explicación pedagógica." },
   "scored": true,
   "points": 1,
-  "retries": 2,
+  "attempts": 3,
   "source_refs": []
 }
 ```
@@ -599,9 +658,10 @@ Estructura común a TODAS:
   Sigue vetados aunque el documento fuente los pida por marca de autoría (ver
   `marcas-autoria.md`).
 - **Una evaluable no comparte pantalla con teoría**: la interactividad evaluable o de
-  pregunta directa va en pantalla propia; su `student_text` lleva como mucho una
-  frase de contexto (el enunciado va en `prompt`/`instructions`) y el desarrollo, en
-  la pantalla anterior (mismo `title`). Excepción: dentro de una marca de corte
+  pregunta directa va en pantalla propia, titulada «Actividad: …» y situada **después
+  de todas las pantallas cuyo contenido evalúa**; su `student_text` lleva solo la
+  introducción (el enunciado va en `prompt`/`instructions`) y el desarrollo, en las
+  pantallas anteriores. Excepción: dentro de una marca de corte
   `{{diapositiva}}` del documento fuente, que manda incluso sobre esta regla (ver
   `marcas-autoria.md`).
 - **Formato dentro de los campos de interacción**: los campos de texto corto
@@ -612,7 +672,15 @@ Estructura común a TODAS:
   uses ahí. El markdown de bloque completo (párrafos, listas, encabezados) funciona
   **solo** en los cuerpos largos: `body` de `accordion`/`tabs`/hitos de `timeline` y
   `text` de `image_cards`.
-- `retries`: `0` = ilimitados.
+- `attempts`: intentos para comprobar la respuesta (def. `1`; `0` = ilimitados). Pon
+  **`3`** en toda interacción evaluable que use intentos (`single_choice`,
+  `true_false`, `match_pairs`, `classification`, `fill_blanks`, `crossword`,
+  `sort_steps`); en las informativas y en las que no tienen Comprobar, omítelo. `retries`
+  está en desuso: no lo emitas.
+- **Intro de la pantalla** (`student_text` de una pantalla con interacción): 2-3
+  frases de contexto y para qué, con la **instrucción de acción al final en negrita**
+  («**Lee la situación y decide cómo actuarías.**»); nunca la instrucción genérica por
+  defecto (guía, «La introducción de cada actividad»).
 - La interacción no lleva `learning_objective`: evalúa el `objective` de su propia
   pantalla (§4). No lo añadas al JSON.
 - Reglas del validador para preguntas evaluables: deben tener **respuesta
@@ -648,7 +716,15 @@ Para `true_false` usa dos opciones (Verdadero/Falso) con `correct`.
 > Para “emparejar” en 2 columnas, modela cada elemento de la columna derecha como
 > un `group` y cada elemento de la izquierda como `option` con su `group`.
 
-**`sort_steps`** — ordenar pasos. `config.steps` con `order` (1..n) y `explanation`
+Úsalas con moderación (en el móvil son poco intuitivas) y **siempre** con la
+instrucción explícita de cómo se responde en la introducción: el alumno **arrastra**
+cada elemento a su casilla **o lo toca y después toca la casilla** de su pareja o de su
+grupo, y luego pulsa Comprobar. Con dos grupos que responden «sí/no» (¿se debe hacer?),
+los `label` son **`"Correcto"`** e **`"Incorrecto"`**.
+
+**`sort_steps`**: **evítalo** (no es intuitivo para el alumnado). Un proceso se
+presenta con `timeline` y se comprueba con `scenario_steps` o `single_choice`. Si el
+usuario lo pide expresamente, esta es su forma: `config.steps` con `order` (1..n) y `explanation`
 opcional por paso (por qué va en ese lugar). La explicación **solo se ve al quedar
 resuelta** la actividad (acierto o intentos agotados), junto a cada paso marcado ✔/✖
 con su posición correcta; antes no se muestra, así que puede razonar el orden sin
@@ -814,8 +890,9 @@ recordar sin pista (no reconocer), con respuestas cortas e inequívocas. Sin `mo
 ```
 
 **`timeline`** — línea de tiempo (informativa; `scored: false`). `config.milestones`
-en orden, cada hito con `label` (fecha/fase, opcional), `title` y `body` (admite
-markdown ligero). El alumno despliega cada hito:
+en orden, cada hito con `title`, `body` (admite markdown ligero) y `label` **solo si es
+una fecha, una fase o un plazo** («1995», «Fase 2», «En 24 h»); nunca un número de
+orden («1», «2»): omite la clave. El alumno despliega cada hito:
 ```json
 "config": { "milestones": [
   { "label": "1995", "title": "Primer estándar", "body": "Texto del hito..." },
@@ -892,7 +969,8 @@ opcionales («Antes»/«Después» por defecto):
 a partir de `config.words` (3–12 letras por palabra; acentos y espacios se ignoran
 al colocarla). El alumno toca la primera y la última letra de cada palabra; no hay
 botón Comprobar ni intentos. Si puntúa, cada palabra encontrada suma su parte
-proporcional de `points`. Úsala para afianzar vocabulario clave del tema:
+proporcional de `points`. Úsala **poco** y solo cuando el tema trae vocabulario
+técnico que hay que fijar (no por sistema en cada cierre; igual con `crossword`):
 ```json
 "config": { "words": ["SCORM", "Moodle", "Prevención", "Extintor"] }
 ```
@@ -959,8 +1037,13 @@ con una `editor_note` describiendo el interactivo deseado y el autor lo montará
 
 ## 7. Evaluación (`assessments`)
 
-El **test calificable** va aquí, NO como interacción de una pantalla.
-Si `scorm.rules.score_source = "final_test"`, **debe** existir `final_test` con
+**Por defecto, sin test dentro del SCORM**: el test final y los foros van en Moodle
+(§2), así que `assessments` va con `"unit_tests": []` y `"final_test": null`, y la hoja
+de ruta y la síntesis no anuncian ningún test ni dan duración estimada. Si el fuente
+trae preguntas de test, entrégalas aparte para el cuestionario de Moodle (no dentro
+del `course.json`). Lo que sigue aplica **solo** si el usuario pide el test dentro del
+paquete: el **test calificable** va aquí, NO como interacción de una pantalla, y si
+`scorm.rules.score_source = "final_test"`, **debe** existir `final_test` con
 preguntas.
 
 > **NO crees una pantalla `unit_quiz`** (ni ninguna pantalla) con el test escrito como
@@ -1101,7 +1184,10 @@ preguntas.
 - [ ] `type` de pantalla e interacción, y `status` de pantalla/unidad (enums
       DISTINTOS: `borrador` no existe en unidad), dentro de los enums permitidos.
 - [ ] Cada interacción usa el `config`/`options` correcto de su tipo (§6).
-- [ ] Test calificable en `assessments.final_test`.
+- [ ] Reglas SCORM por defecto (§2): test y foros en Moodle (`final_test: null`),
+      `completion_mode: "screens"`, `min_score: 50`, `score_source: "unit_tests"`,
+      `auto_return: true`; `attempts: 3` en las evaluables. Test dentro solo si se
+      pide, y entonces en `assessments.final_test`.
 - [ ] `bibliography` usa `ref`; `quality_checklist` es objeto de booleanos.
 - [ ] Sin afirmaciones de homologación SEPE; nota normativa como "pendiente de
       revisión por la entidad".
@@ -1438,9 +1524,14 @@ def validate_course(course: dict) -> list:
                for ss in [m.get("screens") or []] + [u.get("screens") or [] for u in m.get("units") or []]
                for s in ss if (s.get("interaction") or {}).get("scored"))
     src = rules.get("score_source")
-    if src == "final_test" and nfinal == 0: err("score_source final_test sin preguntas en final_test")
-    if src == "unit_tests" and nact == 0: err("score_source unit_tests sin interacciones scored")
-    if src == "mixed" and nfinal == 0 and nact == 0: err("score_source mixed sin test ni actividades")
+    # Igual que validators.ts: completado por pantallas sin nada evaluable es legítimo
+    # (no envía nota al LMS), no un error.
+    ungraded = rules.get("completion_mode", "evaluation") == "screens" and nfinal == 0 and nact == 0
+    if src == "final_test" and nfinal == 0 and not ungraded: err("score_source final_test sin preguntas en final_test")
+    if src == "unit_tests" and nact == 0 and not ungraded: err("score_source unit_tests sin interacciones scored")
+    if src == "mixed" and nfinal == 0 and nact == 0 and not ungraded: err("score_source mixed sin test ni actividades")
+    if src == "mixed" and nfinal == 0 and nact > 0:
+        warn("score_source mixed sin test final: usa \"unit_tests\" (test en Moodle, §2)")
     if not str((course.get("scorm") or {}).get("identifier", "")).strip(): err("scorm.identifier vacío")
     if not course.get("glossary"): warn("glossary vacío")
     if not course.get("bibliography"): warn("bibliography vacía")

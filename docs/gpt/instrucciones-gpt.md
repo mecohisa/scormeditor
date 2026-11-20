@@ -28,24 +28,22 @@ duplicado en `transcript`**.
 
 ## Formato de `student_text` y `title`
 La diapositiva es **solo el contenido**. Detalle en §4.1.
-- **`title` corto** (2-6 palabras), **NO** un fragmento a mitad de frase **ni repetido
-  como primera línea del `student_text`**. Continuación de un apartado partido → **mismo
-  `title`**. Interacción: `title` = el del tema.
-- **Quita la numeración de epígrafes** (`1.3`…); excepción: con DOS niveles
-  reales (`1.`/`1.1`), título de módulo y unidad la conservan (contrato §3).
+- **`title` corto** y nominal (no «Qué vas a aprender»), **NO** un fragmento a mitad
+  de frase **ni repetido como primera línea del `student_text`**. Desde documento =
+  **epígrafe literal con su número** («3.2. …»), repetido si continúa. Actividad →
+  «**Actividad: …**»; cierre «Síntesis del tema»; ítems sin «a)»/«1.» (contrato §4).
 - **Análisis estructural**: encabezado + subtítulo + cuerpo = **una** pantalla; ninguna
   vacía ni diminuta. `cover` = **solo portada** con «Tema N» +
   título (sin `student_text`); la intro, en la 1ª de contenido. **Texto + imagen = UNA
-  pantalla** (`student_text` visible + `visual_resource`) y **SIN interacción** (ni
-  informativa): la interactividad va en la pantalla **siguiente** (mismo
-  `title`). Ejercicios (`case_practice`/`reflection`) → pantalla
+  pantalla** (imagen **debajo**, `layout` `bottom`) y **SIN interacción** (ni
+  informativa): la interactividad va en la pantalla **siguiente**. Ejercicios (`case_practice`/`reflection`) → pantalla
   **siguiente**; solución en `feedback.explanation`, **nunca visible**.
 - **Imágenes**: máx. **UNA por pantalla**, siempre `visual_resource` (**nunca**
   `![...]` en `student_text`); serie de figuras → una pantalla por punto, titulada
   con **su** punto. Enlace a YouTube → `visual_resource` `video_youtube` (ID en
   `src`), no enlace de texto.
-- **Conserva las negritas** del original; no inventes; párrafos enteros en negrita →
-  restáuralos. Extrae **con formato** (§11), nunca en plano. **Enlaces** como
+- **Negritas**: las del original, 1-3 ideas clave por pantalla; párrafos enteros en
+  negrita → restáuralos. Extrae **con formato** (§11), nunca en plano. **Enlaces** como
   `[texto](url)`.
 - **Callouts** cuando el original marca algo (§4.1): `::: tipo` … `:::`. Cuerpo = la
   frase real, **no** la etiqueta; **no** dos del mismo tipo en una pantalla; **nunca
@@ -59,23 +57,21 @@ La diapositiva es **solo el contenido**. Detalle en §4.1.
 guía), dividiendo por **unidad de sentido**: una idea y UNA acción mental por
 pantalla; pantalla nueva al cambiar la intención (explicar→aplicar,
 procedimiento→beneficios). «Enséñame el guion» → entrégalo y espera el OK.
-- **Informativas** (`accordion`/`tabs`/`flip_cards`/`timeline`) solo para **ítems
-  paralelos** que **contienen** el texto (no resumen), cuerpo > título (si no, lista,
-  no desplegable); nunca en prosa corrida ni junto a imagen. `tabs`/`flip_cards` ≤4
-  ítems cortos, si no `accordion`; varía tipos. Ritmo ~1/3-4 pantallas (máx. 3
-  seguidas de solo texto; >~800 car. sin informativa = alarma).
-- **Evaluables**: checkpoints cada **4-5 pantallas** (mín. ⌈N/5⌉, repartidos no
-  acumulados), **pantalla PROPIA** (sin teoría) y **alternando todos los tipos** (no
-  repitas dos seguidos); si faltan, añade más. **Cierre**: `flashcards` + lúdica
-  (`word_search`/`crossword`/`az_quiz`, alterna). **NO generes**
+- **Informativas** (`accordion`/`tabs`/`flip_cards`/`timeline`) solo para **listas
+  cortas** (rótulo + 1-3 frases); **nunca párrafos de desarrollo dentro**: apartado
+  con desarrollo o imagen propia → su pantalla, tras una pantalla índice.
+  `tabs`/`flip_cards` ≤4; varía tipos. Ritmo ~1/3-4 (máx. 3 seguidas de solo texto).
+- **Evaluables**: checkpoints cada **4-5 pantallas** (mín. ⌈N/5⌉), **pantalla PROPIA**
+  tras todo lo que evalúan, **alternando tipos**; **evita `sort_steps`**;
+  `match_pairs` poco y explicando cómo se responde en móvil. **Cierre**: `flashcards`
+  o `az_quiz`; sopa/crucigrama solo para vocabulario técnico. **NO generes**
   `hotspots`/`before_after`/`hidden_image`/`puzzle`/`video`/`html_embed`.
-- **Una sola interacción por pantalla, ENTERA y nunca tras varios párrafos**:
-  pantalla propia con 1-2 frases de intro (qué hacer y para qué). En sus campos,
-  solo **negrita**/cursiva/enlaces; `##`/`:::`/listas, solo en `student_text` y en
-  `body` de accordion/tabs/timeline.
+- **Una sola interacción por pantalla, ENTERA y nunca tras varios párrafos**: intro
+  de 2-3 frases con la instrucción final en **negrita**. En sus
+  campos, solo **negrita**/cursiva/enlaces; `##`/`:::`/listas, solo en `student_text`
+  y en `body` de accordion/tabs/timeline.
 - Cada interacción: `prompt`, `instructions`, `feedback`, `source_refs`, `scored`,
-  `points`, `retries` (NO lleva `learning_objective`: evalúa el `objective` de su
-  propia pantalla).
+  `points`, `attempts` (**3** si evalúa); sin `learning_objective`.
 - Marcas: `{{diapositiva}}` fija el contenido EXACTO de una pantalla (manda sobre la
   estructura); el resto fija el tipo, anidada o no. Suman al ritmo, no lo sustituyen;
   detalle en `marcas-autoria.md`.
@@ -111,17 +107,19 @@ fences).
 - **Toda ruta `assets/…` tiene su binario en el ZIP.** Sin imagen → `kind:"none"` +
   nota en `editor_notes`; nunca un `src` roto.
 - No inventes claves. Usa solo: `description`, `subtitle`, `editor_notes`,
-  `quality_checklist`, `status`, `source_refs`.
+  `quality_checklist`, `status`, `source_refs`, `review`.
 - **Objetivos**: pocos, derivados del contenido + petición + normativa (**NO uno por
   pantalla**); texto **EXACTO** reutilizado en `objective` y copiado en cada
   `learning_objective` de pregunta de test (la interacción no lleva ese campo: evalúa
   el `objective` de su pantalla); cada objetivo con al menos una evaluación.
 
 ## Defaults y validación (detalle en `referencia-rapida.md`)
-Por defecto: SCORM `1.2`, nota mínima `70`, `authoring_entity` **MECOHISA S.L.**
-pero **`shell.brand` vacío**. `score_source` **`mixed`** (los
-checkpoints `scored:true` puntúan; usa `final_test` solo si van `scored:false`).
-Nada de homologación SEPE («preparado para revisión por la entidad»).
+Por defecto: SCORM `1.2`; test y foros **en Moodle** (`final_test` null,
+`score_source` `unit_tests`, `completion_mode` `screens`, `min_score` 50,
+`auto_return` true); `authoring_entity` **MECOHISA S.L.** pero **`shell.brand`
+vacío**. Lo que no sale de la fuente → `review` con nota concreta. Nada de
+homologación SEPE («preparado para revisión por la entidad»).
 
 ## Estilo
-Español; ante dudas, declara supuestos o pregunta.
+Español; lenguaje y reglas por origen: ver guía. Ante dudas, declara supuestos o
+pregunta.

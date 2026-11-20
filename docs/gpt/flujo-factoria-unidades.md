@@ -70,8 +70,11 @@ Para **cada** tema, y **solo** ese tema (ver Regla Nº1 de la guía):
    pantalla de checkpoint con una interactividad **aplicada en pantalla propia** (sin
    teoría: solo el enunciado), **alternando todo el repertorio evaluable** sin repetir
    tipo dos veces seguidas (incluidas las prácticas de varios pasos —
-   `scenario_steps`, `decision_tree`, `calculator`— donde el contenido las pida). Cierra cada tema con `flashcards` **+ una lúdica**
-   (`word_search`/`crossword`/`az_quiz`, alternando entre temas, `scored: false`).
+   `scenario_steps`, `decision_tree`, `calculator`— donde el contenido las pida; sin
+   `sort_steps`, y `match_pairs` con moderación), cada una **después** de lo que
+   evalúa, titulada «Actividad: …» y con `attempts: 3`. Cierra cada tema con un repaso
+   (`flashcards` o `az_quiz`, `scored: false`) y la «Síntesis del tema»; sopa de letras
+   y crucigrama solo si hay vocabulario técnico que fijar.
    Nunca `hotspots`/`before_after`/`hidden_image`/`puzzle`/`video`/`html_embed`
    (los añade el editor humano). Una interacción por pantalla, según el guion.
 6. Añade callouts (`::: tipo`), `source_refs` reales (página real del PDF, no
@@ -172,9 +175,12 @@ Cuando **todos** los temas estén aprobados:
    `module` por grupo, con sus `unit` en el orden de los subtemas.
 3. **Unifica** glosario, bibliografía, evaluación, assets y `quality_checklist`.
 4. **Deduplica** términos de glosario (por `term`) y referencias (por `ref`/`url`).
-5. Monta la **evaluación**: por defecto (`score_source=final_test`) vuelca todos los
-   `question_bank` en `assessments.final_test.questions`; si el usuario pide test por
-   tema, usa `assessments.unit_tests[]` (uno por `unit`).
+5. Monta la **evaluación**: por defecto el test va en **Moodle** (contrato §2):
+   `assessments` vacío (`final_test: null`), `score_source: "unit_tests"` y los
+   `question_bank` de los parciales se entregan **aparte** (fichero de preguntas para
+   el cuestionario de Moodle). Solo si el usuario pide el test dentro del paquete,
+   vuelca los `question_bank` en `assessments.final_test.questions`
+   (`test_in_scorm=True` en `merge_unit`).
 6. Construye **un único `.scormproj`** con `build_scormproj` (contrato §11):
    `course.json` en la raíz + `assets/` con todos los binarios; **sin rutas rotas**.
 7. **Valida** el paquete antes de entregarlo.
@@ -219,13 +225,15 @@ def load_partial(path):
         return data, assets
     return json.loads(open(path, encoding='utf-8').read()), {}
 
-def merge_unit(base_course, partials, score_source='final_test'):
+def merge_unit(base_course, partials, test_in_scorm=False):
     """base_course: dict con course/scorm/shell ya definidos.
     Un solo nivel: incluye modules=[{id,title,units:[]}] (un módulo fijo, como siempre).
     Dos niveles reales (parciales con 'modulo_title'): NO hace falta 'modules' aquí, se
     reconstruye agrupando por modulo_title (un module real por tema, ver «Si hay dos
     niveles reales»).
-    partials: lista de rutas a parciales aprobados, en orden."""
+    partials: lista de rutas a parciales aprobados, en orden.
+    test_in_scorm: False (por defecto) = test en Moodle; devuelve el banco de preguntas
+    aparte. True = test dentro del paquete (solo si el usuario lo pide)."""
     units, glo, bib, qbank, asset_files = [], [], [], [], {}
     mod_order, mod_units = [], {}  # agrupación por modulo_title, solo si hay dos niveles
     for p in partials:
@@ -252,21 +260,21 @@ def merge_unit(base_course, partials, score_source='final_test'):
         base_course['modules'][0]['units'] = units
     base_course['glossary'] = glo
     base_course['bibliography'] = bib
-    if score_source == 'unit_tests':
-        base_course['assessments'] = {'unit_tests': [
-            {'id': f"A_{u['id']}", 'unit_id': u['id'], 'title': f"Test {u['title']}",
-             'pass_score': 70, 'questions': pq}
-            for u, pq in zip(units, [d.get('question_bank', []) for d,_ in map(load_partial, partials)])
-        ], 'final_test': None}
-    else:
+    rules = base_course.setdefault('scorm', {}).setdefault('rules', {})
+    if test_in_scorm:
         base_course['assessments'] = {'unit_tests': [],
             'final_test': {'id':'A01','unit_id':units[0]['id'],'title':'Evaluación final',
-                           'pass_score':70,'questions': qbank}}
-    return base_course, asset_files
+                           'questions': qbank}}
+        rules['score_source'] = 'mixed'   # checkpoints scored + test final
+        return base_course, asset_files, []
+    base_course['assessments'] = {'unit_tests': [], 'final_test': None}
+    rules['score_source'] = 'unit_tests'  # nota = actividades evaluables (test en Moodle)
+    return base_course, asset_files, qbank
 
-# uso, un solo nivel: course, asset_files = merge_unit(base, sorted(glob.glob('u01_t*.*')))
-# uso, dos niveles:   course, asset_files = merge_unit(base, sorted(glob.glob('u01_t*_st*.*')))
+# uso, un solo nivel: course, asset_files, qbank = merge_unit(base, sorted(glob.glob('u01_t*.*')))
+# uso, dos niveles:   course, asset_files, qbank = merge_unit(base, sorted(glob.glob('u01_t*_st*.*')))
 #      build_scormproj(course, asset_files)   # del contrato §11
+#      qbank → entrégalo aparte (preguntas para el cuestionario de Moodle)
 ```
 
 ---
@@ -329,11 +337,14 @@ Si el GPT recibe una orden con esta forma, debe tratar las reglas numeradas como
 >    divide). Divide siempre por unidad de sentido y cambio de intención
 >    (definición→aplicación, explicación→actividad, procedimiento→beneficios),
 >    nunca con un corte mecánico de longitud: los caracteres son solo una alarma.
-> 8. Toda evaluable o pregunta directa en SU PROPIA pantalla (sin teoría en
->    student_text), alternando todo el repertorio (choice, V/F, huecos, parejas,
->    clasificar, ordenar, escenario, caso por decisiones, conversación, reto
->    numérico si hay cálculo, caso). Cierre de cada tema: Tarjetas de repaso
->    + una lúdica (sopa de letras / crucigrama / rosco, alterna entre temas).
+> 8. Toda evaluable o pregunta directa en SU PROPIA pantalla titulada «Actividad: …»
+>    (sin teoría en student_text: intro de 2-3 frases con la instrucción de acción
+>    final en negrita), DESPUÉS de todo lo que evalúa, con attempts: 3, alternando el
+>    repertorio (choice, V/F, huecos, clasificar, escenario, caso por decisiones,
+>    conversación, reto numérico si hay cálculo, caso; parejas con moderación y con
+>    la instrucción de cómo responder en móvil; nunca ordenar pasos). Cierre de cada
+>    tema: tarjetas de repaso o rosco + «Síntesis del tema»; sopa de letras y
+>    crucigrama solo si hay vocabulario técnico que fijar.
 >    Nunca hotspots, before_after, hidden_image, puzzle, vídeo interactivo ni
 >    html_embed: esos los añade el editor humano desde SCORMEditor.
 > 9. Máximo UNA imagen por pantalla y siempre como visual_resource, nunca ![...]
@@ -342,10 +353,11 @@ Si el GPT recibe una orden con esta forma, debe tratar las reglas numeradas como
 >    (tampoco tabs/timeline/accordion): va en la pantalla siguiente con solo una
 >    frase introductoria. Ni callouts vacíos ni rótulos/flechas de una infografía
 >    volcados como texto suelto.
-> 10. En accordion/tabs/flip_cards/timeline, el cuerpo de cada ítem debe ser
->     claramente más extenso y descriptivo que el título que se clica: nunca una
->     frase que repite el rótulo. Si el fuente solo da rótulos sin desarrollo,
->     preséntalo como lista en student_text, no como desplegable.
+> 10. Nada de párrafos de desarrollo dentro de accordion/tabs/flip_cards: si cada
+>     elemento tiene título propio, un párrafo de desarrollo o su imagen, va en su
+>     propia pantalla tras una pantalla índice. Desplegables solo para listas cortas
+>     (rótulo + 1-3 frases que aporten más que el rótulo); solo rótulos sin
+>     desarrollo → lista en student_text. Ítems sin «a)»/«1.».
 > 11. Una pantalla = una idea y UNA sola acción mental (comprender, explorar,
 >     practicar, decidir o repasar). Ninguna interacción tras varios párrafos de
 >     desarrollo: pantalla propia, con 1-2 frases naturales de introducción (qué
@@ -358,10 +370,15 @@ Si el GPT recibe una orden con esta forma, debe tratar las reglas numeradas como
 >     como encabezado, restáuralos a párrafo normal.
 > 13. IDs únicos en todo el curso (pantallas, interacciones, módulos, unidades,
 >     tests, preguntas). authoring_entity = «MECOHISA S.L.» pero shell.brand VACÍO.
->     Como habrá checkpoints scored:true, usa score_source "mixed" (con
->     mixed_final_weight), no "final_test". El preflight validate_course (contrato
+>     Test y foros van en Moodle: sin final_test, score_source "unit_tests",
+>     completion_mode "screens", min_score 50, auto_return true; las preguntas de
+>     test del documento, aparte. El preflight validate_course (contrato
 >     §11) debe quedar a CERO errores y CERO avisos antes de empaquetar; no me
 >     entregues el paquete si queda alguno.
+> 14. Títulos: desde documento, el epígrafe literal con su número («3.2. …»);
+>     los que redactes, nominales (no «Qué vas a aprender»); imagen de contenido
+>     debajo del texto (layout bottom); lo que no sale del documento, marcado con
+>     review y nota concreta.
 >
 > Antes de entregar: pasa el checklist de referencia-rapida.md y la revisión de
 > fidelidad contra el PDF (cada epígrafe con su pantalla, mismo orden y jerarquía).
