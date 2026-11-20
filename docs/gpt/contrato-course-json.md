@@ -270,7 +270,8 @@ evaluable (§6).
       pantallas de la unidad de nivel 2 que le corresponde — como encabezados
       `### ` hermanos si es solo un matiz del mismo punto, o como pantallas
       sucesivas si tiene desarrollo propio (misma unidad, más pantallas, cada
-      una titulada con su epígrafe `1.1.1. …`).
+      una titulada con su epígrafe literal **sin el número**: «Cuidados de la
+      piel», no «1.1.1. Cuidados de la piel»).
     - Si el documento usa vocabulario propio para los dos niveles («Tema»/
       «Subtema», «Unidad»/«Tema», «Bloque»/«Apartado»…), refléjalo en
       `course.module_label`/`course.unit_label` (por defecto `"Módulo"`/
@@ -506,9 +507,12 @@ Reglas de formato (para que el editor lo renderice bien):
 - **Numeración de epígrafes (origen documento)**: el `title` de una pantalla que sale
   de un epígrafe es el **epígrafe literal con su numeración** (`"3.2. Detección de
   necesidades"`), repetido igual en todas las pantallas que ocupa; con número en
-  **todos** los `title` que salen de un epígrafe numerado (nunca unos sí y otros no).
-  Un sub-epígrafe numerado que va como `###` dentro de la pantalla conserva también su
-  número. Donde **no** va la numeración: en los **títulos de los ítems** de
+  **todos** los `title` que salen de un epígrafe numerado de nivel 1 o 2 (nunca unos sí
+  y otros no). Los epígrafes de **tercer nivel o más** (`1.1.1`…) van **sin número**,
+  tanto en el `title` como en un `###` dentro de la pantalla: solo el texto literal.
+- **Mayúsculas de los títulos**: si el documento escribe los epígrafes con Mayúsculas
+  Iniciales En Cada Palabra o EN MAYÚSCULAS, normalízalos a mayúscula solo inicial
+  (más nombres propios y siglas): «Cuidados de la piel en la incontinencia». Donde **no** va la numeración: en los **títulos de los ítems** de
   `accordion`/`tabs`/`flip_cards`/`timeline` (ni «1.» ni «a)»), en la primera línea del
   cuerpo (que no repite el `title`) y en las pantallas que no salen de un epígrafe
   (portada, objetivos, actividades, síntesis). Excepción de dos niveles reales: §3. En

@@ -284,7 +284,7 @@ checkpoint automático: el GPT redacta todo a partir del texto marcado.
    «forma del bloque fuente» — esa tabla solo decide en las filas SIN marca.
 3. Con las filas fijas ya colocadas, aplica el **chequeo de ritmo de siempre** sobre
    el guion completo (marcadas + resto): informativas ~1 de cada 3-4 pantallas de
-   desarrollo, checkpoints cada 4-5. Las marcas **cuentan** para ese ritmo (una
+   desarrollo, evaluables al final de cada subtema. Las marcas **cuentan** para ese ritmo (una
    `{{acordeon}}` ya satisface el hueco de informativa de su tramo; una
    `{{diapositiva}}` sin interactividad anidada cuenta como pantalla de solo texto a
    efectos del «máx. 3 seguidas»). Solo se **añaden** automáticas en los tramos que,

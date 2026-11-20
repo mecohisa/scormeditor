@@ -56,7 +56,7 @@ Para **cada** tema, y **solo** ese tema (ver Regla Nº1 de la guía):
 2. **Monta el guion de pantallas del tema** (guía, sección «El guion de pantallas»):
    tabla bloque→pantalla→interacción, con el **nº de caracteres** de cada pantalla y
    su **chequeo de ritmo** (informativa ~1 de cada 3-4 pantallas, nunca >3 seguidas
-   de solo texto; checkpoint aplicado cada 4-5, tipos variados; ninguna pantalla de
+   de solo texto; evaluables al final de cada subtema (+1 intercalada si es largo), tipos variados; ninguna pantalla de
    >~800 caracteres sin informativa). Corrige la tabla antes de escribir nada. Si la orden pedía
    **«enséñame el guion»**, entrega aquí el guion completo y espera el OK del usuario.
 3. **Segmenta según el guion**, en orden: **una pantalla por fila** (o más si un bloque

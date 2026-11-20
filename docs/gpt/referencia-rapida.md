@@ -148,7 +148,8 @@ Cada tema es SCO independiente: indícalo solo en campos internos (`subtitle`,
   conserva su número tal cual (`"1. …"` en el módulo, `"1.2 …"` en la unidad — sin él se
   pierde la referencia al documento original); un tercer nivel (`1.1.1`…) no crea
   contenedor, se funde en pantallas de la unidad de nivel 2 que le toque, sin arrastrar
-  su numeración (esa sí se quita, como cualquier epígrafe de nivel 3+, contrato §3/§4 —
+  su numeración (esa sí se quita: título literal sin número, como cualquier epígrafe
+  de nivel 3+, contrato §3/§4 —
   el árbol solo distingue dos niveles a propósito); **cierre opcional**
   (`closing_screens` del curso y de cada módulo, contrato §1/§3): simétrico a
   `intro_screens`/`screens` pero al final de todo el paquete o del módulo — solo si el
@@ -214,11 +215,11 @@ Cada tema es SCO independiente: indícalo solo en campos internos (`subtitle`,
   guion») y su **ritmo** cumplido: informativa ~1 de cada 3-4 pantallas de desarrollo
   donde el contenido traiga listas cortas (**nunca >3 seguidas de solo texto**);
   **ninguna pantalla de >~800 caracteres sin revisar** (dividir por donde cambia la
-  idea; a una informativa solo si son frases breves paralelas); checkpoint aplicado
-  cada 4-5 pantallas (mín. ⌈N/5⌉, no acumulados al final), **alternando el repertorio
+  idea; a una informativa solo si son frases breves paralelas); evaluables con
+  **reparto mixto** (1-3 al final de cada subtema; +1 breve intercalada si es largo; ⌈N/5⌉
+  solo orientativo), **alternando el repertorio
   evaluable** sin repetir tipo dos veces seguidas y prefiriendo decidir/clasificar a
-  `single_choice`; ante la duda, un checkpoint de más (borrar en SCORMEditor es fácil;
-  crear, no).
+  `single_choice`.
 - **Marcas de autoría** (`{{alias}}…{{/alias}}`, `marcas-autoria.md`) si el documento
   las trae: `{{diapositiva}}` con su contenido EXACTO (sin partir ni fusionar, aunque
   salte otra regla de estructura — anotado en `editor_notes`); el resto, con su tipo

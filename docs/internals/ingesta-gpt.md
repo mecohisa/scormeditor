@@ -125,7 +125,7 @@ El contenido de los cursos **no se teclea a mano**: lo genera un **GPT de ChatGP
     el guion de pantallas (paso 0): cada una fija su fila; el resto del guion se sigue
     rellenando con el criterio automático de siempre (**aditivo, no sustituye**:
     documento sin marcas = comportamiento idéntico al anterior). Cuentan para el
-    ritmo (informativa ~1/3-4, checkpoint cada 4-5): si ya lo cubren, no se añade nada
+    ritmo (informativa ~1/3-4, evaluables al final de cada subtema): si ya lo cubren, no se añade nada
     automático ahí (nunca DENTRO de una `{{diapositiva}}`, solo antes o después); si
     el documento trae más marcas de las que el ritmo pediría, se respetan todas — el
     documento manda por encima del límite aproximado. Los tipos vetados al GPT
@@ -214,7 +214,7 @@ El contenido de los cursos **no se teclea a mano**: lo genera un **GPT de ChatGP
   seguidas de solo texto), **ninguna pantalla de >~800 caracteres sin revisar**
   (dividir por donde cambia la idea — el recuento de caracteres es alarma secundaria:
   la división la manda la unidad de sentido, ver ronda de reglas aprendidas),
-  checkpoint aplicado cada 4-5 (mín. ⌈N/5⌉)
+  evaluables con reparto mixto (1-3 al final de cada subtema, +1 intercalada si es largo; ⌈N/5⌉ orientativo)
   prefiriendo decidir/clasificar a `single_choice`, tipos variados sin
   repetir dos seguidos. El guion es interno por
   defecto (va al informe final); la orden «enséñame el guion» añade una única parada

@@ -122,8 +122,10 @@ guion es barato; regenerar pantallas, no):
   estructura (`::: stats`/`::: compare`/`::: dodont`); si de verdad no la hay, rompe el
   tramo con una imagen o un callout del propio fuente. **Nunca metas párrafos de
   desarrollo en un desplegable para cumplir el ritmo**: el corte manda (ver «Corte»).
-- **Checkpoints evaluables: uno cada 4-5 pantallas** (mínimo ⌈N/5⌉ en un tema de N
-  pantallas), repartidos —no acumulados al final—, cada uno **después de todas las
+- **Checkpoints evaluables: reparto mixto.** Al **final de cada subtema**, de 1 a 3
+  evaluables sobre lo visto; si el subtema es largo (más de ~8 pantallas), además una
+  **comprobación breve intercalada** tras el primer bloque aplicable. El «uno cada 4-5
+  pantallas» (⌈N/5⌉) es orientativo, no un mínimo que obligue a añadir. Cada uno **después de todas las
   pantallas que evalúa** y **en pantalla propia** (fila propia del guion, sin teoría).
   **Alterna el repertorio** (`single_choice`, `true_false`, `fill_blanks`,
   `classification`, `scenario_decision`, `scenario_steps`, `decision_tree`,
@@ -393,13 +395,11 @@ El ritmo se fija en el **guion** (ver arriba), no improvisando pantalla a pantal
   más de 3 seguidas de solo texto (ni las fuerces metiendo desarrollo dentro, ver
   «Corte»).
 - **Aplicadas y evaluables** (`scenario_decision`, `scenario_steps`, `decision_tree`,
-  `classification`, `single_choice`, `case_practice`) como **checkpoints repartidos a lo largo del tema,
-  uno cada 4-5 pantallas** de contenido. Es **obligatorio el reparto**: **NO las
-  acumules al final**. Regla práctica: un tema de N pantallas lleva **al menos ⌈N/5⌉
-  checkpoints** intercalados (un tema de 30 → ~6, hacia las pantallas 5, 10, 15, 20,
-  25, 30), no dos seguidas en la 28-29. **Si con las que salen no llegas a esa
-  densidad, añade más** donde el contenido se pueda aplicar/decidir (cada checkpoint,
-  tras un bloque aplicable), **en pantalla propia** (sin teoría) y **alternando el
+  `classification`, `single_choice`, `case_practice`) con **reparto mixto**: de 1 a 3 al
+  **final de cada subtema** y, si el subtema es largo (más de ~8 pantallas), una
+  **comprobación breve intercalada** tras el primer bloque aplicable. El «uno cada 4-5
+  pantallas» (⌈N/5⌉) es orientativo: no añadas actividades solo por cumplirlo. Cada una
+  va tras todo lo que evalúa, **en pantalla propia** (sin teoría) y **alternando el
   repertorio evaluable** (`single_choice`, `true_false`, `fill_blanks`,
   `classification`, `scenario_decision`, `scenario_steps`, `decision_tree`,
   `case_practice`, `calculator` si hay cálculo y, con moderación, `match_pairs`)

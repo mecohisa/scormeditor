@@ -61,7 +61,7 @@ procedimiento→beneficios). «Enséñame el guion» → entrégalo y espera el 
   cortas** (rótulo + 1-3 frases); **nunca párrafos de desarrollo dentro**: apartado
   con desarrollo o imagen propia → su pantalla, tras una pantalla índice.
   `tabs`/`flip_cards` ≤4; varía tipos. Ritmo ~1/3-4 (máx. 3 seguidas de solo texto).
-- **Evaluables**: checkpoints cada **4-5 pantallas** (mín. ⌈N/5⌉), **pantalla PROPIA**
+- **Evaluables**: 1-3 al **final de cada subtema** (+1 intercalada si es largo), **pantalla PROPIA**
   tras todo lo que evalúan, **alternando tipos**; **evita `sort_steps`**;
   `match_pairs` poco y explicando cómo se responde en móvil. **Cierre**: `flashcards`
   o `az_quiz`; sopa/crucigrama solo para vocabulario técnico. **NO generes**

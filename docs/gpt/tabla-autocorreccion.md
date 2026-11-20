@@ -43,7 +43,7 @@ informe de revisión.
 |---|:-:|---|---|:-:|
 | `UNIT_SKELETON` | ⚠ | Unidad marcada como esqueleto | Como `SKELETON`: desarrollar solo si el usuario lo pide | Según |
 | `UNIT_NO_SUMMARY` | ⚠ | Unidad sin `summary` ni pantalla `summary` | Redacta el `summary` a partir del cierre del tema en el texto fuente | GPT |
-| `UNIT_NO_ACTIVITY` | ⚠ | Unidad sin ninguna interacción ni test | Añade checkpoints evaluables según el ritmo de la guía (cada 4-5 pantallas) | GPT |
+| `UNIT_NO_ACTIVITY` | ⚠ | Unidad sin ninguna interacción ni test | Añade checkpoints evaluables según el ritmo de la guía (1-3 al final de cada subtema) | GPT |
 | `EDITOR_NOTE` | ℹ | Nota editorial — es el **canal previsto** para dejar tareas al humano | No es un defecto: no corregir. Solo actúa si el usuario aporta el material que la nota pide | Editor |
 | `REVIEW_PENDING` | ⚠ | Hay pantallas marcadas «pendiente de revisión» (`screen.review.flagged`): no se incluirán en el SCORM exportado | Esperado en lo que el GPT marca a propósito (contenido que no sale de la fuente, actualizaciones, lo dudoso): **no quites la marca** para silenciar el aviso. Comprueba solo que cada marca lleva una `note` concreta de qué revisar. La desmarca el equipo tras revisar | Editor |
 | `GLOSSARY_EMPTY` | ⚠ | `glossary` vacío | Extrae términos y definiciones del texto fuente (`{term, definition, source_refs}`) | GPT |

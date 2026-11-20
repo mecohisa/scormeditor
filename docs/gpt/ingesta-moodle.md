@@ -669,7 +669,7 @@ Con esta forma, trata las reglas numeradas del prompt reforzado (más abajo) com
 >    sentido** (las páginas de Moodle son el material de partida, agrúpalas o
 >    divídelas según la idea, regla 2), con chequeo de ritmo: informativa ~1 de cada
 >    3-4 pantallas, checkpoint
->    aplicado cada 4-5, tipos variados, ninguna pantalla de más de ~800 caracteres sin
+>    al final de cada subtema (+1 intercalada si es largo), tipos variados, ninguna pantalla de más de ~800 caracteres sin
 >    revisar (dividir por donde cambia la idea).
 > 8. Toda evaluable o pregunta directa en SU PROPIA pantalla titulada «Actividad: …»,
 >    después de todo lo que evalúa, con `attempts: 3`, alternando el repertorio
