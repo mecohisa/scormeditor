@@ -2027,14 +2027,14 @@ export const sampleCourse: Course = {
           "loose": false,
           "hide_menu_title": false,
           "title": "Ordenar, emparejar, clasificar",
-          "summary": "El alumno arrastra o reordena elementos; también se puede hacer con teclado o táctil.",
+          "summary": "El alumno ordena o coloca elementos: con ratón puede arrastrarlos; en móvil y con teclado, tocando y colocando.",
           "screens": [
             {
               "id": "s401",
               "type": "content",
               "title": "Ordenar pasos",
               "objective": "Reconocer las interacciones de manipulación: ordenar, emparejar y clasificar.",
-              "student_text": "**Ordenar pasos**: arrastra (o usa ▲▼ y las flechas del teclado) hasta dejar la secuencia correcta.",
+              "student_text": "**Ordenar pasos**: sube o baja cada paso con ▲ ▼ (con ratón también puedes arrastrarlo) hasta dejar la secuencia correcta; cada paso muestra su posición.",
               "source_refs": [],
               "visual_resource": {
                 "kind": "none",
@@ -2119,7 +2119,7 @@ export const sampleCourse: Course = {
               "type": "content",
               "title": "Emparejar",
               "objective": "Reconocer las interacciones de manipulación: ordenar, emparejar y clasificar.",
-              "student_text": "**Emparejar**: arrastra cada elemento con el que le corresponde (o tócalo y luego toca su pareja).",
+              "student_text": "**Emparejar**: toca un elemento y después la casilla con la que se relaciona (con ratón también puedes arrastrarlo). Mientras hay uno seleccionado, los destinos se resaltan y puedes cancelar.",
               "source_refs": [],
               "visual_resource": {
                 "kind": "none",

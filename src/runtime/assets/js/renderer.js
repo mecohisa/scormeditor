@@ -550,8 +550,11 @@
       var titleH1 = container.querySelector('.me-screen > h1');
       if (titleH1) {
         var icon = global.MEIcons ? global.MEIcons.svg('edit-3') : '';
+        // Si el título ya empieza por «Actividad:» (criterio editorial: se escribe
+        // en toda actividad, evaluable o no), solo se antepone el icono.
+        var yaRotulada = /^actividad\s*:/i.test(screen.title || '');
         titleH1.innerHTML =
-          '<span class="me-h1-text"><span class="me-scored-prefix">' + icon + 'Actividad: </span>' +
+          '<span class="me-h1-text"><span class="me-scored-prefix">' + icon + (yaRotulada ? '' : 'Actividad: ') + '</span>' +
           titleH1.innerHTML + '</span><span class="me-scored-badge">Evaluable</span>';
       }
     }

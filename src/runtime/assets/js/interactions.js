@@ -210,6 +210,14 @@
            (data.instructions ? '<p class="me-instructions">' + rich(data.instructions) + '</p>' : '');
   }
 
+  // Puntero principal táctil (móvil/tableta). Decide las instrucciones de los
+  // ejercicios de ordenar/colocar y si se ofrece el arrastre nativo HTML5, que en
+  // táctil no es fiable (el dedo hace scroll). Un portátil con pantalla táctil
+  // tiene puntero principal fino: conserva el arrastre con ratón.
+  function isCoarse() {
+    try { return !!(global.matchMedia && global.matchMedia('(pointer: coarse)').matches); } catch (e) { return false; }
+  }
+
   // Botón Comprobar: nace desactivado; cuando `ready()` (respuesta completa) se cumple,
   // se activa y, si el cambio viene del usuario (`pulse`), late para invitar a comprobar.
   // El pulso se apaga al clicar y vuelve si se cambia la respuesta.
@@ -469,41 +477,87 @@
         shown = shown.slice(1).concat([shown[0]]);
       }
     }
+    // Instrucción según el puntero principal: en táctil el arrastre nativo no es
+    // fiable (el dedo hace scroll), así que ahí no se promete y se guía a ▲ ▼.
+    var coarse = isCoarse();
     var html = header(data) +
-      '<p class="me-sort-hint">Arrastra los elementos para ordenarlos. También puedes usar los botones ▲▼ o las flechas del teclado.</p>' +
-      '<ol class="me-sort" aria-label="Lista ordenable">';
+      '<p class="me-sort-hint">' + (coarse
+        ? 'Toca las flechas ▲ ▼ de cada paso para subirlo o bajarlo hasta su posición.'
+        : 'Arrastra los pasos para ordenarlos o usa los botones ▲ ▼.') +
+      '<span class="sr-only"> Con teclado: enfoca un paso y usa las flechas arriba y abajo.</span></p>' +
+      '<ol class="me-sort' + (coarse ? ' is-touch' : '') + '" aria-label="Lista ordenable">';
     shown.forEach(function (s) {
-      html += '<li class="me-sort-item" data-id="' + esc(s.id) + '" draggable="true" tabindex="0" aria-roledescription="elemento reordenable">' +
-        '<span class="me-sort-grip" aria-hidden="true">⋮⋮</span> <span class="me-sort-text">' + rich(s.text) + '</span>' +
-        ' <span class="me-sort-ctrl"><button type="button" class="me-up" aria-label="Subir">▲</button><button type="button" class="me-down" aria-label="Bajar">▼</button></span></li>';
+      var plain = esc(stripTags(s.text));
+      html += '<li class="me-sort-item" data-id="' + esc(s.id) + '" draggable="' + (coarse ? 'false' : 'true') + '" tabindex="0" aria-roledescription="elemento reordenable">' +
+        '<span class="me-sort-grip" aria-hidden="true">⋮⋮</span>' +
+        '<span class="me-sort-pos"><span class="sr-only">Posición </span><span class="me-sort-num"></span><span class="sr-only">.</span></span>' +
+        ' <span class="me-sort-text">' + rich(s.text) + '</span>' +
+        ' <span class="me-sort-ctrl"><button type="button" class="me-up" aria-label="Subir «' + plain + '»">▲</button>' +
+        '<button type="button" class="me-down" aria-label="Bajar «' + plain + '»">▼</button></span></li>';
     });
-    el.innerHTML = html + '</ol><button class="me-btn me-check">Comprobar</button><span class="me-attempts" aria-live="polite"></span>' + feedbackBox(data);
+    el.innerHTML = html + '</ol><p class="me-sort-tally" aria-live="polite" hidden></p>' +
+      '<button class="me-btn me-check">Comprobar</button><span class="me-attempts" aria-live="polite"></span>' + feedbackBox(data);
     var list = el.querySelector('.me-sort');
+    var tally = el.querySelector('.me-sort-tally');
     var attempts = (ctx.state && ctx.state.attempts) || 0;
     var maxAtt = attemptsOf(data);
     var updateAttempts = attemptsHint(el, maxAtt);
     // Aquí «responder» es reordenar: el botón se activa al primer movimiento
     var refreshCheck = wireCheck(el, function () { return true; });
 
+    function expectedIds() {
+      return steps.slice().sort(function (a, b) { return a.order - b.order; }).map(function (s) { return s.id; });
+    }
+    function currentIds() {
+      return [].slice.call(list.children).map(function (li) { return li.getAttribute('data-id'); });
+    }
+    // Número de posición visible y ▲ ▼ desactivados en los extremos (sin efecto ahí).
+    function renumber() {
+      var items = [].slice.call(list.children);
+      items.forEach(function (li, i) {
+        li.querySelector('.me-sort-num').textContent = String(i + 1);
+        if (!done) {
+          li.querySelector('.me-up').disabled = i === 0;
+          li.querySelector('.me-down').disabled = i === items.length - 1;
+        }
+      });
+    }
+    function textOf(li) { var t = li.querySelector('.me-sort-text'); return t ? t.textContent : ''; }
+    // Resalta brevemente el paso recién movido para no perderlo de vista.
+    function flash(li) {
+      li.classList.remove('is-moved'); void li.offsetWidth; li.classList.add('is-moved');
+      clearTimeout(li._meMoved);
+      li._meMoved = setTimeout(function () { li.classList.remove('is-moved'); }, 900);
+    }
     function move(li, dir) {
-      if (done) return;
-      if (dir < 0 && li.previousElementSibling) list.insertBefore(li, li.previousElementSibling);
-      else if (dir > 0 && li.nextElementSibling) list.insertBefore(li.nextElementSibling, li);
+      if (done) return false;
+      var moved = false;
+      if (dir < 0 && li.previousElementSibling) { list.insertBefore(li, li.previousElementSibling); moved = true; }
+      else if (dir > 0 && li.nextElementSibling) { list.insertBefore(li.nextElementSibling, li); moved = true; }
+      if (!moved) return false;
+      renumber(); flash(li);
+      tally.hidden = true; // la cuenta de la última comprobación ya no vale
       refreshCheck(true);
+      var pos = [].indexOf.call(list.children, li) + 1;
+      ctx.announce('«' + textOf(li) + '» ahora en la posición ' + pos + ' de ' + list.children.length + '.');
+      return true;
     }
 
-    // Botones ▲▼
+    // Botones ▲▼: el foco se queda en el botón pulsado (o pasa al otro si llegó al extremo).
     list.addEventListener('click', function (e) {
-      var li = e.target.closest('.me-sort-item'); if (!li) return;
-      if (e.target.classList.contains('me-up')) { move(li, -1); li.focus(); }
-      else if (e.target.classList.contains('me-down')) { move(li, 1); li.focus(); }
+      var btn = e.target.closest('.me-up, .me-down'); if (!btn) return;
+      var li = btn.closest('.me-sort-item'); if (!li) return;
+      var up = btn.classList.contains('me-up');
+      move(li, up ? -1 : 1);
+      var target = btn.disabled ? li.querySelector(up ? '.me-down' : '.me-up') : btn;
+      if (target && !target.disabled) target.focus();
     });
 
     // Teclado: flechas arriba/abajo reordenan el elemento enfocado
     list.addEventListener('keydown', function (e) {
       var li = e.target.closest('.me-sort-item'); if (!li) return;
-      if (e.key === 'ArrowUp') { e.preventDefault(); move(li, -1); li.focus(); ctx.announce('Movido hacia arriba.'); }
-      else if (e.key === 'ArrowDown') { e.preventDefault(); move(li, 1); li.focus(); ctx.announce('Movido hacia abajo.'); }
+      if (e.key === 'ArrowUp') { e.preventDefault(); move(li, -1); li.focus(); }
+      else if (e.key === 'ArrowDown') { e.preventDefault(); move(li, 1); li.focus(); }
     });
 
     // Drag & drop nativo (ratón)
@@ -534,8 +588,9 @@
       var after = afterElement(e.clientY);
       if (after == null) list.appendChild(dragging);
       else list.insertBefore(dragging, after);
+      renumber();
     });
-    list.addEventListener('drop', function (e) { e.preventDefault(); });
+    list.addEventListener('drop', function (e) { e.preventDefault(); tally.hidden = true; });
 
     var correct = false, done = false;
     function lockSort() {
@@ -548,7 +603,7 @@
     // orden): cada paso queda ✔/✖ y el mal colocado dice dónde lo puso el
     // alumno y dónde va, más la explicación del paso si el autor la escribió.
     function markSorted() {
-      var expected = steps.slice().sort(function (a, b) { return a.order - b.order; }).map(function (s) { return s.id; });
+      var expected = expectedIds();
       [].slice.call(list.children).forEach(function (li, i) {
         var id = li.getAttribute('data-id');
         var want = expected.indexOf(id);
@@ -567,16 +622,29 @@
         }
       });
     }
+    // Tras fallar: cuántos pasos están ya en su sitio, sin decir cuáles (marcarlos
+    // desvelaría el orden mientras queden intentos). Devuelve el texto mostrado.
+    function showTally() {
+      var exp = expectedIds();
+      var ok = currentIds().filter(function (id, i) { return exp[i] === id; }).length;
+      var n = exp.length;
+      tally.textContent = ok + ' de ' + n + (n === 1 ? ' paso está' : ' pasos están') + ' en su sitio.';
+      tally.hidden = false;
+      return tally.textContent;
+    }
+    renumber();
     if (ctx.state && typeof ctx.state.correct === 'boolean') {
       correct = ctx.state.correct; showFeedback(el, correct, data);
       if (correct || (maxAtt > 0 && attempts >= maxAtt)) { done = true; lockSort(); }
+      // El orden restaurado es el de la última comprobación (ctx.save solo en check).
+      if (!correct) showTally();
     }
     updateAttempts(attempts, correct);
     if (!done) refreshCheck(false); // orden restaurado sin resolver: activo sin pulso
     function check() {
       if (done) return { resolved: true, correct: correct };
-      var order = [].slice.call(list.children).map(function (li) { return li.getAttribute('data-id'); });
-      var expected = steps.slice().sort(function (a, b) { return a.order - b.order; }).map(function (s) { return s.id; });
+      var order = currentIds();
+      var expected = expectedIds();
       correct = JSON.stringify(order) === JSON.stringify(expected);
       attempts++;
       done = correct || (maxAtt > 0 && attempts >= maxAtt);
@@ -584,7 +652,9 @@
       updateAttempts(attempts, correct);
       ctx.save({ order: order, correct: correct, attempts: attempts });
       if (done) lockSort();
-      ctx.announce(correct ? 'Orden correcto.' : (done ? 'Orden incorrecto. Sin más intentos.' : 'Orden incorrecto. Inténtalo de nuevo.'));
+      var tallyMsg = correct ? '' : ' ' + showTally();
+      if (correct) tally.hidden = true;
+      ctx.announce(correct ? 'Orden correcto.' : (done ? 'Orden incorrecto.' + tallyMsg + ' Sin más intentos.' : 'Orden incorrecto.' + tallyMsg + ' Inténtalo de nuevo.'));
       return { resolved: done, correct: correct };
     }
     el.querySelector('.me-check').addEventListener('click', check);
@@ -596,30 +666,52 @@
   });
 
   // --- 4. Match pairs / 8. Classification -> arrastrar a categorías ----------
-  // DnD nativo (ratón) + desplegable «Asignar a» por elemento (teclado/táctil).
+  // Tocar y colocar (táctil, teclado y ratón) + DnD nativo con ratón.
   function dragAssignFactory(el, data, ctx) {
     var groups = data.config.groups || [];   // [{id, label}]
     var opts = shuffle(data.options || [], data.id); // [{id, text, group}], pool barajado
     var assign = {};                          // itemId -> groupId ('' = sin asignar)
     if (ctx.state && ctx.state.answers) assign = Object.assign({}, ctx.state.answers);
+    // En táctil no se ofrece el arrastre nativo (no es fiable y choca con el scroll).
+    var coarse = isCoarse();
+    var isMatch = data.type === 'match_pairs';
+    var uid = 'me-dnd-' + String(data.id || '').replace(/[^A-Za-z0-9_-]/g, '_');
 
     function chipHtml(o) {
-      return '<div class="me-chip" role="button" draggable="true" tabindex="0" aria-pressed="false" data-id="' + esc(o.id) + '">' +
+      return '<div class="me-chip" role="button" draggable="' + (coarse ? 'false' : 'true') + '" tabindex="0" aria-pressed="false" data-id="' + esc(o.id) + '">' +
         '<span class="me-chip-text">' + rich(o.text) + '</span></div>';
     }
+    // Cada zona es un grupo (no un botón: dentro hay chips, que sí lo son) con su
+    // botón real «Colocar aquí», visible solo mientras hay una pieza seleccionada.
+    function zoneHtml(cls, zoneId, idx, titleHtml, dropLabel, dropText) {
+      var tid = uid + '-t' + idx;
+      return '<div class="' + cls + ' me-dnd-zone" data-zone="' + esc(zoneId) + '" role="group" aria-labelledby="' + tid + '">' +
+        '<p class="me-dnd-title" id="' + tid + '">' + titleHtml + '</p>' +
+        '<div class="me-dnd-list" data-zone-list="' + esc(zoneId) + '"></div>' +
+        '<button type="button" class="me-dnd-drop" aria-label="' + dropLabel + '">' + dropText + '</button></div>';
+    }
 
+    var hint = coarse
+      ? (isMatch ? 'Toca un elemento y después toca la casilla con la que se relaciona.'
+                 : 'Toca un elemento y después toca la categoría donde va.')
+      : (isMatch ? 'Arrastra cada elemento a la casilla con la que se relaciona, o haz clic en él y después en la casilla.'
+                 : 'Arrastra cada elemento a su categoría, o haz clic en él y después en la categoría.');
     var html = header(data) +
-      '<p class="me-sort-hint">Arrastra cada elemento a su categoría, o tócalo para seleccionarlo y después toca la categoría destino.</p>' +
-      '<div class="me-dnd">' +
-      '<div class="me-dnd-pool me-dnd-zone" data-zone="" tabindex="0" role="button" aria-label="Sin asignar"><p class="me-dnd-title">Sin asignar</p><div class="me-dnd-list" data-zone-list=""></div></div>' +
+      '<p class="me-sort-hint">' + hint +
+      '<span class="sr-only"> Con teclado: Intro para seleccionar un elemento y después el botón «Colocar aquí» de su destino.</span></p>' +
+      '<div class="me-dnd' + (coarse ? ' is-touch' : '') + '">' +
+      zoneHtml('me-dnd-pool', '', 0, 'Sin asignar', 'Devolver a «Sin asignar»', 'Devolver aquí') +
       '<div class="me-dnd-groups">';
-    groups.forEach(function (g) {
-      html += '<div class="me-dnd-group me-dnd-zone" data-zone="' + esc(g.id) + '" tabindex="0" role="button" aria-label="Categoría ' + esc(stripTags(g.label)) + '">' +
-        '<p class="me-dnd-title">' + rich(g.label) + '</p>' +
-        '<div class="me-dnd-list" data-zone-list="' + esc(g.id) + '"></div></div>';
+    groups.forEach(function (g, i) {
+      html += zoneHtml('me-dnd-group', g.id, i + 1, rich(g.label), 'Colocar en «' + esc(stripTags(g.label)) + '»', 'Colocar aquí');
     });
-    html += '</div></div><button class="me-btn me-check">Comprobar</button><span class="me-attempts" aria-live="polite"></span>' + feedbackBox(data);
+    html += '</div></div>' +
+      '<div class="me-dnd-bar" hidden><span class="me-dnd-bar-text"></span>' +
+      '<button type="button" class="me-dnd-cancel">Cancelar</button></div>' +
+      '<button class="me-btn me-check">Comprobar</button><span class="me-attempts" aria-live="polite"></span>' + feedbackBox(data);
     el.innerHTML = html;
+    var dnd = el.querySelector('.me-dnd');
+    var bar = el.querySelector('.me-dnd-bar');
     var attempts = (ctx.state && ctx.state.attempts) || 0;
     var maxAtt = attemptsOf(data);
     var updateAttempts = attemptsHint(el, maxAtt);
@@ -656,6 +748,9 @@
     // Tocar y colocar (táctil / teclado / ratón): se selecciona un chip y luego
     // se toca la zona destino. Enter/Espacio equivalen al toque.
     var pickedId = null, locked = false;
+    function chipText(id) { var t = chips[id] && chips[id].querySelector('.me-chip-text'); return t ? t.textContent : ''; }
+    // Selección visible: la pieza resaltada, las zonas destino destacadas con su
+    // botón «Colocar aquí» (la zona donde ya está, no) y una barra con Cancelar.
     function setPicked(id) {
       if (pickedId && chips[pickedId]) {
         chips[pickedId].classList.remove('is-picked');
@@ -666,6 +761,14 @@
         chips[id].classList.add('is-picked');
         chips[id].setAttribute('aria-pressed', 'true');
       }
+      dnd.classList.toggle('is-picking', !!id);
+      var here = id ? (assign[id] || '') : null;
+      el.querySelectorAll('.me-dnd-zone').forEach(function (z) {
+        z.classList.toggle('is-current', id != null && z.getAttribute('data-zone') === here);
+      });
+      bar.hidden = !id;
+      if (id) bar.querySelector('.me-dnd-bar-text').textContent = 'Seleccionado: «' + chipText(id) + '». ' +
+        (isMatch ? 'Toca la casilla con la que se relaciona.' : 'Toca la categoría donde va.');
     }
     // Coloca el chip seleccionado en `zone` (misma lógica para tocar la zona o
     // una pieza que ya está dentro de ella).
@@ -693,15 +796,22 @@
           }
         }
         setPicked(pickedId === id ? null : id);
-        if (pickedId) ctx.announce('Elemento seleccionado. Toca una categoría para colocarlo.');
+        if (pickedId) ctx.announce('«' + chipText(pickedId) + '» seleccionado. Elige dónde colocarlo con «Colocar aquí».');
         return;
       }
+      if (e.target.closest('.me-dnd-cancel')) { cancelPick(); return; }
       var zone = e.target.closest('.me-dnd-zone');
       if (zone && pickedId) dropPicked(zone);
     });
+    function cancelPick() {
+      var id = pickedId; if (!id) return;
+      setPicked(null); chips[id].focus();
+      ctx.announce('Selección cancelada.');
+    }
     el.addEventListener('keydown', function (e) {
+      if (e.key === 'Escape' && pickedId) { e.preventDefault(); cancelPick(); return; }
       if (e.key !== 'Enter' && e.key !== ' ') return;
-      var t = e.target.closest('.me-chip, .me-dnd-zone'); if (!t) return;
+      var t = e.target.closest('.me-chip'); if (!t) return; // los <button> ya responden solos
       e.preventDefault(); t.click();
     });
 
@@ -737,7 +847,7 @@
         c.setAttribute('draggable', 'false'); c.removeAttribute('role');
         c.removeAttribute('aria-pressed'); c.tabIndex = -1;
       });
-      el.querySelectorAll('.me-dnd-zone').forEach(function (z) { z.removeAttribute('role'); z.tabIndex = -1; });
+      el.querySelectorAll('.me-dnd-drop').forEach(function (b) { b.disabled = true; });
       var cb = el.querySelector('.me-check'); if (cb) cb.disabled = true;
     }
     if (ctx.state && typeof ctx.state.correct === 'boolean') {

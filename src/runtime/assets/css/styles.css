@@ -669,7 +669,26 @@ video.me-video, .me-audio { width: 100%; height: auto; aspect-ratio: auto; }
 .me-sort-text { flex: 1; }
 .me-sort-grip { color: var(--me-muted); cursor: grab; }
 .me-sort-ctrl { margin-left: auto; display: flex; gap: .2rem; }
-.me-sort-ctrl button { border: 1px solid var(--me-border); background: var(--me-bg); border-radius: 4px; cursor: pointer; }
+.me-sort-ctrl button { min-width: 2.25rem; min-height: 2.25rem; font-size: 1rem; line-height: 1; border: 1px solid var(--me-border); background: var(--me-bg); color: var(--me-text); border-radius: 6px; cursor: pointer; }
+.me-sort-ctrl button:disabled { opacity: .35; cursor: default; }
+/* Número de posición visible (se renumera en cada movimiento). */
+.me-sort-pos { flex: none; display: inline-flex; align-items: center; justify-content: center; min-width: 1.7em; height: 1.7em; border-radius: 50%; font-size: .85rem; font-weight: 700; color: var(--me-primary); background: color-mix(in srgb, var(--me-primary) 12%, var(--me-surface)); }
+/* Paso recién movido: resaltado breve solo de color (sin movimiento). */
+.me-sort-item { transition: background-color .3s, border-color .3s; }
+.me-sort-item.is-moved { border-color: var(--me-primary); background: color-mix(in srgb, var(--me-primary) 12%, var(--me-surface)); }
+/* Tras fallar: «N de M pasos están en su sitio» (sin decir cuáles). */
+.me-sort-tally { margin: .5rem 0 0; font-weight: 600; }
+/* Táctil: sin asa (promete un arrastre que no se ofrece), flechas de 44 px y sin
+   menú/selección de texto por pulsación larga. */
+.me-sort.is-touch .me-sort-grip { display: none; }
+.me-sort.is-touch .me-sort-ctrl button, .me-dnd.is-touch :is(.me-chip, .me-dnd-drop, .me-dnd-cancel) { -webkit-tap-highlight-color: transparent; }
+.me-sort.is-touch .me-sort-item { cursor: default; -webkit-touch-callout: none; -webkit-user-select: none; user-select: none; }
+@media (pointer: coarse), (max-width: 480px) {
+  .me-sort-ctrl button { min-width: 44px; min-height: 44px; font-size: 1.1rem; }
+}
+@media (max-width: 480px) {
+  .me-sort-ctrl { flex-direction: column; }
+}
 .me-assign-row { display: flex; gap: .75rem; align-items: center; justify-content: space-between; padding: .4rem 0; border-bottom: 1px solid var(--me-border); }
 .me-assign-row select { padding: .35rem; border-radius: 6px; border: 1px solid var(--me-border); }
 
@@ -693,6 +712,17 @@ video.me-video, .me-audio { width: 100%; height: auto; aspect-ratio: auto; }
 .me-chip.is-right::after { content: '✔'; color: var(--me-ok); font-weight: 700; margin-left: auto; }
 .me-chip.is-wrong::after { content: '✖'; color: var(--me-error); font-weight: 700; margin-left: auto; }
 .me-chip-text a, .me-prose a, .me-acc-body a, [role=tabpanel] a { color: var(--me-primary); }
+.me-dnd.is-touch .me-chip { cursor: pointer; min-height: 44px; -webkit-touch-callout: none; -webkit-user-select: none; user-select: none; }
+/* Con una pieza seleccionada: zonas destino destacadas y su botón «Colocar
+   aquí» (no en la zona donde ya está la pieza). */
+.me-dnd-drop { display: none; }
+.me-dnd.is-picking .me-dnd-zone:not(.is-current) { border-color: var(--me-primary); box-shadow: 0 0 0 2px color-mix(in srgb, var(--me-primary) 25%, transparent); cursor: pointer; }
+.me-dnd.is-picking .me-dnd-zone:not(.is-current) .me-dnd-drop { display: flex; align-items: center; justify-content: center; width: 100%; min-height: 44px; margin-top: .4rem; padding: .3rem .6rem; border: 2px dashed var(--me-primary); border-radius: 6px; background: color-mix(in srgb, var(--me-primary) 8%, var(--me-surface)); color: var(--me-primary); font: inherit; font-weight: 600; cursor: pointer; }
+.me-dnd-drop:focus-visible, .me-dnd-cancel:focus-visible { outline: 2px solid var(--me-primary); outline-offset: 2px; }
+/* Barra «Seleccionado: … · Cancelar», pegada abajo mientras se ve el ejercicio. */
+.me-dnd-bar { position: sticky; bottom: 0; z-index: 5; display: flex; align-items: center; justify-content: space-between; gap: .6rem; margin-top: .6rem; padding: .5rem .75rem; border: 1px solid var(--me-primary); border-radius: 8px; background: var(--me-surface); box-shadow: 0 -2px 10px rgba(0,0,0,.12); font-size: .92rem; }
+.me-dnd-bar[hidden] { display: none; }
+.me-dnd-cancel { flex: none; min-height: 44px; padding: 0 .9rem; border: 1px solid var(--me-border); border-radius: 6px; background: var(--me-bg); color: var(--me-text); font: inherit; cursor: pointer; }
 @media (max-width: 640px) {
   .me-dnd { grid-template-columns: 1fr; }
   .me-dnd-pool .me-dnd-list { flex-direction: row; flex-wrap: wrap; }

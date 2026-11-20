@@ -34,7 +34,9 @@ ese contrato; no conoce el tipo concreto.
 - **Tocar y colocar**: con una pieza seleccionada, tocar OTRA pieza que está en una
   categoría distinta a la de la seleccionada cuenta como tocar esa categoría
   (`dropPicked`); si está en la misma zona, solo cambia la selección. Sin esto, tocar una
-  categoría por el centro (donde suele haber una pieza) no permitía soltar.
+  categoría por el centro (donde suele haber una pieza) no permitía soltar. Tocar
+  cualquier punto de la zona también coloca; el botón «Colocar aquí» es el objetivo
+  explícito (y el único accesible por teclado).
 - **Forzar completado** (`config.force_complete`, solo `match_pairs`, `classification`
   y `crossword`): con la clave **ausente o `true`** (proyectos antiguos) Comprobar solo se
   activa con todo colocado/rellenado, como siempre. Con **`false`** se activa en cuanto
@@ -85,10 +87,32 @@ ese contrato; no conoce el tipo concreto.
   y `classification` usan `dragAssignFactory` (chips `.me-chip` sobre zonas `.me-dnd`).
   Layout: pool «Sin asignar» a la **izquierda** y categorías a la derecha, **apiladas en
   vertical** (grid 2 columnas al 50%; se apilan a ≤640px). No hay `<select>` por chip: la
-  alternativa al arrastre es **tocar y colocar** (clic/Enter en el chip lo selecciona
-  `.is-picked`/`aria-pressed`, clic/Enter en una zona lo coloca; las zonas son focusables
-  con `role=button` y todo se anuncia vía `ctx.announce`). Sirve igual para táctil,
-  teclado y ratón; `lockAssign` retira roles/tabindex al resolverse.
+  alternativa al arrastre es **tocar y colocar**, que sirve igual para táctil, teclado y
+  ratón (clic/Intro en el chip lo selecciona, `.is-picked`/`aria-pressed`).
+- **Táctil vs. ratón** (`isCoarse()` = `matchMedia('(pointer: coarse)')`, evaluado al
+  pintar): el arrastre nativo HTML5 **no es fiable con el dedo** (según navegador no
+  arranca, o el gesto hace scroll), así que en puntero táctil no se ofrece
+  (`draggable="false"`, clase `.is-touch` en `.me-sort`/`.me-dnd`) y la instrucción
+  visible (`.me-sort-hint`) **no dice «arrastra»**: guía a ▲ ▼ (ordenar) o a «toca un
+  elemento y después la categoría/casilla» (colocar). Con ratón la instrucción ofrece
+  ambas vías. Lo de teclado va en un `.sr-only` dentro de la misma instrucción. Un
+  portátil con pantalla táctil tiene puntero principal fino: conserva el arrastre.
+  En `.is-touch` se anula la lupa/menú de pulsación larga (`-webkit-touch-callout`,
+  `user-select`) y el resaltado de toque; objetivos táctiles ≥ 44 px.
+- **Selección visible al colocar** (`setPicked`): con una pieza seleccionada, `.me-dnd`
+  lleva `.is-picking`, las zonas destino se resaltan y muestran su botón real
+  **«Colocar aquí»** (`.me-dnd-drop`; en el pool, «Devolver aquí»); la zona donde ya
+  está la pieza (`.is-current`) no. Aparece la barra `.me-dnd-bar` («Seleccionado: «…».
+  Toca …» + **Cancelar**), `position: sticky; bottom: 0` dentro del scroll de
+  `.me-content` para que se vea aunque el destino quede abajo; Esc también cancela. Los
+  anuncios (`ctx.announce`) nombran la pieza.
+- **Accesibilidad de las zonas**: cada zona es `role="group"` con `aria-labelledby` a su
+  título (id `me-dnd-<id>-t<n>`), **no** un botón: dentro hay chips (`role=button`) y
+  antes quedaban botones anidados y el `aria-label` de la zona tapaba las piezas ya
+  colocadas. El destino accionable por teclado es el `<button>` «Colocar aquí» (aria-label
+  «Colocar en «categoría»»). `lockAssign` retira roles/tabindex de los chips y desactiva
+  esos botones al resolverse. `match_pairs` comparte este modo con `classification`
+  (solo cambian los textos: «casilla con la que se relaciona»); no impone 1:1.
 - **Informativas** (`accordion`, `tabs`, `flip_cards`, `video`, `hotspots`,
   `case_practice`) **no** fijan `STATE.results`; su avance se captura al entrar (ver sync
   en `editor-ui.md`) para no bloquear «Siguiente».
@@ -210,6 +234,24 @@ Cada paso admite `explanation` opcional. **Solo cuando la actividad queda resuel
 del paso, y oculta asa y flechas. Se repinta al restaurar (el orden guardado basta: no
 cambia el estado ni el codec). Aplica también a proyectos antiguos al re-exportar (sin
 explicaciones, solo posición), mismo criterio que las marcas de `match_pairs`.
+
+Mientras **quedan intentos**, un fallo no marca cuáles están mal pero sí muestra
+`.me-sort-tally` «N de M pasos están en su sitio.» (y lo incluye en el anuncio): orienta
+sin desvelar el orden. Se oculta al mover un paso (deja de valer) y se recalcula al
+restaurar desde el orden guardado, que es el de la última comprobación (`ctx.save` solo
+ocurre en `check()`).
+
+### `sort_steps` — manejo
+- Cada paso muestra su **posición** (`.me-sort-num`, renumerada por `renumber()` en cada
+  movimiento, también durante el arrastre con ratón; con «Posición» en `.sr-only`).
+- ▲ del primero y ▼ del último están **desactivados** (no hacen nada ahí). Sus
+  `aria-label` nombran el paso («Subir «texto»»). Tamaño mínimo 2.25rem, **44 px** en
+  táctil o ≤ 480 px; a ≤ 480 px ▲ y ▼ se apilan en vertical para no robar ancho al texto.
+- Tras mover (botón, flecha o arrastre por botón/teclado) el paso se resalta un momento
+  (`.is-moved`, solo color, sin movimiento) y se anuncia ««texto» ahora en la posición N
+  de M.». Con botón, el foco se queda en el botón pulsado (o pasa al otro si el pulsado
+  quedó desactivado en el extremo); con flechas del teclado, en el paso.
+- En táctil se oculta el asa ⋮⋮ (prometía un arrastre que no se ofrece).
 
 ### `timeline` (informativa)
 `config.milestones` `[{label, title, body}]` → `<ol class="me-tl">` con línea/puntos de

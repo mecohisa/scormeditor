@@ -334,7 +334,10 @@
   function menuScreenLabel(sc) {
     var showScored = (COURSE.scorm.rules || {}).score_source !== 'final_test';
     var scored = showScored && sc.interaction && sc.interaction.scored;
-    return (scored ? 'Actividad: ' : '') + (sc.title || sc.type);
+    var title = sc.title || sc.type;
+    // Criterio editorial: toda actividad se titula «Actividad: …» (evaluable o
+    // no); si el autor ya lo escribió, no se duplica.
+    return (scored && !/^actividad\s*:/i.test(title) ? 'Actividad: ' : '') + title;
   }
 
   function buildMenu() {
