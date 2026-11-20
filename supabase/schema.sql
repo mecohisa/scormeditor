@@ -80,6 +80,27 @@ alter table scormeditor.org_creators enable row level security;
 insert into scormeditor.org_creators (email) values ('jarruego@mecohisa.com')
 on conflict (email) do nothing;
 
+-- Lectores globales: cuentas internas (p. ej. la que usa Claude desde la
+-- terminal, `scripts/nube/nube.mjs`) que LEEN todo SCORMEditor —todas las
+-- organizaciones, carpetas, documentos, versiones y ZIP— sin ser miembros
+-- de nada y sin poder escribir. No es un rol de la app: no aparece en
+-- «Gestionar equipo» y, como `org_creators`, solo se gestiona desde el SQL
+-- Editor (sin grant ni políticas: acceso cero desde el cliente). Solo
+-- añade políticas de SELECT (sección 6 y 7), así que no cambia lo que
+-- puede hacer ninguna otra cuenta.
+--   Añadir:  insert into scormeditor.global_readers (user_id)
+--              select id from auth.users where email = 'cuenta@mecohisa.com';
+--   Quitar:  delete from scormeditor.global_readers
+--              where user_id = (select id from auth.users where email = 'cuenta@mecohisa.com');
+--   Ver:     select u.email, g.created_at from scormeditor.global_readers g
+--              join auth.users u on u.id = g.user_id;
+create table scormeditor.global_readers (
+  user_id    uuid primary key references auth.users (id) on delete cascade,
+  created_at timestamptz not null default now()
+);
+alter table scormeditor.global_readers enable row level security;
+-- Sin "grant" a authenticated y sin políticas: acceso cero desde el cliente.
+
 -- -----------------------------------------------------------------------------
 -- 2. Carpetas y documentos (proyectos .scormproj)
 -- -----------------------------------------------------------------------------
@@ -204,6 +225,13 @@ create index folder_access_user_id_idx on scormeditor.folder_access (user_id);
 -- la que se está insertando, así que no tienen este problema y usan las
 -- variantes «por id» de siempre.
 -- -----------------------------------------------------------------------------
+
+-- ¿La sesión actual es un lector global? (ver `global_readers`, sección 1).
+create or replace function scormeditor.is_global_reader()
+returns boolean
+language sql security definer set search_path = '' stable as $$
+  select exists (select 1 from scormeditor.global_readers where user_id = auth.uid());
+$$;
 
 create or replace function scormeditor.is_org_member(p_org_id uuid)
 returns boolean
@@ -852,6 +880,20 @@ create policy "cada uno ve sus propias concesiones"
   on scormeditor.folder_access for select
   using (user_id = auth.uid());
 
+-- lectores globales ---------------------------------------------------------------
+-- Solo SELECT (las políticas permisivas se suman con OR: esto no quita ni
+-- da escritura a nadie). Ver `global_readers` en la sección 1.
+create policy "lector global ve las organizaciones"
+  on scormeditor.organizations for select using (scormeditor.is_global_reader());
+create policy "lector global ve las membresías"
+  on scormeditor.memberships for select using (scormeditor.is_global_reader());
+create policy "lector global ve las carpetas"
+  on scormeditor.folders for select using (scormeditor.is_global_reader());
+create policy "lector global ve los documentos"
+  on scormeditor.documents for select using (scormeditor.is_global_reader());
+create policy "lector global ve las versiones"
+  on scormeditor.document_versions for select using (scormeditor.is_global_reader());
+
 -- =============================================================================
 -- 7. Storage: bucket 'scormeditor-projects' + políticas
 --
@@ -882,6 +924,10 @@ create policy "scormeditor: acceso de edición sube el ZIP"
     bucket_id = 'scormeditor-projects'
     and scormeditor.can_edit_document(((storage.foldername(name))[2])::uuid)
   );
+
+create policy "scormeditor: lector global descarga el ZIP"
+  on storage.objects for select
+  using (bucket_id = 'scormeditor-projects' and scormeditor.is_global_reader());
 
 -- Purgar en firme sigue siendo exclusivo del owner de la organización (no
 -- es un permiso de carpeta) — sigue mirando el org_id del primer segmento.

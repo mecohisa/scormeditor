@@ -196,13 +196,20 @@ un proyecto Supabase nuevo (pegar entero) y documenta inline el porqué de las v
 «`_direct`» de `folder_role`/`document_role` (un bug real de RLS + `RETURNING` sobre la
 propia tabla, ya corregido — ver los comentarios de la sección 3 del fichero).
 
-## Consulta desde la terminal (`scripts/nube/nube.mjs`)
+## Consulta desde la terminal (`scripts/nube/nube.mjs`) y lectores globales
 Herramienta de **solo lectura** para consultar la nube sin abrir el editor: listar
 documentos y versiones, descargar una versión y comparar dos versiones (o una versión de la
-nube con un `.scormproj` local) pantalla a pantalla. Sirve para ver qué se ha cambiado a
-mano en la nube sobre un proyecto generado fuera. Entra con una cuenta propia por
-**email + contraseña** (`NUBE_EMAIL`/`NUBE_PASSWORD` en `.env`, sin prefijo `VITE_`),
-porque el enlace mágico no sirve para un proceso sin buzón. El acceso lo limita la
-cuenta: con rol `viewer`, RLS impide cualquier escritura aunque el script fallara. Además,
-el script no tiene ninguna llamada de escritura. Las descargas van a `.nube/`, que git
-ignora porque los cursos son privados.
+nube con un `.scormproj` local) pantalla a pantalla, emparejando por contenido los
+elementos de las listas para no confundir una inserción con muchos cambios. Sirve para ver
+qué se ha cambiado a mano en la nube sobre un proyecto generado fuera.
+
+Entra con una cuenta propia por **email + contraseña** (`NUBE_EMAIL`/`NUBE_PASSWORD` en
+`.env`, sin prefijo `VITE_`), porque el enlace mágico no sirve para un proceso sin buzón.
+Esa cuenta no es miembro de ninguna organización: está en `scormeditor.global_readers`, una
+tabla interna que, como `org_creators`, solo se gestiona desde el SQL Editor y no aparece
+en la app. Sus políticas son **solo de SELECT** (organizaciones, membresías, carpetas,
+documentos, versiones y ZIP del bucket). Como las políticas permisivas se suman con OR, no
+cambian lo que puede hacer ninguna otra cuenta. Se eligió así, y no la clave
+`service_role`, porque esa clave abre todo el proyecto compartido con el CRM y además
+permite escribir. Las descargas van a `.nube/`, que git ignora porque los cursos son
+privados.

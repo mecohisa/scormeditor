@@ -3,10 +3,11 @@
  * Consulta de la nube de SCORMEditor desde la terminal — SOLO LECTURA.
  *
  * Entra con una cuenta propia (email + contraseña) dada de alta a mano en
- * Supabase y con rol `viewer` en las carpetas que deba ver. La barrera real
- * es RLS en el servidor: aunque este script tuviera un fallo, una cuenta
- * `viewer` no puede subir ni borrar nada. Además, el script no contiene
- * ninguna llamada de escritura (ni insert/update/delete ni upload).
+ * Supabase e inscrita en `scormeditor.global_readers` (ver supabase/schema.sql):
+ * lee todas las organizaciones sin ser miembro de ninguna. La barrera real es
+ * RLS en el servidor: esa inscripción solo concede SELECT, así que aunque este
+ * script tuviera un fallo no podría subir ni borrar nada. Además, el script no
+ * contiene ninguna llamada de escritura (ni insert/update/delete ni upload).
  *
  * Credenciales en `.env` (nunca en el chat ni en la línea de órdenes):
  *   VITE_SUPABASE_URL, VITE_SUPABASE_ANON_KEY   (ya existen, las usa el editor)
@@ -81,12 +82,10 @@ async function contexto(sb) {
   const orgs = await q(sb.from('organizations').select('*').order('name'))
   const carpetas = await q(sb.from('folders').select('*'))
   const docs = await q(sb.from('documents').select('*').is('deleted_at', null).order('title'))
-  // Emails de los autores (solo si la cuenta puede listar miembros; si no, se muestra el id corto).
+  // Nombre de los autores: `profiles` es visible para cualquier cuenta autenticada.
   const emails = {}
-  for (const o of orgs) {
-    const { data } = await sb.rpc('list_members', { p_org_id: o.id })
-    for (const m of data ?? []) emails[m.user_id] = m.email
-  }
+  const { data: perfiles } = await sb.from('profiles').select('id, display_name')
+  for (const p of perfiles ?? []) emails[p.id] = p.display_name
   return { orgs, carpetas, docs, emails }
 }
 
@@ -164,23 +163,6 @@ function pantallas(course) {
   return out
 }
 
-/** Aplana un objeto a { 'a.b[2].c': hoja }. */
-function aplanar(obj, pre = '', out = {}) {
-  if (obj === null || typeof obj !== 'object') {
-    out[pre] = obj
-    return out
-  }
-  if (Array.isArray(obj)) {
-    if (!obj.length) out[pre] = '[]'
-    obj.forEach((v, i) => aplanar(v, `${pre}[${i}]`, out))
-    return out
-  }
-  const claves = Object.keys(obj)
-  if (!claves.length) out[pre] = '{}'
-  for (const k of claves) aplanar(obj[k], pre ? `${pre}.${k}` : k, out)
-  return out
-}
-
 /** Subsecuencia común más larga de dos listas. */
 function lcs(A, B) {
   const L = Array.from({ length: A.length + 1 }, () => new Uint16Array(B.length + 1))
@@ -223,17 +205,72 @@ const corto = (v) => {
   return s === undefined ? '(nada)' : s.length > 160 ? s.slice(0, 157) + '…' : s
 }
 
-function diffCampos(a, b, ignorar = () => false) {
-  const fa = aplanar(a)
-  const fb = aplanar(b)
-  const lineas = []
-  for (const k of [...new Set([...Object.keys(fa), ...Object.keys(fb)])].sort()) {
-    if (ignorar(k) || fa[k] === fb[k]) continue
-    const multilinea = (typeof fa[k] === 'string' && fa[k].includes('\n')) || (typeof fb[k] === 'string' && fb[k].includes('\n'))
-    lineas.push(`    · ${k}`)
-    if (multilinea) lineas.push(...diffLineas(fa[k], fb[k]))
-    else lineas.push(`      - ${corto(fa[k])}`, `      + ${corto(fb[k])}`)
+/** Parecido 0–1 entre dos valores (palabras en común); 2 si son idénticos. */
+function parecido(x, y) {
+  const sx = JSON.stringify(x)
+  const sy = JSON.stringify(y)
+  if (sx === sy) return 2
+  const pal = (s) => new Set(norm(s).match(/[a-z0-9ñ]{3,}/g) ?? [])
+  const a = pal(sx)
+  const b = pal(sy)
+  if (!a.size && !b.size) return 0
+  let comun = 0
+  for (const w of a) if (b.has(w)) comun++
+  return comun / Math.max(a.size, b.size)
+}
+
+/**
+ * Empareja los elementos de dos listas por contenido (alineación monótona que
+ * maximiza el parecido), para que insertar o quitar un elemento no haga parecer
+ * cambiados todos los de detrás. Devuelve [iA|null, iB|null] en orden.
+ */
+function alinear(A, B) {
+  const n = A.length
+  const m = B.length
+  const S = Array.from({ length: n + 1 }, () => new Float64Array(m + 1))
+  const sim = Array.from({ length: n }, (_, i) => B.map((_, j) => parecido(A[i], B[j])))
+  for (let i = n - 1; i >= 0; i--)
+    for (let j = m - 1; j >= 0; j--) {
+      const emparejar = sim[i][j] >= 0.4 ? sim[i][j] + S[i + 1][j + 1] : -1
+      S[i][j] = Math.max(S[i + 1][j], S[i][j + 1], emparejar)
+    }
+  const pares = []
+  let i = 0
+  let j = 0
+  while (i < n && j < m) {
+    if (sim[i][j] >= 0.4 && S[i][j] === sim[i][j] + S[i + 1][j + 1]) pares.push([i++, j++])
+    else if (S[i][j] === S[i + 1][j]) pares.push([i++, null])
+    else pares.push([null, j++])
   }
+  while (i < n) pares.push([i++, null])
+  while (j < m) pares.push([null, j++])
+  return pares
+}
+
+function diffValor(a, b, ruta, out) {
+  if (JSON.stringify(a) === JSON.stringify(b)) return
+  if (Array.isArray(a) && Array.isArray(b)) {
+    for (const [i, j] of alinear(a, b)) {
+      if (i !== null && j !== null) diffValor(a[i], b[j], `${ruta}[${j}]`, out)
+      else if (j !== null) out.push(`    · ${ruta}[${j}] (nuevo)`, `      + ${corto(b[j])}`)
+      else out.push(`    · ${ruta}[${i}] (quitado)`, `      - ${corto(a[i])}`)
+    }
+    return
+  }
+  const obj = (v) => v !== null && typeof v === 'object' && !Array.isArray(v)
+  if (obj(a) && obj(b)) {
+    for (const k of [...new Set([...Object.keys(a), ...Object.keys(b)])]) diffValor(a[k], b[k], ruta ? `${ruta}.${k}` : k, out)
+    return
+  }
+  out.push(`    · ${ruta}`)
+  const multilinea = (typeof a === 'string' && a.includes('\n')) || (typeof b === 'string' && b.includes('\n'))
+  if (multilinea) out.push(...diffLineas(a, b))
+  else out.push(`      - ${corto(a)}`, `      + ${corto(b)}`)
+}
+
+function diffCampos(a, b) {
+  const lineas = []
+  diffValor(a, b, '', lineas)
   return lineas
 }
 
@@ -327,7 +364,8 @@ async function main() {
     const acc = await q(sb.from('folder_access').select('folder_id, role').eq('user_id', user.id))
     const carpetas = await q(sb.from('folders').select('id, name'))
     for (const a of acc) console.log(`  carpeta «${carpetas.find((c) => c.id === a.folder_id)?.name ?? a.folder_id}»: ${a.role}`)
-    if (!mem.length) console.log('  (sin organizaciones: pide que te inviten)')
+    if (!mem.length && orgs.length) console.log(`  lector global: ve ${orgs.length} organizaciones y ${carpetas.length} carpetas (solo lectura)`)
+    else if (!mem.length) console.log('  (no ve ninguna organización: falta darla de alta en scormeditor.global_readers)')
     return
   }
 
