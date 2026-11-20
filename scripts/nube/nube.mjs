@@ -133,6 +133,47 @@ async function bajarVersion(sb, doc, v) {
   return fichero
 }
 
+/**
+ * Lee SOLO `course.json` de una versión sin bajar el ZIP entero (los proyectos
+ * con vídeo pesan decenas de MB): URL firmada + peticiones Range al directorio
+ * central del ZIP y a la entrada concreta. Devuelve el objeto ya parseado.
+ */
+async function leerCourseJson(sb, storagePath) {
+  const { data, error } = await sb.storage.from(BUCKET).createSignedUrl(storagePath, 600)
+  if (error) fallo(`No se pudo firmar ${storagePath}: ${error.message}`)
+  const url = data.signedUrl
+  const rango = async (desde, hasta) => {
+    const r = await fetch(url, { headers: { Range: hasta == null ? `bytes=${desde}` : `bytes=${desde}-${hasta}` } })
+    if (!r.ok && r.status !== 206) fallo(`HTTP ${r.status} al leer ${storagePath}`)
+    return Buffer.from(await r.arrayBuffer())
+  }
+  const cola = await rango(-65558)
+  const eocd = cola.lastIndexOf(Buffer.from([0x50, 0x4b, 0x05, 0x06]))
+  if (eocd < 0) fallo(`${storagePath}: no parece un ZIP`)
+  const cdTam = cola.readUInt32LE(eocd + 12)
+  const cdIni = cola.readUInt32LE(eocd + 16)
+  const cd = await rango(cdIni, cdIni + cdTam - 1)
+  for (let p = 0; p < cd.length && cd.readUInt32LE(p) === 0x02014b50; ) {
+    const metodo = cd.readUInt16LE(p + 10)
+    const comp = cd.readUInt32LE(p + 20)
+    const lNom = cd.readUInt16LE(p + 28)
+    const lExtra = cd.readUInt16LE(p + 30)
+    const lCom = cd.readUInt16LE(p + 32)
+    const offLocal = cd.readUInt32LE(p + 42)
+    const nombre = cd.toString('utf8', p + 46, p + 46 + lNom)
+    if (nombre === 'course.json') {
+      const cab = await rango(offLocal, offLocal + 29)
+      const ini = offLocal + 30 + cab.readUInt16LE(26) + cab.readUInt16LE(28)
+      const bruto = await rango(ini, ini + comp - 1)
+      const { inflateRawSync } = await import('node:zlib')
+      const json = metodo === 8 ? inflateRawSync(bruto) : bruto
+      return JSON.parse(json.toString('utf8'))
+    }
+    p += 46 + lNom + lExtra + lCom
+  }
+  fallo(`${storagePath}: sin course.json`)
+}
+
 async function abrirProyecto(fichero) {
   const zip = await JSZip.loadAsync(readFileSync(fichero))
   const cj = zip.file('course.json')
@@ -354,6 +395,14 @@ async function main() {
     console.log(readFileSync(fileURLToPath(import.meta.url), 'utf8').match(/Uso:\n([\s\S]*?)\*\//)[1].replace(/^ \* ?/gm, ''))
     return
   }
+  if (orden === 'comparar') {
+    // Sin conexión: compara dos ficheros locales (.scormproj o course.json).
+    const abrir = async (f) => (f.endsWith('.json') ? { course: JSON.parse(readFileSync(f, 'utf8')), assets: {} } : abrirProyecto(f))
+    if (args.length < 2) fallo('Uso: comparar <A> <B>')
+    informeDiff(await abrir(args[0]), await abrir(args[1]), args[0], args[1])
+    return
+  }
+
   const { sb, user } = await conectar()
 
   if (orden === 'yo') {
@@ -391,6 +440,41 @@ async function main() {
           console.log(`     · ${d.title}  — v${u?.version_no ?? '?'} · ${fecha(u?.created_at)} · ${quien(ctx, u?.created_by)} · ${kb(u?.size_bytes)}`)
         }
       }
+    }
+    return
+  }
+
+  if (orden === 'exportar') {
+    // Para analizar la evolución: metadatos de todas las versiones + course.json
+    // de la primera y la última de cada documento (incluidos los de BORRADOS).
+    const filtro = norm(args.join(' '))
+    const base = join(CACHE, 'analisis')
+    for (const d of ctx.docs) {
+      const carpeta = rutaCarpeta(ctx, d.folder_id)
+      if (filtro && !norm(d.title).includes(filtro) && !norm(carpeta).includes(filtro)) continue
+      const vs = await versiones(sb, d.id)
+      if (!vs.length) continue
+      const dir = join(base, d.id)
+      mkdirSync(dir, { recursive: true })
+      const meta = {
+        titulo: d.title,
+        carpeta,
+        slug: d.course_slug,
+        versiones: vs.map((v) => ({ v: v.version_no, fecha: v.created_at, autor: quien(ctx, v.created_by), kb: Math.round(v.size_bytes / 1024) })),
+      }
+      writeFileSync(join(dir, 'meta.json'), JSON.stringify(meta, null, 1))
+      // «Base» = última versión antes de la primera subida de otra persona que no
+      // sea quien sube lo generado (jarruego): lo más parecido a «lo entregado».
+      const generador = vs[0].created_by
+      const k = vs.findIndex((v) => v.created_by !== generador)
+      const baseV = k > 0 ? vs[k - 1] : vs[0]
+      meta.base = baseV.version_no
+      writeFileSync(join(dir, 'meta.json'), JSON.stringify(meta, null, 1))
+      for (const v of new Set([vs[0], baseV, vs.at(-1)])) {
+        const f = join(dir, `v${v.version_no}.json`)
+        if (!existsSync(f)) writeFileSync(f, JSON.stringify(await leerCourseJson(sb, v.storage_path)))
+      }
+      console.log(`✓ ${carpeta} · ${d.title} (v${vs[0].version_no} y v${vs.at(-1).version_no})`)
     }
     return
   }
