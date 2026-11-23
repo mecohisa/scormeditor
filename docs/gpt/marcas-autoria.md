@@ -60,6 +60,12 @@ todo este texto, tal cual, es UNA pantalla — ni se parte ni se fusiona
   entra contenido vecino no marcado dentro de él.
 - El GPT sigue redactando el `title` de esa pantalla (2-6 palabras, como siempre): la
   marca no fija el título, solo el cuerpo.
+- **Diapositiva que abre un Módulo, una Unidad o un Tema** (empieza por su encabezado y
+  sigue con su texto de presentación): se monta como **dos pantallas**, una **portada**
+  (`cover`, solo el título, con la imagen de la diapositiva si la trae) y a continuación una
+  pantalla de contenido con el mismo título y el texto. En el orden del documento: módulo →
+  unidad → tema, cada una en su nivel del árbol (la del módulo, en la introducción del
+  paquete si la unidad es el SCORM).
 - **El documento NO tiene que estar cubierto de marcas de corte.** Puede no haber
   ninguna (comportamiento 100% automático), una suelta en medio de un tema, o varias:
   cada `{{diapositiva}}` es una isla fija; todo lo que quede **fuera** de las marcas de
