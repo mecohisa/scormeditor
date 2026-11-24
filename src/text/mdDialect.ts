@@ -48,7 +48,7 @@ const RE_STRONG = /\*\*([^*]+)\*\*/g
 const RE_EM = /\*([^*]+)\*/g
 
 /** Tipos de callout predefinidos que renderiza la carcasa. */
-export const CALLOUT_TYPES = ['tip', 'info', 'warn', 'important', 'fact', 'reflect', 'case']
+export const CALLOUT_TYPES = ['tip', 'info', 'warn', 'important', 'fact', 'reflect', 'summary', 'case']
 
 // =============================================================================
 // PARSER inline: texto -> nodos text con marcas (bold/italic/link)

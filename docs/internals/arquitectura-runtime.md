@@ -139,7 +139,7 @@ Online.odt" en Google Drive; ver memoria `paleta-teleformacion`):
 
 | Color | Hex | Bloques |
 |---|---|---|
-| Turquesa | `#6DC3C0` | 💡 Consejo (`tip`), 🧠 ¿Sabías que…? (`fact`), 📌 Importante (`important`) |
+| Turquesa | `#6DC3C0` | 💡 Consejo (`tip`), 🧠 ¿Sabías que…? (`fact`), 📌 Importante (`important`), 📝 Síntesis (`summary`) |
 | Naranja | `#F4C910` | ⚠️ Atención (`warn`), 💭 Reflexiona (`reflect`); también 🧪 Caso práctico (`case`), retirado de los menús y del GPT pero que se sigue mostrando en los cursos antiguos |
 | Violeta | `#7787BF` | ℹ️ Información (`info`) |
 | Rosa | `#F4D6D2` | (color por defecto del bloque personalizado) |
@@ -148,6 +148,19 @@ Decisiones: se adoptó la paleta de 4 colores (varios bloques **comparten color*
 en la tabla original); **no** se añadieron como bloques fijos todos los elementos
 (Tablas, Actividad, Referencias, Glosario, Debate, Tests): quedan cubiertos por el
 bloque personalizado.
+
+### Marco de color de la pantalla (`screen.frame`)
+
+`frame: { color, label, icon }` (opcional) envuelve **toda** la tarjeta `.me-screen`
+(texto, recurso visual e interacción) en un borde de ese color con fondo tintado
+(`.me-screen-framed`, variable `--me-frame`) y, si hay rótulo o icono, una píldora
+`.me-frame-ribbon` arriba. Existe para que varias pantallas seguidas se lean como una
+unidad (p. ej. las diapositivas de una actividad práctica): no hay contenedor de varias
+pantallas en el modelo, así que cada una lleva su marco. El color se valida (solo hex)
+antes de ir al atributo `style`; rótulo e icono se escapan. La marca de revisión (borde
+rojo) gana si coinciden. Se edita en el fold «Marco de color» de la pantalla
+(`ScreenFrameEditor`) y el árbol muestra un punto de su color. Sin color = sin campo en
+`course.json` (pantallas y proyectos anteriores no cambian). El exportador `.elpx` lo ignora.
 
 ### Bloque personalizado
 Botón **✚ Personalizado** en la barra abre un panel con **icono, título y color**

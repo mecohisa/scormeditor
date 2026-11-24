@@ -439,7 +439,7 @@ Dosis prescrita = 15 mg/kg
 
 <!-- captura: reto | Reto numérico con el resultado escrito, listo para comprobar -->
 
-#### {{actividad_practica}}
+#### {{caso_practico}}
 
 <!-- tipo: SIN NOTA | case_practice -->
 
@@ -448,21 +448,20 @@ criterios (rúbrica) o con la solución explicada. No se corrige automáticament
 quieres dar tú los criterios, escríbelos en líneas `- ` tras la palabra `Criterios:`.
 
 ```
-{{actividad_practica}}
+{{caso_practico}}
 Revisa el extintor de tu planta y anota qué compruebas.
 Criterios:
 - Compruebas el precinto y el manómetro
 - Miras la fecha de la última revisión
 - Verificas que el acceso está despejado
-{{/actividad_practica}}
+{{/caso_practico}}
 ```
 
-<!-- captura: practico | Actividad práctica con la rúbrica de autoevaluación plegada -->
+<!-- captura: practico | Caso práctico con la rúbrica de autoevaluación plegada -->
 
-**Si la actividad ocupa varias diapositivas** (el caso, las preguntas, cómo hacerla y la
-resolución), abre `{{actividad_practica}}` al principio de la primera diapositiva y
-ciérrala al final de la última. Cada diapositiva será una pantalla «Actividad: …»; en la de las
-preguntas el alumno escribe su respuesta, y la resolución aparece después.
+Si tu actividad ocupa **varias diapositivas** (el caso, las preguntas, la resolución…),
+márcalas como diapositivas normales y envuélvelas en un `{{marco}}` (§4.3) para que se
+vean como una sola actividad.
 
 ### 3.3 Para reflexionar (abierta, sin nota)
 
@@ -471,7 +470,7 @@ preguntas el alumno escribe su respuesta, y la resolución aparece después.
 <!-- tipo: SIN NOTA | pantalla reflection -->
 
 Una pregunta abierta para pensar, sin respuesta única. Si el texto admite una respuesta
-defendible, el sistema puede convertirla en una actividad práctica con rúbrica. No la
+defendible, el sistema puede convertirla en un caso práctico con rúbrica. No la
 confundas con la caja `{{reflexiona}}` (§4.1), que solo destaca unas preguntas dentro
 del texto, sin pantalla propia ni respuesta escrita.
 
@@ -575,11 +574,11 @@ la misma diapositiva (mejor de tipos distintos) y también dentro de un
 | `{{sabias_que}}` | 🧠 ¿Sabías que…? |
 | `{{informacion}}` | ℹ️ Información |
 | `{{reflexiona}}` | 💭 Reflexiona |
-| `{{sintesis}}` | 🧠 Síntesis |
+| `{{sintesis}}` | 📝 Síntesis |
 
 No hace falta escribir dentro el título de la caja («⚠️ Importante», «💭 Reflexiona»…):
 la caja ya lo pone. Para un caso práctico con tarea no hay caja: usa
-`{{actividad_practica}}` (§3.2).
+`{{caso_practico}}` (§3.2).
 
 ```
 Un extintor portátil se descarga en pocos segundos: hay que saber usarlo
@@ -662,6 +661,37 @@ hay que hacer; el segundo, lo que hay que evitar.
 ```
 
 <!-- captura: quehacer | Qué hacer / qué evitar -->
+
+### 4.3 Marco de color: una o varias diapositivas como una unidad
+
+#### {{marco}}
+
+<!-- tipo: DESTACADO | marco de pantalla -->
+
+**Nuevo.** Envuelve **diapositivas enteras** en una caja de color, con un rótulo arriba.
+Si pones el mismo marco a varias diapositivas seguidas, el alumno las ve como una sola
+unidad: por ejemplo, una actividad práctica con el caso, las preguntas y la resolución.
+No cambia el texto ni cómo se cortan las diapositivas. Es la única marca que puede
+abarcar varias diapositivas: ábrela antes de la primera y ciérrala después de la última.
+
+Tras los dos puntos van el **rótulo**, el **color** y el **icono**, separados por `|`.
+Los tres son opcionales: sin color sale amarillo.
+
+```
+{{marco: Actividad práctica | #F4C910 | 🧪}}
+{{diapositiva}}
+Carmen vive en un centro y necesita ayuda para vestirse…
+{{/diapositiva}}
+{{diapositiva}}
+¿Qué cambiarías en la forma de atenderla?
+{{/diapositiva}}
+{{/marco}}
+```
+
+<!-- captura: marco | Diapositiva dentro de un marco «Actividad práctica» -->
+
+El marco también se puede poner, quitar o cambiar después en SCORMEditor, en la sección
+«Marco de color» de cada pantalla.
 
 ## 5. Combinar marcas
 

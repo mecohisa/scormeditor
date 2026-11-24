@@ -365,6 +365,10 @@ evaluable (§6).
 - `interaction_layout`: `"top"` | `"bottom"` (def. `"bottom"`). Posición de la
   interacción respecto al texto: encima o debajo. Las listas dentro de un `item`/`tab`
   se renderizan como lista si cada elemento va en su línea con `- `.
+- `frame` (opcional): **marco de color** que envuelve todo el contenido de la pantalla,
+  `{ "color": "#F4C910", "label": "Actividad práctica", "icon": "🧪" }` (color hex;
+  rótulo e icono opcionales). **Solo si el documento lo pide con `{{marco}}`**
+  (`marcas-autoria.md` §3 ter): por iniciativa propia no lo pongas.
 - `source_refs[]` (trazabilidad, recomendado en cada pantalla):
   `{ "doc": "...", "locator": "p.8" , "quote": "...", "transform": "resumen|reescritura|..." }`
   (solo `doc` es obligatorio).
@@ -446,10 +450,11 @@ el editor pone icono y título automáticamente):
 | `important` | 📌 Importante |
 | `fact` | 🧠 ¿Sabías que…? |
 | `reflect` | 💭 Reflexiona |
+| `summary` | 📝 Síntesis |
 | `info` | ℹ️ Información |
 
 El antiguo `case` (🧪 Caso práctico) está retirado: no lo generes. Un caso con tarea es una
-pantalla «Actividad práctica» (`case_practice`) o una decisión (`scenario_decision`).
+pantalla `case_practice` o una decisión (`scenario_decision`).
 
 - **Bloque personalizado** (cuando ninguno encaje):
   `::: custom | #color | icono | título` … `:::` (color en hex; p. ej.

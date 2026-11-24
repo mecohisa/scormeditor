@@ -202,6 +202,10 @@ function ScreenItem({ screen, containerId, issues, size, index, count, level, mo
           )}
         </span>
         <span className="ed-screen-title">{screen.title || '(sin título)'}</span>
+        {screen.frame?.color && /^#[0-9a-fA-F]{3,8}$/.test(screen.frame.color) && (
+          <span className="ed-frame-dot" style={{ background: screen.frame.color }}
+            title={'Marco de color' + (screen.frame.label ? ': ' + screen.frame.label : '')} aria-label="Con marco de color" />
+        )}
         {flagged && <span className="ed-flag" title="Pendiente de desarrollo"><Icon name="alert-triangle" size={13} /></span>}
         {screen.review.flagged && (
           <span className="ed-flag ed-flag-review" title="Pendiente de revisión: no se exporta en el paquete SCORM">

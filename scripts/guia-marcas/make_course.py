@@ -82,7 +82,7 @@ S.append(scr("decision", "Qué harías tú", "",
     options=[{"id": "a", "text": "Echar agua sobre el enchufe.", "correct": False, "feedback": "El agua conduce la electricidad."},
              {"id": "b", "text": "Dar la alarma y cortar la corriente si es seguro.", "correct": True, "feedback": "Correcto."},
              {"id": "c", "text": "Esperar a ver si se apaga solo.", "correct": False, "feedback": "Cada minuto cuenta."}])))
-S.append(scr("practico", "Actividad práctica", "",
+S.append(scr("practico", "Caso práctico", "",
   inter("practico", "case_practice", "Revisa el extintor de tu planta", "Piensa tu respuesta y compárala con los criterios.",
     {"rubric": [{"label": "Compruebas el precinto y el manómetro"}, {"label": "Miras la fecha de la última revisión"}, {"label": "Verificas que el acceso está despejado"}]}, scored=False)))
 S.append(scr("pasos", "Caso: la ducha de la mañana", "",
@@ -146,6 +146,9 @@ S.append(scr("comparativa", "Agua frente a CO2",
   "::: compare\n### Extintor de agua\n- Para sólidos: madera, papel, tejidos\n- Barato y fácil de recargar\n- Nunca sobre electricidad\n### Extintor de CO2\n- Para fuegos eléctricos\n- No deja residuo\n- Poco eficaz al aire libre\n:::"))
 S.append(scr("quehacer", "Ante el humo",
   "::: dodont\n### Qué hacer\n- Avanzar agachado, cerca del suelo\n- Tocar las puertas antes de abrirlas\n- Cerrar las puertas al salir\n### Qué evitar\n- Usar el ascensor\n- Volver a por objetos personales\n- Abrir una puerta caliente\n:::"))
+_m = scr("marco", "Actividad: Carmen y la ropa", "Carmen vive en un centro y necesita ayuda para vestirse. Puede elegir su ropa y colaborar si dispone de tiempo.\n\n**¿Qué cambiarías en la forma de atenderla?**")
+_m["frame"] = {"color": "#F4C910", "label": "Actividad práctica", "icon": "🧪"}
+S.append(_m)
 S.append(scr("combinado", "Tipos de extintor", "Los extintores se clasifican según el tipo de fuego para el que están indicados.",
   inter("combinado", "accordion", "Tipos de extintor", "Despliega cada apartado.", {"items": [
     {"title": "Extintor de agua", "body": "Fuegos de materiales sólidos (clase A): madera, papel, tejidos."},

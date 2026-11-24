@@ -63,7 +63,7 @@ const DEGRADE_REASON: Record<string, string> = {
   hidden_image: 'imagen oculta → imagen y preguntas',
   puzzle: 'puzle → imagen',
   hotspots: 'zonas activas → imagen y etiquetas',
-  case_practice: 'actividad práctica → enunciado y rúbrica',
+  case_practice: 'caso práctico → enunciado y rúbrica',
   video: 'vídeo interactivo → vídeo y preguntas',
   html_embed: 'HTML a medida → bloque HTML',
   scenario_steps: 'caso por decisiones → decisiones con sus opciones',

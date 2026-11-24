@@ -509,6 +509,7 @@ mapeo:
 | «Importante», «Recuerda», «Clave», «No olvides» | `important` |
 | «¿Sabías que…?», «Dato», «Curiosidad» | `fact` |
 | «Reflexiona», «Piensa en…», «Para reflexionar» | `reflect` |
+| «Síntesis», «En resumen», «Resumen» (caja dentro de una pantalla) | `summary` |
 | «Ejemplo», «Situación», «Supuesto» (sin tarea) | `info` |
 | Nota informativa general que no encaja arriba | `info` |
 | Una caja recurrente del documento sin equivalente (p. ej. «Glosario», «Normativa») | `custom` con icono/color |
@@ -523,7 +524,7 @@ Pautas:
   observado; si no tienes el texto de la caja, no emitas la caja (el editor lo marca
   con el aviso `CALLOUT_EMPTY`).
 - Un «Caso práctico» o «Actividad práctica» del documento (caso con tarea) va en su
-  pantalla «Actividad práctica» (`case_practice`) o, si admite una decisión, como
+  pantalla de caso práctico (`case_practice`) o, si admite una decisión, como
   `scenario_decision` (o `scenario_steps` si encadena varias). No hay callout de caso.
 - **Bloques con estructura** (`::: stats`, `::: compare`, `::: dodont`, contrato
   §4.1): cuando el fuente ya trae cifras que destacan, enfoques contrapuestos o una

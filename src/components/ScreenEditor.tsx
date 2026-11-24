@@ -16,6 +16,7 @@ import { buildTranscript, contentHash, INFORMATIVE } from '../tts/buildTranscrip
 import { confirmDialog, confirmDialogTri } from '../store/confirm'
 import type { AssetMap } from '../export/exportScorm'
 import { Icon } from './Icon'
+import { ScreenFrameEditor } from './ScreenFrameEditor'
 import { ExportScreensModal } from './ExportScreensModal'
 
 // Controles compactos con iconos (title/aria-label describen la acción) en vez de selects.
@@ -718,6 +719,10 @@ export function ScreenEditor() {
       </Fold>
 
       {audioSection}
+
+      <Fold summary={screen.frame?.color ? 'Marco de color · ' + (screen.frame.label || screen.frame.color) : 'Marco de color'}>
+        <ScreenFrameEditor frame={screen.frame} onChange={(frame) => patch({ frame })} />
+      </Fold>
 
       <Fold summary="Avanzado">
         <div className="ed-row">

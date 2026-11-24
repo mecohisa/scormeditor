@@ -25,6 +25,7 @@ const CALLOUTS: Record<string, { color: string; icon: string; label: string }> =
   important: { color: '#c2417e', icon: '📌', label: 'Importante' },
   fact: { color: '#0f9490', icon: '🧠', label: '¿Sabías que…?' },
   reflect: { color: '#7787bf', icon: '💭', label: 'Reflexiona' },
+  summary: { color: '#0f9490', icon: '📝', label: 'Síntesis' },
   case: { color: '#c2570b', icon: '🧪', label: 'Caso práctico' },
   // Bloques con estructura de la carcasa (tarjetas/columnas): en eXe van como
   // callout con su lista y encabezados, sin la maqueta.

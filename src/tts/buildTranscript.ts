@@ -79,6 +79,7 @@ const CALLOUT_LABELS: Record<string, string> = {
   important: 'Importante',
   fact: '¿Sabías que…?',
   reflect: 'Reflexiona',
+  summary: 'Síntesis',
   case: 'Caso práctico',
   stats: 'Cifras destacadas',
   compare: 'Comparativa',

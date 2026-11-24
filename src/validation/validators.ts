@@ -63,6 +63,10 @@ function checkScreen(ctx: Ctx, s: Screen, loc: string) {
   if (/^[ \t]*:::[ \t]*[\wáéíóúñ-]+[^\n]*\n(?:[ \t]*\n)*[ \t]*:::[ \t]*$/im.test(s.student_text))
     add('CALLOUT_EMPTY', 'warning', 'Callout sin contenido (`::: tipo` vacío): añade el texto de la caja o elimínala.')
 
+  // Marco de color con un valor que no es hex: la carcasa no lo pinta.
+  if (s.frame && s.frame.color && !/^#[0-9a-fA-F]{3,8}$/.test(s.frame.color))
+    add('FRAME_BAD_COLOR', 'warning', `Marco de color con un color no válido («${s.frame.color}»): usa un hex como #F4C910 o no se verá.`)
+
   const vr = s.visual_resource
   if (vr.kind === 'image' && !vr.alt.trim())
     add('IMG_NO_ALT', 'error', 'Imagen sin texto alternativo (alt).')
@@ -144,7 +148,7 @@ function checkScreen(ctx: Ctx, s: Screen, loc: string) {
     if (it.type === 'timeline' && ((it.config as any)?.milestones || []).length === 0)
       add('TL_EMPTY', 'error', 'Línea de tiempo sin hitos.')
     if (it.type === 'case_practice' && ((it.config as any)?.rubric || []).length === 0)
-      add('CP_NO_RUBRIC', 'warning', 'Actividad práctica sin rúbrica: sin criterios de autoevaluación queda solo el enunciado.')
+      add('CP_NO_RUBRIC', 'warning', 'Caso práctico sin rúbrica: sin criterios de autoevaluación queda solo el enunciado.')
     if (it.type === 'html_embed') {
       const c = (it.config as any) || {}
       if (!String(c.html || '').trim() && !String(c.js || '').trim())

@@ -159,7 +159,8 @@ en un PDF. Tabla de partida (amplíala si el rótulo no encaja):
 |---|---|
 | «Importante» | `important` |
 | «¿Sabías que…?» | `fact` |
-| «Actividad práctica» / «Caso práctico» / con tarea | sin callout: pantalla «Actividad práctica» (`case_practice`) o `reflection` en la **pantalla siguiente**, solución en `feedback.explanation` (regla de siempre) |
+| «Actividad práctica» / «Caso práctico» / con tarea | sin callout: pantalla `case_practice` o `reflection` en la **pantalla siguiente**, solución en `feedback.explanation` (regla de siempre) |
+| «Síntesis» / «En resumen» | `summary` |
 | «Reflexiona» / «Clave de reflexión» / «Resolución propuesta» | `reflect` |
 | «Consejo» | `tip` |
 | «Atención» | `warn` |

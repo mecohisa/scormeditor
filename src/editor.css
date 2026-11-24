@@ -947,3 +947,7 @@ button.ed-pill.info:hover:not(:disabled) { background: #e8f0fe; }
 .ed-export-group legend label, .ed-export-item { display: flex; align-items: center; gap: .4rem; cursor: pointer; }
 .ed-export-item { font-size: .9rem; padding: .1rem 0 .1rem 1.2rem; }
 .ed-export-list input[type="checkbox"] { width: auto; flex: none; margin: 0; }
+
+/* Punto de color en el árbol: la pantalla tiene marco de color (screen.frame). */
+.ed-frame-dot { flex: 0 0 auto; width: 10px; height: 10px; border-radius: 50%; border: 1px solid rgba(0,0,0,.25); }
+.ed-frame { display: grid; gap: .6rem; }

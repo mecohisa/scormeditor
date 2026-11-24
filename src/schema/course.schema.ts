@@ -230,6 +230,17 @@ export const Screen = z.object({
     .string()
     .optional()
     .describe('Metadato interno del editor (no autorado): huella de transcript cuando se generó audio_src por última vez. Si no coincide con transcript actual, avisa de que el audio puede estar desactualizado. Omitir al redactar course.json a mano.'),
+  /** Marco de color: la carcasa envuelve TODO el contenido de la pantalla en una caja de
+   *  ese color, con un rótulo opcional (icono + texto) arriba. Pantallas seguidas con el
+   *  mismo marco se leen como una unidad («🧪 Actividad práctica»). Opcional: las
+   *  pantallas sin marco no llevan el campo (los .scormproj anteriores no cambian). */
+  frame: z
+    .object({
+      color: z.string().default('').describe('Color hex del marco (#RRGGBB); vacío = sin marco'),
+      label: z.string().default('').describe('Rótulo opcional sobre el contenido'),
+      icon: z.string().default('').describe('Emoji opcional delante del rótulo'),
+    })
+    .optional(),
   accessibility: Accessibility.default({}),
   scorm: z
     .object({

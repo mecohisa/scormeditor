@@ -100,7 +100,7 @@ El contenido de los cursos **no se teclea a mano**: lo genera un **GPT de ChatGP
     Distinto de la herramienta determinista `scripts/moodle-import/` (mapeo literal sin
     enriquecer, ver más abajo): son dos vías paralelas para el mismo tipo de fuente.
   - `marcas-autoria.md` (jul 2026): capa **opcional y aditiva** sobre la ingesta
-    automática, con tres familias de marca `{{alias}}…{{/alias}}` (alias en español).
+    automática, con cuatro familias de marca `{{alias}}…{{/alias}}` (alias en español).
     **Marca de corte** `{{diapositiva}}`: fija el contenido EXACTO de una pantalla —
     ni se parte ni se fusiona con lo vecino, y **manda incluso sobre reglas de
     estructura** normalmente estrictas (evaluable siempre en pantalla propia,
@@ -116,9 +116,14 @@ El contenido de los cursos **no se teclea a mano**: lo genera un **GPT de ChatGP
     (opciones con `*`, comentario tras ` — `, guion `[n] Nombre: … → m` / `FINAL BUENO:`
     de la conversación, `Dato = valor` / `¿Resultado? = operación` del cálculo). **Marcas
     de destacado** (`consejo`, `atencion`, `importante`, `sabias_que`, `informacion`,
-    `cifras`, `comparativa`, `que_hacer`): el texto va literal a un callout o bloque con
-    estructura del `student_text`; no crean interacción ni cuentan para el ritmo, y
-    caben varias dentro de una `{{diapositiva}}`. La versión para autores (sin
+    `cifras`, `comparativa`, `que_hacer`, `reflexiona`, `sintesis`): el texto va literal a
+    un callout o bloque con estructura del `student_text`; no crean interacción ni cuentan
+    para el ritmo, y caben varias dentro de una `{{diapositiva}}`. **Marca de marco**
+    (`{{marco: rótulo | color | icono}}`): la única que abarca varias diapositivas; pone
+    `screen.frame` a cada pantalla que cubre para que se lean como una unidad (sustituye
+    a la antigua idea de una «actividad práctica» de varias diapositivas, que el modelo
+    no puede representar como un solo objeto). La caja `::: case` está retirada de
+    marcas y GPT (se confundía con `{{caso_practico}}` = `case_practice`). La versión para autores (sin
     tecnicismos, con capturas) es `docs/guia-marcas-para-autores.md` → `.docx`/`.pdf`
     con `scripts/guia-marcas/` (regenerar al cambiar marcas o el aspecto de un tipo).
     El GPT escanea todas antes de montar

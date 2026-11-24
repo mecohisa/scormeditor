@@ -336,8 +336,8 @@ const SECTIONS: Section[] = [
         <p>
           Tras el separador de la barra hay un botón por cada bloque estándar —{' '}
           <strong>💡 Consejo</strong>, <strong>⚠️ Atención</strong>,{' '}
-          <strong>📌 Importante</strong>, <strong>🧠 ¿Sabías que…?</strong>{' '}
-          y <strong>💭 Reflexiona</strong> — que
+          <strong>📌 Importante</strong>, <strong>🧠 ¿Sabías que…?</strong>,{' '}
+          <strong>💭 Reflexiona</strong> y <strong>📝 Síntesis</strong> — que
           inserta el bloque con su color e icono de la paleta del curso. Cada bloque
           insertado tiene un desplegable en su cabecera para cambiar de tipo (incluye
           también «ℹ️ Información») y un botón para «quitar formato» conservando el

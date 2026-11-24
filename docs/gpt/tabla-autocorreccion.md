@@ -31,6 +31,7 @@ informe de revisión.
 | `ID_DUPLICATE` | ⛔ | Dos entidades (pantalla, interacción, módulo, unidad, test o pregunta) comparten `id` | Renombra una a un `id` único: el runtime guarda el progreso y la nota por `id`, y un duplicado los corrompe | GPT |
 | `NO_OBJECTIVE` | ⚠ | Pantalla (no `cover`/`summary`/`guide`) sin `objective` | Copia **carácter a carácter** el objetivo declarado del curso que la pantalla desarrolla (no inventes uno nuevo) | GPT |
 | `SKELETON` | ⚠ | Pantalla `content_placeholder` o `status` esqueleto | Solo si el usuario pide desarrollarla: complétala desde el texto fuente. Si es un esqueleto deliberado, no tocar | Según |
+| `FRAME_BAD_COLOR` | ⚠ | `frame.color` no es un hex (`#RRGGBB`) | Pon un color hex de la paleta (p. ej. `#F4C910`) o quita el `frame` | GPT |
 | `CALLOUT_EMPTY` | ⚠ | Emitiste `::: tipo` sin cuerpo, o con la etiqueta («Importante») como cuerpo | El cuerpo es la **frase destacada del original**; si no hay texto real para la caja, elimina el callout | GPT |
 | `COVER_INTERACTION` | ⚠ | Pusiste una interacción en la portada (`cover`) | Muévela a una pantalla propia después de la portada; la portada queda solo con título/subtítulo | GPT |
 | `VIDEO_NO_MEDIA` | ⚠ | Pantalla `type:"video"` sin recurso de vídeo | Añade el `visual_resource` (`video_youtube` con el ID del fuente) o, si no hay vídeo, cambia `type` a `content` | GPT |
@@ -78,7 +79,7 @@ informe de revisión.
 | `Q_NO_FEEDBACK` | ⛔ | `feedback.correct` e `incorrect` vacíos | Escribe ambos, pedagógicos: por qué es correcta / qué repasar. Nunca un «¡Bien!» vacío | GPT |
 | `FB_NO_BLANKS` | ⛔ | `fill_blanks` sin ningún hueco en `config.text` | Marca cada respuesta correcta entre dobles corchetes `[[respuesta]]` (en `mode:"type"`, alternativas válidas con `[[a\|b]]`) | GPT |
 | `TL_EMPTY` | ⛔ | `timeline` sin hitos | Añade `config.milestones` (`label`/`title`/`body`) con el contenido del fuente, o cambia el tipo | GPT |
-| `CP_NO_RUBRIC` | ⚠ | `case_practice` («Actividad práctica») sin rúbrica | Añade `config.rubric` con criterios de autoevaluación verificables | GPT |
+| `CP_NO_RUBRIC` | ⚠ | `case_practice` sin rúbrica | Añade `config.rubric` con criterios de autoevaluación verificables | GPT |
 | `FC_EMPTY` | ⛔ | `flashcards` sin tarjetas | Añade `config.cards` (`front`/`back`) con conceptos del tema, o elimina la interacción | GPT |
 | `FC_SCORED` | ⚠ | `flashcards` con `scored:true` | Pon `scored:false`: es autoevaluación de repaso | GPT |
 | `IC_EMPTY` | ⛔ | `image_cards` sin tarjetas | Añade las `cards` (`alt`, `title`, `text`); `image` vacío + `editor_note` describiendo cada imagen | GPT |

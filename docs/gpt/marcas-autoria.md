@@ -8,7 +8,7 @@ del resto del documento. Si el documento no trae ninguna marca, el comportamient
 **exactamente el actual**: todo se decide con el criterio automático de
 `guia-diseno-interacciones.md`.
 
-Hay **tres familias** de marca, con sintaxis idéntica pero función distinta:
+Hay **cuatro familias** de marca, con sintaxis idéntica pero función distinta:
 
 - **Marca de corte** (`{{diapositiva}}…{{/diapositiva}}`, §2): fija el **contenido
   exacto de una pantalla**. El autor decide dónde empieza y acaba, y el GPT no puede
@@ -20,6 +20,8 @@ Hay **tres familias** de marca, con sintaxis idéntica pero función distinta:
 - **Marcas de destacado** (`{{consejo}}`, `{{cifras}}`, `{{que_hacer}}`… §3 bis): fijan
   que un trozo de texto vaya, **literal**, en un callout o bloque con estructura
   (contrato §4.1) dentro del `student_text`. No crean interacción ni fijan límites.
+- **Marca de marco** (`{{marco: rótulo}}`, §3 ter): envuelve una o varias pantallas en un
+  marco de color para que se lean como una unidad.
 
 ## 1. Sintaxis común
 
@@ -40,7 +42,7 @@ texto del bloque
 - Alias no reconocido o con typo: intenta el match más cercano (¿es `diapositiva` o es
   de la tabla de interactividad, §3?); si no hay ninguno razonable, trátalo como
   `{{interactividad}}` genérica y anota el alias original tal cual apareció en
-  `editor_notes`. Un `{{caso_practico}}` de un documento antiguo es `{{actividad_practica}}`.
+  `editor_notes`.
 - Dentro de la marca vale exactamente el mismo markdown ligero que en cualquier otro
   bloque de origen (negrita, enlaces, listas): no cambia nada de la Regla Nº1.
 - Reglas de anidamiento entre familias: ver §4.
@@ -107,7 +109,7 @@ todo este texto, tal cual, es UNA pantalla — ni se parte ni se fusiona
 | `clasificar` | `classification` |
 | `ordenar` | `sort_steps` |
 | `decision` | `scenario_decision` |
-| `actividad_practica` | `case_practice`: pantalla «Actividad práctica» (si abarca varias diapositivas, ver §4) |
+| `caso_practico` | `case_practice` |
 | `caso_decisiones` | `scenario_steps` |
 | `conversacion` | `decision_tree` |
 | `reto_numerico` | `calculator` con `mode: "challenge"` |
@@ -171,7 +173,7 @@ la pantalla (salvo que esté dentro de una `{{diapositiva}}`).
 | `comparativa` | `::: compare` (2-3 encabezados `### `, uno por columna) |
 | `que_hacer` | `::: dodont` (dos `### `: qué hacer y qué evitar) |
 | `reflexiona` | `::: reflect` (caja 💭 Reflexiona: preguntas para pensar, sin respuesta escrita) |
-| `sintesis` | `::: custom \| #6DC3C0 \| 🧠 \| Síntesis` |
+| `sintesis` | `::: summary` (caja 📝 Síntesis) |
 
 - Si al bloque le falta la estructura que su tipo espera (`cifras` sin lista,
   `comparativa`/`que_hacer` sin sus `### `), dásela **sin cambiar el texto**: convierte
@@ -184,8 +186,31 @@ la pantalla (salvo que esté dentro de una `{{diapositiva}}`).
 - Si el bloque empieza por una línea de cabecera con emoji que repite el nombre de la caja
   («⚠️ Importante», «💭 Reflexiona», «🧠 Síntesis»), quítala: la caja ya trae icono y título.
 - No confundir `{{reflexiona}}` (caja dentro del texto) con `{{reflexion}}` (§3: pantalla
-  `reflection` en la que la persona escribe su respuesta). No hay caja de «caso práctico»:
-  un caso con tarea es `{{actividad_practica}}`.
+  `reflection` en la que la persona escribe su respuesta). No hay caja de «caso práctico»
+  (el antiguo `::: case` está retirado: no lo generes): un caso con tarea es la pantalla
+  `{{caso_practico}}` (§3).
+
+## 3 ter. Marca de marco: varias pantallas como una unidad
+
+```
+{{marco: Actividad práctica | #F4C910 | 🧪}}
+{{diapositiva}} … {{/diapositiva}}
+{{diapositiva}} … {{/diapositiva}}
+{{/marco}}
+```
+
+- Pone el **marco de color** (`frame`, contrato §4) a **cada pantalla** que salga del texto
+  que envuelve: la carcasa rodea todo su contenido con una caja de ese color y el rótulo
+  arriba, de modo que varias pantallas seguidas se leen como una sola unidad.
+- Tras los dos puntos: `rótulo | color | icono`, los tres opcionales (`{{marco}}` a secas
+  vale). Color por defecto `#F4C910`; rótulo e icono vacíos = solo el color.
+  → `"frame": { "color": "#F4C910", "label": "Actividad práctica", "icon": "🧪" }`.
+- Es la única marca que **puede abarcar varias `{{diapositiva}}`** y contener marcas de
+  cualquier familia. No cambia el corte, el texto ni las interacciones: solo añade el
+  marco. Se abre y se cierra fuera de las diapositivas (o al principio de la primera y al
+  final de la última); si queda a medias, aplícalo a las pantallas completas que cubre y
+  anótalo en `editor_notes`.
+- Sin marca, no pongas `frame`: es una decisión del autor.
 
 ## 4. Anidamiento entre las familias
 
@@ -220,13 +245,8 @@ la pantalla (salvo que esté dentro de una `{{diapositiva}}`).
   (una pantalla no cabe dentro de una interacción): si aparece, ignora esos
   delimitadores como texto literal dentro de la interactividad y anótalo en
   `editor_notes`.
-- **Excepción: `{{actividad_practica}}` puede abarcar varias `{{diapositiva}}`** (caso →
-  preguntas «Reflexiona y responde» → «¿Cómo realizo esta actividad?» → «Resolución
-  propuesta»). Entonces no es una interacción: cada diapositiva es su pantalla, todas
-  tituladas «Actividad: <nombre breve>»; la de las preguntas es una pantalla `reflection`
-  (la persona escribe su respuesta, sin nota) con «¿Cómo realizo esta actividad?» como
-  `::: info` en esa misma pantalla, y la resolución va en las pantallas siguientes.
-  Dentro de una sola diapositiva es la pantalla `case_practice` de §3.
+- **`{{marco}}` (§3 ter) envuelve** una o varias `{{diapositiva}}` y lo que contengan; no
+  va dentro de una diapositiva ni de una marca de interactividad.
 - **`{{diapositiva}}` no se anida dentro de otra `{{diapositiva}}`**: si aparece,
   la interior se ignora como texto literal (queda dentro de la exterior) y se anota.
 - **`{{diapositiva}}` puede contener varias marcas de destacado** (además de, como
@@ -283,8 +303,7 @@ reconocible, el GPT lo usa **literal** en vez de inventarlo:
   `feedback`). Respeta textos y grafo tal cual; si el guion tiene un ciclo, un `→` a un
   número inexistente o ningún final bueno, corrige lo mínimo y anótalo. Sin guion, el
   GPT monta el árbol (contrato §6) a partir del diálogo o la situación marcada.
-- `{{actividad_practica}}` (en una sola diapositiva): líneas `- ` tras `Criterios:` →
-  `config.rubric` (`label`).
+- `{{caso_practico}}`: líneas `- ` tras `Criterios:` → `config.rubric` (`label`).
 - `{{sopa_letras}}`: una palabra por línea → `config.words`. `{{crucigrama}}`: líneas
   `PALABRA → pista` → `config.entries`. `{{rosco}}`: líneas `Respuesta → pista` →
   `config.items` (`answer`/`clue`).

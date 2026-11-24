@@ -14,7 +14,7 @@
   // Markdown ligero y SEGURO -> HTML. Soporta:
   //   ## / ### encabezados, **negrita**, *cursiva*, [texto](url),
   //   listas con "- ", listas numeradas con "1. ",
-  //   bloques destacados:  ::: tip|warn|important|info ... :::
+  //   bloques destacados:  ::: tip|warn|important|fact|reflect|summary|info ... :::
   // Todo el texto pasa por inline()/rich() que escapa antes de aplicar formato.
   // Colores alineados con la paleta corporativa de teleformación:
   //   #6DC3C0 turquesa · #F4C910 naranja · #F4D6D2 rosa · #7787BF violeta.
@@ -25,6 +25,8 @@
     important: { cls: 'me-callout-important', icon: '📌', label: 'Importante' },
     fact:      { cls: 'me-callout-fact',      icon: '🧠', label: '¿Sabías que…?' },
     reflect:   { cls: 'me-callout-reflect',   icon: '💭', label: 'Reflexiona' },
+    summary:   { cls: 'me-callout-summary',   icon: '📝', label: 'Síntesis' },
+    // Retirado de los menús y del GPT; se sigue pintando en los cursos que lo tienen.
     case:      { cls: 'me-callout-case',      icon: '🧪', label: 'Caso práctico' },
     // Bloques con estructura (ver renderStats/renderColumns): solo se pintan
     // así, como callout, si les falta la estructura que necesitan.
@@ -535,9 +537,18 @@
           cparts.join('<span class="me-crumb-sep" aria-hidden="true">›</span>') + '</p>';
       }
     }
+    // Marco de color (screen.frame): el color se valida (solo hex) antes de ir al
+    // atributo style; rótulo e icono se escapan como el resto del texto.
+    var fr = screen.frame || {};
+    var frameColor = /^#[0-9a-fA-F]{3,8}$/.test(fr.color || '') ? fr.color : '';
+    var frameRibbon = frameColor && (fr.label || fr.icon)
+      ? '<p class="me-frame-ribbon">' + (fr.icon ? '<span aria-hidden="true">' + esc(fr.icon) + '</span>' : '') +
+        esc(fr.label || '') + '</p>'
+      : '';
     container.innerHTML = '<article class="me-screen me-screen-' + esc(screen.type) +
-      (isScored ? ' me-screen-scored' : '') + (reviewFlagged ? ' me-screen-review' : '') + '">' +
-      reviewBanner + crumb + narrationBlock(screen) + html +
+      (isScored ? ' me-screen-scored' : '') + (reviewFlagged ? ' me-screen-review' : '') +
+      (frameColor ? ' me-screen-framed" style="--me-frame:' + frameColor : '') + '">' +
+      reviewBanner + frameRibbon + crumb + narrationBlock(screen) + html +
       (screen.interaction ? '<section class="me-interaction" aria-label="Actividad"></section>' : '') + '</article>';
 
     // Icono + «Actividad: » delante del título de la pantalla evaluable, y la

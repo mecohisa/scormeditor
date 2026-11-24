@@ -1,6 +1,6 @@
 /* =============================================================================
  * CalloutNode — nodo TipTap para los bloques destacados "::: tipo … :::".
- * attrs: ctype (tip|info|warn|important|fact|reflect|case|custom), color, icon,
+ * attrs: ctype (tip|info|warn|important|fact|reflect|summary|case|custom), color, icon,
  * title (los tres últimos solo aplican a "custom"). Contenido: bloque (párrafos,
  * listas, encabezados, imágenes — nunca otro callout, igual que la carcasa no
  * anida ::: dentro de :::).

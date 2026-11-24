@@ -169,6 +169,24 @@ body {
    Solo se ve en Vista estudiante: nunca llega al paquete SCORM exportado
    (excepción deliberada a la invariante «Vista estudiante = export», ver
    CLAUDE.md). */
+/* Marco de color de la pantalla (screen.frame, ver renderer.js): envuelve TODO su
+   contenido (texto, recurso visual e interacción) en una caja de ese color, con un
+   rótulo opcional arriba. Sirve para que el alumno vea varias pantallas seguidas con
+   el mismo marco como una sola unidad (p. ej. «🧪 Actividad práctica»). Va antes de
+   .me-screen-review para que la marca de revisión (roja) gane si coinciden. */
+.me-screen-framed {
+  border: 4px solid var(--me-frame);
+  background: color-mix(in srgb, var(--me-frame) 7%, var(--me-surface));
+}
+.me-frame-ribbon {
+  display: inline-flex; align-items: center; gap: .45rem;
+  margin: 0 0 1rem; padding: .3rem .85rem; border-radius: 99px;
+  font-size: .85rem; font-weight: 700; letter-spacing: .02em;
+  background: color-mix(in srgb, var(--me-frame) 32%, white); color: var(--me-text);
+}
+/* Con rótulo, la banda a sangre de una portada (márgenes negativos) no sube hasta el borde:
+   queda debajo del rótulo en vez de taparlo. */
+.me-frame-ribbon ~ .me-module-cover, .me-frame-ribbon ~ .me-course-cover { margin-top: 0; border-radius: 10px; }
 .me-screen-review { border: 4px solid var(--me-error); }
 .me-review-banner {
   margin: -1.75rem -2rem 1.5rem; padding: .75rem 2rem;
@@ -289,6 +307,7 @@ body {
 .me-callout-important { border-left-color: #6dc3c0; background: color-mix(in srgb, #6dc3c0 18%, white); }
 .me-callout-warn { border-left-color: #f4c910; background: color-mix(in srgb, #f4c910 22%, white); }
 .me-callout-reflect { border-left-color: #f4c910; background: color-mix(in srgb, #f4c910 22%, white); }
+.me-callout-summary { border-left-color: #6dc3c0; background: color-mix(in srgb, #6dc3c0 18%, white); }
 .me-callout-case { border-left-color: #f4c910; background: color-mix(in srgb, #f4c910 22%, white); }
 .me-callout-info { border-left-color: #7787bf; background: color-mix(in srgb, #7787bf 16%, white); }
 /* Bloques con estructura (renderer.js: ::: stats | compare | dodont) */
