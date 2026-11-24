@@ -48,7 +48,7 @@ export function ScreenFrameEditor({ frame, onChange }: { frame: Screen['frame'];
           <IconPicker value={f.icon} onChange={(icon) => set({ icon })} open={showIcons} onOpenChange={setShowIcons} />
           <label className="ed-field">
             <span>Rótulo (opcional)</span>
-            <input value={f.label} placeholder="p. ej. Actividad práctica" onChange={(e) => set({ label: e.target.value })} />
+            <input value={f.label} placeholder="p. ej. Caso práctico" onChange={(e) => set({ label: e.target.value })} />
           </label>
         </div>
       )}

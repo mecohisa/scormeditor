@@ -147,7 +147,7 @@ S.append(scr("comparativa", "Agua frente a CO2",
 S.append(scr("quehacer", "Ante el humo",
   "::: dodont\n### Qué hacer\n- Avanzar agachado, cerca del suelo\n- Tocar las puertas antes de abrirlas\n- Cerrar las puertas al salir\n### Qué evitar\n- Usar el ascensor\n- Volver a por objetos personales\n- Abrir una puerta caliente\n:::"))
 _m = scr("marco", "Actividad: Carmen y la ropa", "Carmen vive en un centro y necesita ayuda para vestirse. Puede elegir su ropa y colaborar si dispone de tiempo.\n\n**¿Qué cambiarías en la forma de atenderla?**")
-_m["frame"] = {"color": "#F4C910", "label": "Actividad práctica", "icon": "🧪"}
+_m["frame"] = {"color": "#F4C910", "label": "Caso práctico", "icon": "🧪"}
 S.append(_m)
 S.append(scr("combinado", "Tipos de extintor", "Los extintores se clasifican según el tipo de fuego para el que están indicados.",
   inter("combinado", "accordion", "Tipos de extintor", "Despliega cada apartado.", {"items": [

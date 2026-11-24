@@ -557,7 +557,7 @@ export const sampleCourse: Course = {
               "id": "s106",
               "type": "reflection",
               "title": "Reflexiona: ¿qué tipo usarías tú?",
-              "frame": { "color": "#F4C910", "icon": "🧪", "label": "Actividad práctica" },
+              "frame": { "color": "#F4C910", "icon": "🧪", "label": "Caso práctico" },
               "objective": "Reconocer los tipos de pantalla del editor y cuándo usar cada uno.",
               "student_text": "Esta es una pantalla de tipo **Reflexión**: no se corrige automáticamente, es para pensar (o responder en papel o en el foro del campus).\n\nAdemás lleva un **marco de color** (sección «Marco de color» de la pantalla): envuelve todo su contenido en una caja con rótulo y sirve para que varias pantallas seguidas se lean como una sola unidad.",
               "source_refs": [],

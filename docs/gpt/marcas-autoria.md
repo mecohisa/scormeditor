@@ -193,7 +193,7 @@ la pantalla (salvo que esté dentro de una `{{diapositiva}}`).
 ## 3 ter. Marca de marco: varias pantallas como una unidad
 
 ```
-{{marco: actividad_practica}}
+{{marco: caso_practico}}
 {{diapositiva}} … {{/diapositiva}}
 {{diapositiva}} … {{/diapositiva}}
 {{/marco}}
@@ -204,7 +204,7 @@ atajos del editor). Úsalos siempre que encajen:
 
 | Escribe | `frame` |
 |---|---|
-| `{{marco: actividad_practica}}` | `{ "color": "#F4C910", "icon": "🧪", "label": "Actividad práctica" }` |
+| `{{marco: caso_practico}}` | `{ "color": "#F4C910", "icon": "🧪", "label": "Caso práctico" }` |
 | `{{marco: sintesis}}` | `{ "color": "#6DC3C0", "icon": "📝", "label": "Síntesis" }` |
 | `{{marco: reflexiona}}` | `{ "color": "#F4C910", "icon": "💭", "label": "Reflexiona" }` |
 
@@ -215,7 +215,7 @@ Marco a medida: `{{marco: rótulo | color | icono}}`, p. ej.
   que envuelve: la carcasa rodea todo su contenido con una caja de ese color y el rótulo
   arriba, de modo que varias pantallas seguidas se leen como una sola unidad.
 - Tras los dos puntos: una **clave predefinida** de la tabla (sin distinguir mayúsculas,
-  con o sin tilde ni guion bajo: «Actividad práctica» también vale) o, si no coincide con
+  con o sin tilde ni guion bajo: «Caso práctico» también vale) o, si no coincide con
   ninguna, `rótulo | color | icono`, los tres opcionales (`{{marco}}` a secas vale). Color
   por defecto `#F4C910`; rótulo e icono vacíos = solo el color.
 - Es la única marca que **puede abarcar varias `{{diapositiva}}`** y contener marcas de

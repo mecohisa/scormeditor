@@ -119,7 +119,7 @@ El contenido de los cursos **no se teclea a mano**: lo genera un **GPT de ChatGP
     `cifras`, `comparativa`, `que_hacer`, `reflexiona`, `sintesis`): el texto va literal a
     un callout o bloque con estructura del `student_text`; no crean interacción ni cuentan
     para el ritmo, y caben varias dentro de una `{{diapositiva}}`. **Marca de marco**
-    (`{{marco: actividad_practica}}` y demás predefinidos de `schema/framePresets.ts`, o
+    (`{{marco: caso_practico}}` y demás predefinidos de `schema/framePresets.ts`, o
     `{{marco: rótulo | color | icono}}`): la única que abarca varias diapositivas; pone
     `screen.frame` a cada pantalla que cubre para que se lean como una unidad (sustituye
     a la antigua idea de una «actividad práctica» de varias diapositivas, que el modelo

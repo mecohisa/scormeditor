@@ -173,7 +173,7 @@ body {
    tarjeta (.me-frame) que envuelve todo el contenido —rótulo, título, texto, recurso
    visual e interacción— debajo de la miga de pan y dentro de los márgenes de la
    diapositiva. Sirve para que el alumno vea varias pantallas seguidas con el mismo
-   marco como una sola unidad (p. ej. «🧪 Actividad práctica»). */
+   marco como una sola unidad (p. ej. «🧪 Caso práctico»). */
 .me-frame {
   border: 3px solid var(--me-frame); border-radius: 10px;
   background: color-mix(in srgb, var(--me-frame) 7%, var(--me-surface));

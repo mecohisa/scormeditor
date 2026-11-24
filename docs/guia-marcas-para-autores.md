@@ -681,7 +681,7 @@ escribir su nombre.
 
 | Escribe esto | Se ve como |
 |---|---|
-| `{{marco: actividad_practica}}` | 🧪 Actividad práctica (amarillo) |
+| `{{marco: caso_practico}}` | 🧪 Caso práctico (amarillo) |
 | `{{marco: sintesis}}` | 📝 Síntesis (turquesa) |
 | `{{marco: reflexiona}}` | 💭 Reflexiona (amarillo) |
 
@@ -690,7 +690,7 @@ separados por `|`, por ejemplo `{{marco: Caso real | #7787BF | 📋}}`. Los tres
 opcionales: sin color sale amarillo.
 
 ```
-{{marco: actividad_practica}}
+{{marco: caso_practico}}
 {{diapositiva}}
 Carmen vive en un centro y necesita ayuda para vestirse…
 {{/diapositiva}}
@@ -700,7 +700,7 @@ Carmen vive en un centro y necesita ayuda para vestirse…
 {{/marco}}
 ```
 
-<!-- captura: marco | Diapositiva dentro de un marco «Actividad práctica» -->
+<!-- captura: marco | Diapositiva dentro de un marco «Caso práctico» -->
 
 El marco también se puede poner, quitar o cambiar después en SCORMEditor, en la sección
 «Marco de color» de cada pantalla, donde los marcos predefinidos son botones de un clic.

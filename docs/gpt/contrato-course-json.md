@@ -366,7 +366,7 @@ evaluable (§6).
   interacción respecto al texto: encima o debajo. Las listas dentro de un `item`/`tab`
   se renderizan como lista si cada elemento va en su línea con `- `.
 - `frame` (opcional): **marco de color** que envuelve todo el contenido de la pantalla,
-  `{ "color": "#F4C910", "label": "Actividad práctica", "icon": "🧪" }` (color hex;
+  `{ "color": "#F4C910", "label": "Caso práctico", "icon": "🧪" }` (color hex;
   rótulo e icono opcionales). **Solo si el documento lo pide con `{{marco}}`**
   (`marcas-autoria.md` §3 ter): por iniciativa propia no lo pongas.
 - `source_refs[]` (trazabilidad, recomendado en cada pantalla):
