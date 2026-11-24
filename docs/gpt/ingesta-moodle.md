@@ -161,6 +161,7 @@ en un PDF. Tabla de partida (amplíala si el rótulo no encaja):
 | «¿Sabías que…?» | `fact` |
 | «Actividad práctica» / «Caso práctico» / con tarea | sin callout: pantalla `case_practice` o `reflection` en la **pantalla siguiente**, solución en `feedback.explanation` (regla de siempre) |
 | «Síntesis» / «En resumen» | `summary` |
+| «Caso» / «Ejemplo» (sin tarea) | `case` |
 | «Reflexiona» / «Clave de reflexión» / «Resolución propuesta» | `reflect` |
 | «Consejo» | `tip` |
 | «Atención» | `warn` |

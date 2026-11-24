@@ -451,10 +451,12 @@ el editor pone icono y título automáticamente):
 | `fact` | 🧠 ¿Sabías que…? |
 | `reflect` | 💭 Reflexiona |
 | `summary` | 📝 Síntesis |
+| `case` | 🧪 Caso práctico |
 | `info` | ℹ️ Información |
 
-El antiguo `case` (🧪 Caso práctico) está retirado: no lo generes. Un caso con tarea es una
-pantalla `case_practice` o una decisión (`scenario_decision`).
+`case` es una **caja dentro del texto** para un caso o situación que ilustra el contenido.
+Un caso con tarea que la persona debe resolver va en su pantalla `case_practice` (o
+`scenario_decision`), no en esta caja.
 
 - **Bloque personalizado** (cuando ninguno encaje):
   `::: custom | #color | icono | título` … `:::` (color en hex; p. ej.

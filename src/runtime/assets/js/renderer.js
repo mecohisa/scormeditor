@@ -26,7 +26,6 @@
     fact:      { cls: 'me-callout-fact',      icon: '🧠', label: '¿Sabías que…?' },
     reflect:   { cls: 'me-callout-reflect',   icon: '💭', label: 'Reflexiona' },
     summary:   { cls: 'me-callout-summary',   icon: '📝', label: 'Síntesis' },
-    // Retirado de los menús y del GPT; se sigue pintando en los cursos que lo tienen.
     case:      { cls: 'me-callout-case',      icon: '🧪', label: 'Caso práctico' },
     // Bloques con estructura (ver renderStats/renderColumns): solo se pintan
     // así, como callout, si les falta la estructura que necesitan.

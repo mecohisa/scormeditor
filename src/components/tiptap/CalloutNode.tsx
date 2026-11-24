@@ -94,7 +94,6 @@ function CalloutView({ node, updateAttributes, editor, getPos }: NodeViewProps) 
         <div className="ed-callout-controls">
           <select value={selectValue} onChange={(e) => onSelectChange(e.target.value)} title="Cambiar el tipo del bloque">
             <optgroup label="Estándar">
-              {selectValue === 'case' && <option value="case">🧪 Caso práctico (retirado)</option>}
               {CALLOUT_ORDER.map((t) => (
                 <option key={t} value={t}>{`${CALLOUT_META[t].icon} ${CALLOUT_META[t].label}`}</option>
               ))}

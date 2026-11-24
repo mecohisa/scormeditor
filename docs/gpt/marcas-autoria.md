@@ -174,6 +174,7 @@ la pantalla (salvo que esté dentro de una `{{diapositiva}}`).
 | `que_hacer` | `::: dodont` (dos `### `: qué hacer y qué evitar) |
 | `reflexiona` | `::: reflect` (caja 💭 Reflexiona: preguntas para pensar, sin respuesta escrita) |
 | `sintesis` | `::: summary` (caja 📝 Síntesis) |
+| `caso` | `::: case` (caja 🧪 Caso práctico: un caso o situación dentro del texto) |
 
 - Si al bloque le falta la estructura que su tipo espera (`cifras` sin lista,
   `comparativa`/`que_hacer` sin sus `### `), dásela **sin cambiar el texto**: convierte
@@ -186,9 +187,8 @@ la pantalla (salvo que esté dentro de una `{{diapositiva}}`).
 - Si el bloque empieza por una línea de cabecera con emoji que repite el nombre de la caja
   («⚠️ Importante», «💭 Reflexiona», «🧠 Síntesis»), quítala: la caja ya trae icono y título.
 - No confundir `{{reflexiona}}` (caja dentro del texto) con `{{reflexion}}` (§3: pantalla
-  `reflection` en la que la persona escribe su respuesta). No hay caja de «caso práctico»
-  (el antiguo `::: case` está retirado: no lo generes): un caso con tarea es la pantalla
-  `{{caso_practico}}` (§3).
+  `reflection` en la que la persona escribe su respuesta), ni `{{caso}}` (caja 🧪 dentro del
+  texto) con `{{caso_practico}}` (§3: pantalla con enunciado y rúbrica de autoevaluación).
 
 ## 3 ter. Marca de marco: varias pantallas como una unidad
 

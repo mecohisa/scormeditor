@@ -123,8 +123,8 @@ El contenido de los cursos **no se teclea a mano**: lo genera un **GPT de ChatGP
     `{{marco: rótulo | color | icono}}`): la única que abarca varias diapositivas; pone
     `screen.frame` a cada pantalla que cubre para que se lean como una unidad (sustituye
     a la antigua idea de una «actividad práctica» de varias diapositivas, que el modelo
-    no puede representar como un solo objeto). La caja `::: case` está retirada de
-    marcas y GPT (se confundía con `{{caso_practico}}` = `case_practice`). La versión para autores (sin
+    no puede representar como un solo objeto). La caja `::: case` tiene su propia marca,
+    `{{caso}}`, distinta de `{{caso_practico}}` (= pantalla `case_practice` con rúbrica). La versión para autores (sin
     tecnicismos, con capturas) es `docs/guia-marcas-para-autores.md` → `.docx`/`.pdf`
     con `scripts/guia-marcas/` (regenerar al cambiar marcas o el aspecto de un tipo).
     El GPT escanea todas antes de montar

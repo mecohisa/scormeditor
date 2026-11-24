@@ -378,7 +378,7 @@ export const sampleCourse: Course = {
               "type": "content",
               "title": "Texto con formato: negrita, listas, enlaces y bloques",
               "objective": "Reconocer los tipos de pantalla del editor y cuándo usar cada uno.",
-              "student_text": "Esta es una pantalla de tipo **Contenido**, la más habitual del editor. El texto admite formato ligero, sin HTML:\n\n- **Negrita** con doble asterisco y *cursiva* con uno solo.\n- Listas con guiones, como esta.\n1. También listas numeradas.\n2. Conservan el número que escribas.\n\nPuedes enlazar a un recurso externo, como la [especificación SCORM](https://scorm.com/scorm-explained/technical-scorm/run-time/), y también insertar una imagen en línea con `![alt](assets/imagen.png)` (aquí no se usa ninguna porque este curso de fábrica no lleva imágenes propias en el proyecto, solo recursos visuales).\n\n::: tip\n💡 Este es un bloque **Consejo**. Hay siete bloques destacados con icono y color fijos (Consejo, Atención, Importante, ¿Sabías que…?, Reflexiona, Síntesis e Información) más uno **Personalizado**, como el de abajo.\n:::\n\n::: custom | #7787bf | 🧩 | Bloque personalizado\nIcono, color y título libres — y se puede guardar como preset para reutilizarlo en otras pantallas.\n:::",
+              "student_text": "Esta es una pantalla de tipo **Contenido**, la más habitual del editor. El texto admite formato ligero, sin HTML:\n\n- **Negrita** con doble asterisco y *cursiva* con uno solo.\n- Listas con guiones, como esta.\n1. También listas numeradas.\n2. Conservan el número que escribas.\n\nPuedes enlazar a un recurso externo, como la [especificación SCORM](https://scorm.com/scorm-explained/technical-scorm/run-time/), y también insertar una imagen en línea con `![alt](assets/imagen.png)` (aquí no se usa ninguna porque este curso de fábrica no lleva imágenes propias en el proyecto, solo recursos visuales).\n\n::: tip\n💡 Este es un bloque **Consejo**. Hay ocho bloques destacados con icono y color fijos (Consejo, Atención, Importante, ¿Sabías que…?, Reflexiona, Síntesis, Caso práctico e Información) más uno **Personalizado**, como el de abajo.\n:::\n\n::: custom | #7787bf | 🧩 | Bloque personalizado\nIcono, color y título libres — y se puede guardar como preset para reutilizarlo en otras pantallas.\n:::",
               "source_refs": [],
               "visual_resource": {
                 "kind": "none",
@@ -866,7 +866,7 @@ export const sampleCourse: Course = {
                       "body": "Comparten el turquesa corporativo (#6DC3C0)."
                     },
                     {
-                      "title": "⚠️ Atención · 💭 Reflexiona",
+                      "title": "⚠️ Atención · 💭 Reflexiona · 🧪 Caso práctico",
                       "body": "Comparten el naranja corporativo (#F4C910)."
                     },
                     {

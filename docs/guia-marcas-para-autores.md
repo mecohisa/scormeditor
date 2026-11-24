@@ -575,10 +575,12 @@ la misma diapositiva (mejor de tipos distintos) y también dentro de un
 | `{{informacion}}` | ℹ️ Información |
 | `{{reflexiona}}` | 💭 Reflexiona |
 | `{{sintesis}}` | 📝 Síntesis |
+| `{{caso}}` | 🧪 Caso práctico |
 
 No hace falta escribir dentro el título de la caja («⚠️ Importante», «💭 Reflexiona»…):
-la caja ya lo pone. Para un caso práctico con tarea no hay caja: usa
-`{{caso_practico}}` (§3.2).
+la caja ya lo pone. `{{caso}}` es una caja para contar un caso dentro del texto; si el
+alumno tiene que resolverlo y autoevaluarse con unos criterios, usa `{{caso_practico}}`
+(§3.2).
 
 ```
 Un extintor portátil se descarga en pocos segundos: hay que saber usarlo
