@@ -294,9 +294,9 @@ export const sampleCourse: Course = {
             {
               "id": "s102",
               "type": "objectives",
-              "title": "Qué vas a repasar",
+              "title": "Objetivos de la unidad",
               "objective": "Reconocer los tipos de pantalla del editor y cuándo usar cada uno.",
-              "student_text": "Al terminar este recorrido habrás visto, en la práctica:\n- Los **diez tipos de pantalla** del editor y para qué sirve cada uno.\n- Las **23 interacciones** disponibles, agrupadas por lo que hace el alumno.\n- Cómo se editan el **test final**, el **glosario** y la **bibliografía**.\n\nNo hace falta leer nada en otro sitio: cada pantalla explica su propio tipo mientras la recorres.",
+              "student_text": "Al terminar este recorrido habrás visto, en la práctica:\n- Los **once tipos de pantalla** del editor y para qué sirve cada uno.\n- Las **26 interacciones** disponibles, agrupadas por lo que hace el alumno.\n- Las **cajas destacadas** y el **marco de color** para resaltar una idea o una pantalla entera.\n- Cómo se editan el **test final**, el **glosario** y la **bibliografía**.\n\nNo hace falta leer nada en otro sitio: cada pantalla explica su propio tipo mientras la recorres.",
               "source_refs": [],
               "visual_resource": {
                 "kind": "none",
@@ -337,7 +337,7 @@ export const sampleCourse: Course = {
               "type": "route",
               "title": "El mapa de este curso",
               "objective": "Reconocer los tipos de pantalla del editor y cuándo usar cada uno.",
-              "student_text": "Este itinerario resume las paradas del recorrido:\n1. **Cómo se organiza un curso** — los diez tipos de pantalla (donde estás ahora).\n2. **Presentar contenido** — interacciones que se exploran, sin corrección.\n3. **Preguntar y corregir** — interacciones que responden y puntúan.\n4. **Manipular elementos** — ordenar, emparejar, clasificar.\n5. **Juegos didácticos y piezas avanzadas** — autoevaluación lúdica, vídeo interactivo y HTML a medida.\n\nAl final: el **test final**, el **glosario** y la **bibliografía** de ejemplo.",
+              "student_text": "Este itinerario resume las paradas del recorrido:\n1. **Cómo se organiza un curso** — los once tipos de pantalla, las cajas destacadas y el marco de color (donde estás ahora).\n2. **Presentar contenido** — interacciones que se exploran, sin corrección.\n3. **Preguntar y corregir** — interacciones que responden y puntúan.\n4. **Manipular elementos** — ordenar, emparejar, clasificar.\n5. **Juegos didácticos y piezas avanzadas** — autoevaluación lúdica, vídeo interactivo y HTML a medida.\n\nAl final: el **test final**, el **glosario** y la **bibliografía** de ejemplo.",
               "source_refs": [],
               "visual_resource": {
                 "kind": "none",
@@ -420,6 +420,47 @@ export const sampleCourse: Course = {
               "title": "Cifras, comparativas y qué hacer y qué evitar",
               "objective": "Reconocer los tipos de pantalla del editor y cuándo usar cada uno.",
               "student_text": "Además de los bloques destacados, la caja de texto tiene tres **bloques con estructura**: escribes una lista o unos encabezados normales dentro del bloque y la carcasa los presenta como tarjetas o columnas.\n\n::: stats\n- **3** bloques con estructura nuevos\n- **0** líneas de HTML: todo es texto con formato ligero\n- **1** clic para insertarlos desde la barra\n:::\n\n::: compare\n### Bloque destacado\n- Un recuadro de color con icono\n- Para un consejo, un aviso o un dato curioso\n### Bloque con estructura\n- Tarjetas o columnas a partir de una lista\n- Para cifras, comparativas o buenas prácticas\n:::\n\n::: dodont\n### Qué hacer\n- Una idea corta por punto de la lista\n- Encabezados breves en cada columna\n### Qué evitar\n- Párrafos largos dentro de una tarjeta\n- Más de tres columnas en una comparativa\n:::",
+              "source_refs": [],
+              "visual_resource": {
+                "kind": "none",
+                "src": "",
+                "alt": "",
+                "tracks": [],
+                "has_voice": false,
+                "layout": "top",
+                "media_width": "50",
+                "media_align": "left",
+                "media_full": false,
+                "media_ratio": "16x9"
+              },
+              "interaction": null,
+              "interaction_layout": "bottom",
+              "required": true,
+              "min_time_seconds": 0,
+              "audio_src": "",
+              "transcript": "",
+              "transcript_hidden": false,
+              "accessibility": {
+                "alt_text_ok": true,
+                "keyboard_ok": true,
+                "contrast_ok": true
+              },
+              "scorm": {
+                "counts_for_completion": true
+              },
+              "editor_notes": [],
+              "status": "ok",
+              "review": {
+                "flagged": false,
+                "note": ""
+              }
+            },
+            {
+              "id": "s104c",
+              "type": "content",
+              "title": "Cajas destacadas: los ocho tipos",
+              "objective": "Reconocer los tipos de pantalla del editor y cuándo usar cada uno.",
+              "student_text": "La caja de texto tiene **ocho cajas destacadas** con icono y color fijos. Se insertan con los botones de la barra y se cambian de tipo con el desplegable de su cabecera. Úsalas para lo que de verdad merece destacarse: **una o dos por pantalla**, nunca dos del mismo tipo.\n\n::: tip\nUna recomendación práctica para hacer mejor el trabajo.\n:::\n\n::: warn\nUn riesgo o un error frecuente que conviene evitar.\n:::\n\n::: important\nLa idea que no se puede olvidar.\n:::\n\n::: fact\nUn dato curioso que despierta el interés.\n:::\n\n::: reflect\nUna pregunta para pensar, sin respuesta escrita.\n:::\n\n::: summary\nLas ideas clave de un apartado, en pocas líneas.\n:::\n\n::: case\nUn caso o una situación real que ilustra el contenido.\n:::\n\n::: info\nUna nota informativa general que no encaja en las anteriores.\n:::",
               "source_refs": [],
               "visual_resource": {
                 "kind": "none",
@@ -556,10 +597,14 @@ export const sampleCourse: Course = {
             {
               "id": "s106",
               "type": "reflection",
-              "title": "Reflexiona: ¿qué tipo usarías tú?",
-              "frame": { "color": "#F4C910", "icon": "🧪", "label": "Caso práctico" },
+              "title": "Actividad: ¿qué tipo usarías tú?",
+              "frame": {
+                "color": "#F4C910",
+                "label": "Caso práctico",
+                "icon": "🧪"
+              },
               "objective": "Reconocer los tipos de pantalla del editor y cuándo usar cada uno.",
-              "student_text": "Esta es una pantalla de tipo **Reflexión**: no se corrige automáticamente, es para pensar (o responder en papel o en el foro del campus).\n\nAdemás lleva un **marco de color** (sección «Marco de color» de la pantalla): envuelve todo su contenido en una caja con rótulo y sirve para que varias pantallas seguidas se lean como una sola unidad.",
+              "student_text": "Esta es una pantalla de tipo **Reflexión** con una actividad de **caso práctico**: no se corrige automáticamente, la persona piensa su respuesta y se autoevalúa con una rúbrica.\n\nAdemás lleva el **marco de color** predefinido «🧪 Caso práctico» (sección «Marco de color» de la pantalla): envuelve todo su contenido —título, texto y actividad— en una caja con rótulo. Si varias pantallas seguidas llevan el mismo marco, el alumno las ve como **una sola actividad**.",
               "source_refs": [],
               "visual_resource": {
                 "kind": "none",
@@ -709,7 +754,7 @@ export const sampleCourse: Course = {
             {
               "id": "s109",
               "type": "unit_quiz",
-              "title": "Comprueba lo aprendido: tipos de pantalla",
+              "title": "Actividad: tipos de pantalla",
               "objective": "Reconocer los tipos de pantalla del editor y cuándo usar cada uno.",
               "student_text": "Cada unidad puede cerrar con un **Test de unidad**: una actividad evaluable con corrección automática.",
               "source_refs": [],
@@ -778,9 +823,9 @@ export const sampleCourse: Course = {
             {
               "id": "s110",
               "type": "summary",
-              "title": "Resumen: estructura del curso",
+              "title": "Síntesis de la unidad",
               "objective": "",
-              "student_text": "Has visto los diez tipos de pantalla: Portada, Objetivos, Itinerario, Contenido, Vídeo, Reflexión, Debate (foro), Pendiente de desarrollo, Test de unidad y este mismo Resumen. A partir de aquí, cada módulo se centra en una familia de interacciones.",
+              "student_text": "Has visto los once tipos de pantalla: Portada, Objetivos, Itinerario, Instrucciones de uso, Contenido, Vídeo, Reflexión, Debate (foro), Pendiente de desarrollo, Test de unidad y este mismo Resumen. A partir de aquí, cada módulo se centra en una familia de interacciones.",
               "source_refs": [],
               "visual_resource": {
                 "kind": "none",

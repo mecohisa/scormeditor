@@ -265,9 +265,10 @@ const SECTIONS: Section[] = [
           cuenta para la nota vive en la propia interacción y en Ajustes.
         </p>
         <p>
-          Los diez tipos de pantalla del editor son: <strong>Portada</strong>,{' '}
-          <strong>Objetivos</strong>, <strong>Itinerario</strong> y{' '}
-          <strong>Resumen</strong> (estructura, sin interacción); <strong>Contenido</strong>{' '}
+          Los once tipos de pantalla del editor son: <strong>Portada</strong>,{' '}
+          <strong>Objetivos</strong>, <strong>Itinerario</strong>,{' '}
+          <strong>Instrucciones de uso</strong> y <strong>Resumen</strong> (estructura, sin
+          interacción); <strong>Contenido</strong>{' '}
           (el tipo más habitual: texto con o sin interacción) y <strong>Vídeo</strong>{' '}
           (contenido); <strong>Reflexión</strong> y <strong>Debate (foro)</strong>{' '}
           (práctica sin corrección automática: la respuesta se da en papel o en el foro
@@ -301,6 +302,16 @@ const SECTIONS: Section[] = [
           formato del marco (16:9, 4:3, 1:1, 9:16); ves una vista previa debajo. Los
           archivos se suben con su botón y quedan dentro del proyecto (se optimizan
           automáticamente al subir).
+        </p>
+        <h4>Marco de color</h4>
+        <p>
+          Envuelve todo el contenido de la pantalla (título, texto, imagen e interacción) en
+          una caja de color con un rótulo opcional, dentro de los márgenes de la diapositiva
+          y debajo de la miga de pan. Tiene marcos predefinidos de un clic (<strong>🧪 Caso
+          práctico</strong>, <strong>📝 Síntesis</strong>, <strong>💭 Reflexiona</strong>),
+          la paleta corporativa o un color libre, y un icono y un rótulo propios. Si varias
+          pantallas seguidas llevan el mismo marco, el alumno las ve como una sola unidad;
+          en el árbol se marcan con un punto de su color.
         </p>
         <h4>Avanzado</h4>
         <p>
