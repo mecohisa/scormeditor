@@ -169,24 +169,26 @@ body {
    Solo se ve en Vista estudiante: nunca llega al paquete SCORM exportado
    (excepción deliberada a la invariante «Vista estudiante = export», ver
    CLAUDE.md). */
-/* Marco de color de la pantalla (screen.frame, ver renderer.js): envuelve TODO su
-   contenido (texto, recurso visual e interacción) en una caja de ese color, con un
-   rótulo opcional arriba. Sirve para que el alumno vea varias pantallas seguidas con
-   el mismo marco como una sola unidad (p. ej. «🧪 Actividad práctica»). Va antes de
-   .me-screen-review para que la marca de revisión (roja) gane si coinciden. */
-.me-screen-framed {
-  border: 4px solid var(--me-frame);
+/* Marco de color de la pantalla (screen.frame, ver renderer.js): caja INTERIOR de la
+   tarjeta (.me-frame) que envuelve todo el contenido —rótulo, título, texto, recurso
+   visual e interacción— debajo de la miga de pan y dentro de los márgenes de la
+   diapositiva. Sirve para que el alumno vea varias pantallas seguidas con el mismo
+   marco como una sola unidad (p. ej. «🧪 Actividad práctica»). */
+.me-frame {
+  border: 3px solid var(--me-frame); border-radius: 10px;
   background: color-mix(in srgb, var(--me-frame) 7%, var(--me-surface));
+  padding: 1.25rem 1.5rem 1.5rem;
 }
+.me-frame > :last-child { margin-bottom: 0; }
 .me-frame-ribbon {
   display: inline-flex; align-items: center; gap: .45rem;
   margin: 0 0 1rem; padding: .3rem .85rem; border-radius: 99px;
   font-size: .85rem; font-weight: 700; letter-spacing: .02em;
   background: color-mix(in srgb, var(--me-frame) 32%, white); color: var(--me-text);
 }
-/* Con rótulo, la banda a sangre de una portada (márgenes negativos) no sube hasta el borde:
-   queda debajo del rótulo en vez de taparlo. */
-.me-frame-ribbon ~ .me-module-cover, .me-frame-ribbon ~ .me-course-cover { margin-top: 0; border-radius: 10px; }
+/* Dentro del marco, la banda a sangre de una portada (márgenes negativos) no se sale:
+   queda como un bloque redondeado dentro de la caja. */
+.me-frame .me-module-cover, .me-frame .me-course-cover { margin: 0 0 1.25rem; border-radius: 8px; }
 .me-screen-review { border: 4px solid var(--me-error); }
 .me-review-banner {
   margin: -1.75rem -2rem 1.5rem; padding: .75rem 2rem;
@@ -223,7 +225,7 @@ body {
    una tarjeta amarilla — mismo amarillo corporativo de acción/actividad que los
    callouts ::: warn/reflect/case. Solo título+texto: el recurso visual (imagen/
    vídeo), si lo hay, queda fuera de la tarjeta. */
-.me-screen-scored > h1 {
+.me-screen-scored > h1, .me-screen-scored > .me-frame > h1 {
   display: flex; align-items: flex-start; justify-content: space-between; flex-wrap: wrap;
   gap: .6rem;
   background: color-mix(in srgb, var(--me-warn, #F4C910) 20%, white);
@@ -1212,6 +1214,7 @@ video.me-video, .me-audio { width: 100%; height: auto; aspect-ratio: auto; }
   /* Contenido con menos margen; altura mínima más contenida en móvil */
   .me-content { padding: .9rem .8rem; }
   .me-screen { padding: 1rem; min-height: clamp(260px, 50vh, 440px); }
+  .me-frame { padding: .9rem .8rem 1rem; }
   .me-screen h1 { font-size: 1.25rem; }
   /* .me-screen h1 (arriba) y .me-cover h1/.me-module-cover h1/.me-course-cover h1
      (fuera de este media query) tienen la MISMA especificidad (clase + elemento):

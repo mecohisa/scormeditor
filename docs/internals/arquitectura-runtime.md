@@ -151,10 +151,13 @@ bloque personalizado.
 
 ### Marco de color de la pantalla (`screen.frame`)
 
-`frame: { color, label, icon }` (opcional) envuelve **toda** la tarjeta `.me-screen`
-(texto, recurso visual e interacción) en un borde de ese color con fondo tintado
-(`.me-screen-framed`, variable `--me-frame`) y, si hay rótulo o icono, una píldora
-`.me-frame-ribbon` arriba. Existe para que varias pantallas seguidas se lean como una
+`frame: { color, label, icon }` (opcional) mete todo el contenido de la pantalla (rótulo,
+título, texto, recurso visual e interacción) en una caja **interior** `.me-frame` (borde de
+ese color, fondo tintado, variable `--me-frame`), debajo de la miga de pan y dentro del
+padding de la tarjeta: la tarjeta, su filo de acento y la miga no cambian. Si hay rótulo o
+icono, una píldora `.me-frame-ribbon` abre la caja. Por eso los selectores del título
+(`.me-screen > h1`) aceptan también `.me-screen > .me-frame > h1`, y la banda a sangre de
+una portada pierde sus márgenes negativos dentro del marco. Existe para que varias pantallas seguidas se lean como una
 unidad (p. ej. las diapositivas de una actividad práctica): no hay contenedor de varias
 pantallas en el modelo, así que cada una lleva su marco. El color se valida (solo hex)
 antes de ir al atributo `style`; rótulo e icono se escapan. La marca de revisión (borde

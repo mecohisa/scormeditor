@@ -537,7 +537,9 @@
           cparts.join('<span class="me-crumb-sep" aria-hidden="true">›</span>') + '</p>';
       }
     }
-    // Marco de color (screen.frame): el color se valida (solo hex) antes de ir al
+    // Marco de color (screen.frame): caja INTERIOR de la tarjeta que envuelve todo el
+    // contenido (rótulo, título, texto, recurso e interacción) respetando la miga de pan
+    // y los márgenes de la diapositiva. El color se valida (solo hex) antes de ir al
     // atributo style; rótulo e icono se escapan como el resto del texto.
     var fr = screen.frame || {};
     var frameColor = /^#[0-9a-fA-F]{3,8}$/.test(fr.color || '') ? fr.color : '';
@@ -545,11 +547,14 @@
       ? '<p class="me-frame-ribbon">' + (fr.icon ? '<span aria-hidden="true">' + esc(fr.icon) + '</span>' : '') +
         esc(fr.label || '') + '</p>'
       : '';
+    var body = narrationBlock(screen) + html +
+      (screen.interaction ? '<section class="me-interaction" aria-label="Actividad"></section>' : '');
     container.innerHTML = '<article class="me-screen me-screen-' + esc(screen.type) +
       (isScored ? ' me-screen-scored' : '') + (reviewFlagged ? ' me-screen-review' : '') +
-      (frameColor ? ' me-screen-framed" style="--me-frame:' + frameColor : '') + '">' +
-      reviewBanner + frameRibbon + crumb + narrationBlock(screen) + html +
-      (screen.interaction ? '<section class="me-interaction" aria-label="Actividad"></section>' : '') + '</article>';
+      (frameColor ? ' me-screen-framed' : '') + '">' +
+      reviewBanner + crumb +
+      (frameColor ? '<div class="me-frame" style="--me-frame:' + frameColor + '">' + frameRibbon + body + '</div>' : body) +
+      '</article>';
 
     // Icono + «Actividad: » delante del título de la pantalla evaluable, y la
     // etiqueta «Evaluable» dentro de la misma tarjeta amarilla (antes flotaba
@@ -558,7 +563,7 @@
     // estudiante (y por tanto en el export, misma fuente — ver CLAUDE.md), sin
     // tocar `screen.title` en course.json.
     if (isScored) {
-      var titleH1 = container.querySelector('.me-screen > h1');
+      var titleH1 = container.querySelector('.me-screen > h1, .me-screen > .me-frame > h1');
       if (titleH1) {
         var icon = global.MEIcons ? global.MEIcons.svg('edit-3') : '';
         // Si el título ya empieza por «Actividad:» (criterio editorial: se escribe
@@ -576,7 +581,7 @@
       // Posición de la interacción respecto al texto: 'top' la sube justo debajo del
       // título (encima del texto); por defecto queda debajo ('bottom').
       if (screen.interaction_layout === 'top') {
-        var h1 = container.querySelector('.me-screen > h1');
+        var h1 = container.querySelector('.me-screen > h1, .me-screen > .me-frame > h1');
         if (h1) h1.insertAdjacentElement('afterend', mount);
       }
       controller = global.Interactions.render(mount, screen.interaction, ctx);
