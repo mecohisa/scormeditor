@@ -318,7 +318,7 @@ Si el GPT recibe una orden con esta forma, debe tratar las reglas numeradas como
 > Reglas INNEGOCIABLES (si alguna falla, corrige y regenera antes de entregarme nada):
 > 1. Texto extraído con extract_text_markdown (contrato §11), nunca en plano.
 >    Ratio de cobertura ≥0.95 por tema y negritas ** conservadas (assert en Python).
-> 2. Los ejercicios prácticos (case_practice, reflection, ::: case, ::: reflect)
+> 2. Los ejercicios prácticos (case_practice, reflection, ::: reflect)
 >    van en SU PROPIA pantalla, solo con el enunciado. La «Resolución propuesta» /
 >    «Clave de reflexión» va en feedback.explanation, NUNCA visible en student_text.
 > 3. Nunca dos callouts del mismo tipo en una pantalla: eso son dos pantallas.

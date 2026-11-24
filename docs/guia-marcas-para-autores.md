@@ -439,7 +439,7 @@ Dosis prescrita = 15 mg/kg
 
 <!-- captura: reto | Reto numérico con el resultado escrito, listo para comprobar -->
 
-#### {{caso_practico}}
+#### {{actividad_practica}}
 
 <!-- tipo: SIN NOTA | case_practice -->
 
@@ -448,16 +448,21 @@ criterios (rúbrica) o con la solución explicada. No se corrige automáticament
 quieres dar tú los criterios, escríbelos en líneas `- ` tras la palabra `Criterios:`.
 
 ```
-{{caso_practico}}
+{{actividad_practica}}
 Revisa el extintor de tu planta y anota qué compruebas.
 Criterios:
 - Compruebas el precinto y el manómetro
 - Miras la fecha de la última revisión
 - Verificas que el acceso está despejado
-{{/caso_practico}}
+{{/actividad_practica}}
 ```
 
-<!-- captura: practico | Caso práctico con la rúbrica de autoevaluación plegada -->
+<!-- captura: practico | Actividad práctica con la rúbrica de autoevaluación plegada -->
+
+**Si la actividad ocupa varias diapositivas** (el caso, las preguntas, cómo hacerla y la
+resolución), abre `{{actividad_practica}}` al principio de la primera diapositiva y
+ciérrala al final de la última. Cada diapositiva será una pantalla «Actividad: …»; en la de las
+preguntas el alumno escribe su respuesta, y la resolución aparece después.
 
 ### 3.3 Para reflexionar (abierta, sin nota)
 
@@ -466,7 +471,9 @@ Criterios:
 <!-- tipo: SIN NOTA | pantalla reflection -->
 
 Una pregunta abierta para pensar, sin respuesta única. Si el texto admite una respuesta
-defendible, el sistema puede convertirla en un caso práctico con rúbrica.
+defendible, el sistema puede convertirla en una actividad práctica con rúbrica. No la
+confundas con la caja `{{reflexiona}}` (§4.1), que solo destaca unas preguntas dentro
+del texto, sin pantalla propia ni respuesta escrita.
 
 ```
 {{reflexion}}
@@ -567,6 +574,12 @@ la misma diapositiva (mejor de tipos distintos) y también dentro de un
 | `{{importante}}` | 📌 Importante |
 | `{{sabias_que}}` | 🧠 ¿Sabías que…? |
 | `{{informacion}}` | ℹ️ Información |
+| `{{reflexiona}}` | 💭 Reflexiona |
+| `{{sintesis}}` | 🧠 Síntesis |
+
+No hace falta escribir dentro el título de la caja («⚠️ Importante», «💭 Reflexiona»…):
+la caja ya lo pone. Para un caso práctico con tarea no hay caja: usa
+`{{actividad_practica}}` (§3.2).
 
 ```
 Un extintor portátil se descarga en pocos segundos: hay que saber usarlo

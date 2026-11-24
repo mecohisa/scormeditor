@@ -13,6 +13,8 @@ export const CALLOUT_META: Record<string, CalloutMeta> = {
   important: { icon: '📌', label: 'Importante', color: '#6dc3c0' },
   fact: { icon: '🧠', label: '¿Sabías que…?', color: '#6dc3c0' },
   reflect: { icon: '💭', label: 'Reflexiona', color: '#f4c910' },
+  // Retirado de los selectores (se confundía con la pantalla «Actividad práctica»); se conserva para seguir
+  // mostrando los bloques ::: case de los cursos antiguos.
   case: { icon: '🧪', label: 'Caso práctico', color: '#f4c910' },
   stats: { icon: '📊', label: 'Cifras destacadas', color: '#6dc3c0' },
   compare: { icon: '⚖️', label: 'Comparativa', color: '#7787bf' },
@@ -20,7 +22,7 @@ export const CALLOUT_META: Record<string, CalloutMeta> = {
 }
 
 /** Tipos que se ofrecen en los selectores del editor (orden de la barra). */
-export const CALLOUT_ORDER = ['tip', 'warn', 'important', 'fact', 'reflect', 'case', 'info'] as const
+export const CALLOUT_ORDER = ['tip', 'warn', 'important', 'fact', 'reflect', 'info'] as const
 
 export const HEX_RE = /^#[0-9a-fA-F]{3,8}$/
 

@@ -82,7 +82,7 @@ S.append(scr("decision", "Qué harías tú", "",
     options=[{"id": "a", "text": "Echar agua sobre el enchufe.", "correct": False, "feedback": "El agua conduce la electricidad."},
              {"id": "b", "text": "Dar la alarma y cortar la corriente si es seguro.", "correct": True, "feedback": "Correcto."},
              {"id": "c", "text": "Esperar a ver si se apaga solo.", "correct": False, "feedback": "Cada minuto cuenta."}])))
-S.append(scr("practico", "Caso práctico", "",
+S.append(scr("practico", "Actividad práctica", "",
   inter("practico", "case_practice", "Revisa el extintor de tu planta", "Piensa tu respuesta y compárala con los criterios.",
     {"rubric": [{"label": "Compruebas el precinto y el manómetro"}, {"label": "Miras la fecha de la última revisión"}, {"label": "Verificas que el acceso está despejado"}]}, scored=False)))
 S.append(scr("pasos", "Caso: la ducha de la mañana", "",

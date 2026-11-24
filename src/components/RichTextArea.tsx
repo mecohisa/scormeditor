@@ -25,7 +25,6 @@ const CALLOUT_TYPES: { value: string; label: string }[] = [
   { value: 'important', label: '📌 Importante' },
   { value: 'fact', label: '🧠 ¿Sabías que…?' },
   { value: 'reflect', label: '💭 Reflexiona' },
-  { value: 'case', label: '🧪 Caso práctico' },
 ]
 
 // Ctrl/Cmd+A por defecto de ProseMirror crea una AllSelection: al colapsarla

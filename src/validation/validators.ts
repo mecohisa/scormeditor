@@ -144,7 +144,7 @@ function checkScreen(ctx: Ctx, s: Screen, loc: string) {
     if (it.type === 'timeline' && ((it.config as any)?.milestones || []).length === 0)
       add('TL_EMPTY', 'error', 'Línea de tiempo sin hitos.')
     if (it.type === 'case_practice' && ((it.config as any)?.rubric || []).length === 0)
-      add('CP_NO_RUBRIC', 'warning', 'Caso práctico sin rúbrica: sin criterios de autoevaluación queda solo el enunciado.')
+      add('CP_NO_RUBRIC', 'warning', 'Actividad práctica sin rúbrica: sin criterios de autoevaluación queda solo el enunciado.')
     if (it.type === 'html_embed') {
       const c = (it.config as any) || {}
       if (!String(c.html || '').trim() && !String(c.js || '').trim())

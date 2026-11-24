@@ -379,7 +379,7 @@ en su pantalla y la pregunta en una pantalla **posterior** titulada «Actividad:
 cuyo `student_text` lleva solo la introducción — el enunciado ya va en
 `prompt`/`instructions`. **Cada actividad va DESPUÉS de todas las pantallas cuyo
 contenido evalúa**: nunca una pregunta sobre algo que el alumno aún no ha visto. Lo mismo con los ejercicios prácticos: `case_practice`,
-`reflection` y los callouts con tarea (`::: case`, `::: reflect` que proponen un
+`reflection` y los callouts con tarea (`::: reflect` que propone un
 ejercicio al alumno) no se pegan al final de una pantalla de contenido: el ejercicio
 va en la **siguiente**, con solo su enunciado/introducción. Una pantalla «lista de
 errores + caso práctico debajo» son **dos** pantallas. **La solución de la actividad nunca va visible**: la
@@ -509,7 +509,7 @@ mapeo:
 | «Importante», «Recuerda», «Clave», «No olvides» | `important` |
 | «¿Sabías que…?», «Dato», «Curiosidad» | `fact` |
 | «Reflexiona», «Piensa en…», «Para reflexionar» | `reflect` |
-| «Caso práctico», «Ejemplo», «Situación», «Supuesto» | `case` |
+| «Ejemplo», «Situación», «Supuesto» (sin tarea) | `info` |
 | Nota informativa general que no encaja arriba | `info` |
 | Una caja recurrente del documento sin equivalente (p. ej. «Glosario», «Normativa») | `custom` con icono/color |
 
@@ -522,9 +522,9 @@ Pautas:
 - **Nunca un callout vacío**: `::: fact` seguido de `:::` sin cuerpo es un error real
   observado; si no tienes el texto de la caja, no emitas la caja (el editor lo marca
   con el aviso `CALLOUT_EMPTY`).
-- Si un «Caso práctico» del documento admite una decisión, valora convertirlo en
-  interacción `scenario_decision` (o `scenario_steps` si encadena varias) en vez de
-  (o además de) un callout `case`.
+- Un «Caso práctico» o «Actividad práctica» del documento (caso con tarea) va en su
+  pantalla «Actividad práctica» (`case_practice`) o, si admite una decisión, como
+  `scenario_decision` (o `scenario_steps` si encadena varias). No hay callout de caso.
 - **Bloques con estructura** (`::: stats`, `::: compare`, `::: dodont`, contrato
   §4.1): cuando el fuente ya trae cifras que destacan, enfoques contrapuestos o una
   lista de «qué hacer» frente a «qué evitar», vuélcalo en el bloque correspondiente

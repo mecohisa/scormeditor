@@ -177,7 +177,7 @@ Cada tema es SCO independiente: indícalo solo en campos internos (`subtitle`,
   pestañas o tarjetas** (apartado con título propio, desarrollo o imagen propia → su
   pantalla, tras una pantalla índice; al quitar un desplegable, «Despliega cada…» →
   transición); ejercicios prácticos
-  (`case_practice`/`reflection`, `::: case`/`::: reflect`) igual, en
+  (`case_practice`/`reflection`, `::: reflect`) igual, en
   **pantalla propia**, no pegados tras el contenido, con la **solución en
   `feedback.explanation`** (nunca «Resolución propuesta» visible en `student_text`);
   **cierre de cada tema**: repaso con `flashcards` o `az_quiz` (`scored: false`) y

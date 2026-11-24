@@ -78,7 +78,7 @@ informe de revisión.
 | `Q_NO_FEEDBACK` | ⛔ | `feedback.correct` e `incorrect` vacíos | Escribe ambos, pedagógicos: por qué es correcta / qué repasar. Nunca un «¡Bien!» vacío | GPT |
 | `FB_NO_BLANKS` | ⛔ | `fill_blanks` sin ningún hueco en `config.text` | Marca cada respuesta correcta entre dobles corchetes `[[respuesta]]` (en `mode:"type"`, alternativas válidas con `[[a\|b]]`) | GPT |
 | `TL_EMPTY` | ⛔ | `timeline` sin hitos | Añade `config.milestones` (`label`/`title`/`body`) con el contenido del fuente, o cambia el tipo | GPT |
-| `CP_NO_RUBRIC` | ⚠ | `case_practice` sin rúbrica | Añade `config.rubric` con criterios de autoevaluación verificables | GPT |
+| `CP_NO_RUBRIC` | ⚠ | `case_practice` («Actividad práctica») sin rúbrica | Añade `config.rubric` con criterios de autoevaluación verificables | GPT |
 | `FC_EMPTY` | ⛔ | `flashcards` sin tarjetas | Añade `config.cards` (`front`/`back`) con conceptos del tema, o elimina la interacción | GPT |
 | `FC_SCORED` | ⚠ | `flashcards` con `scored:true` | Pon `scored:false`: es autoevaluación de repaso | GPT |
 | `IC_EMPTY` | ⛔ | `image_cards` sin tarjetas | Añade las `cards` (`alt`, `title`, `text`); `image` vacío + `editor_note` describiendo cada imagen | GPT |

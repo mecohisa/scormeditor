@@ -179,7 +179,7 @@ El contenido de los cursos **no se teclea a mano**: lo genera un **GPT de ChatGP
   del esquema). **`cover` = solo portada** (título/subtítulo;
   la intro va en la 1ª de contenido) pero **con el número del tema visible** («Tema 1»,
   «Tema 2»… en `subtitle` o antepuesto al título). **Ejercicios prácticos en pantalla
-  propia**: `case_practice`/`reflection` y callouts con tarea (`::: case`/`::: reflect`)
+  propia**: `case_practice`/`reflection` y callouts con tarea (`::: reflect`)
   nunca pegados al final de una pantalla de contenido; el ejercicio va en la pantalla
   siguiente con solo su enunciado, y **la solución** («Resolución propuesta»/«Clave de
   reflexión») en el `feedback.explanation` de la interacción, **nunca visible** en

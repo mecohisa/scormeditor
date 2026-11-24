@@ -159,7 +159,7 @@ en un PDF. Tabla de partida (amplíala si el rótulo no encaja):
 |---|---|
 | «Importante» | `important` |
 | «¿Sabías que…?» | `fact` |
-| «Actividad práctica» / con tarea | `case` (ejercicio → **pantalla siguiente**, solución en `feedback.explanation`, regla de siempre) |
+| «Actividad práctica» / «Caso práctico» / con tarea | sin callout: pantalla «Actividad práctica» (`case_practice`) o `reflection` en la **pantalla siguiente**, solución en `feedback.explanation` (regla de siempre) |
 | «Reflexiona» / «Clave de reflexión» / «Resolución propuesta» | `reflect` |
 | «Consejo» | `tip` |
 | «Atención» | `warn` |
@@ -658,7 +658,7 @@ Con esta forma, trata las reglas numeradas del prompt reforzado (más abajo) com
 > 4. Títulos con `(MODIFICAR)`/`(BORRAR)`/`(REVISAR)`/`(PENDIENTE)`: limpia el prefijo
 >    del título visible, pero deja rastro en `editor_notes` + `status: "borrador"`.
 >    Una lección `(BORRAR)` entera: ignórala.
-> 5. Los ejercicios prácticos (`case_practice`, `reflection`, `::: case`, `::: reflect`)
+> 5. Los ejercicios prácticos (`case_practice`, `reflection`, `::: reflect`)
 >    van en SU PROPIA pantalla («Actividad: …»), solo con el enunciado. La «Resolución
 >    propuesta» / «Clave de reflexión» va en `feedback.explanation`, NUNCA visible en
 >    `student_text`. Una reflexión abierta sin solución: callout `reflect` con sus

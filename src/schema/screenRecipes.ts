@@ -446,7 +446,7 @@ export const SCREEN_RECIPES: ScreenRecipe[] = [
   {
     key: 'case',
     icon: 'briefcase',
-    label: 'Caso práctico',
+    label: 'Actividad práctica',
     description: 'Situación real con tarea; la solución va en el feedback.',
     group: 'practica',
     type: 'content',

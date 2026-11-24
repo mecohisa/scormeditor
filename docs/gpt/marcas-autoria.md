@@ -40,7 +40,7 @@ texto del bloque
 - Alias no reconocido o con typo: intenta el match más cercano (¿es `diapositiva` o es
   de la tabla de interactividad, §3?); si no hay ninguno razonable, trátalo como
   `{{interactividad}}` genérica y anota el alias original tal cual apareció en
-  `editor_notes`.
+  `editor_notes`. Un `{{caso_practico}}` de un documento antiguo es `{{actividad_practica}}`.
 - Dentro de la marca vale exactamente el mismo markdown ligero que en cualquier otro
   bloque de origen (negrita, enlaces, listas): no cambia nada de la Regla Nº1.
 - Reglas de anidamiento entre familias: ver §4.
@@ -107,7 +107,7 @@ todo este texto, tal cual, es UNA pantalla — ni se parte ni se fusiona
 | `clasificar` | `classification` |
 | `ordenar` | `sort_steps` |
 | `decision` | `scenario_decision` |
-| `caso_practico` | `case_practice` |
+| `actividad_practica` | `case_practice`: pantalla «Actividad práctica» (si abarca varias diapositivas, ver §4) |
 | `caso_decisiones` | `scenario_steps` |
 | `conversacion` | `decision_tree` |
 | `reto_numerico` | `calculator` con `mode: "challenge"` |
@@ -170,6 +170,8 @@ la pantalla (salvo que esté dentro de una `{{diapositiva}}`).
 | `cifras` | `::: stats` (lista `- ` con la cifra en **negrita inicial**) |
 | `comparativa` | `::: compare` (2-3 encabezados `### `, uno por columna) |
 | `que_hacer` | `::: dodont` (dos `### `: qué hacer y qué evitar) |
+| `reflexiona` | `::: reflect` (caja 💭 Reflexiona: preguntas para pensar, sin respuesta escrita) |
+| `sintesis` | `::: custom \| #6DC3C0 \| 🧠 \| Síntesis` |
 
 - Si al bloque le falta la estructura que su tipo espera (`cifras` sin lista,
   `comparativa`/`que_hacer` sin sus `### `), dásela **sin cambiar el texto**: convierte
@@ -179,8 +181,11 @@ la pantalla (salvo que esté dentro de una `{{diapositiva}}`).
 - Varias marcas de destacado en la misma pantalla son válidas, pero **no dos del mismo
   tipo** (contrato §4.1): si el autor marca dos iguales seguidas, fusiónalas en un solo
   bloque; si están separadas por otro contenido, reparte en pantallas y anótalo.
-- `reflect` y `case` no tienen alias: esas intenciones van por `{{reflexion}}` y
-  `{{caso_practico}}`.
+- Si el bloque empieza por una línea de cabecera con emoji que repite el nombre de la caja
+  («⚠️ Importante», «💭 Reflexiona», «🧠 Síntesis»), quítala: la caja ya trae icono y título.
+- No confundir `{{reflexiona}}` (caja dentro del texto) con `{{reflexion}}` (§3: pantalla
+  `reflection` en la que la persona escribe su respuesta). No hay caja de «caso práctico»:
+  un caso con tarea es `{{actividad_practica}}`.
 
 ## 4. Anidamiento entre las familias
 
@@ -215,6 +220,13 @@ la pantalla (salvo que esté dentro de una `{{diapositiva}}`).
   (una pantalla no cabe dentro de una interacción): si aparece, ignora esos
   delimitadores como texto literal dentro de la interactividad y anótalo en
   `editor_notes`.
+- **Excepción: `{{actividad_practica}}` puede abarcar varias `{{diapositiva}}`** (caso →
+  preguntas «Reflexiona y responde» → «¿Cómo realizo esta actividad?» → «Resolución
+  propuesta»). Entonces no es una interacción: cada diapositiva es su pantalla, todas
+  tituladas «Actividad: <nombre breve>»; la de las preguntas es una pantalla `reflection`
+  (la persona escribe su respuesta, sin nota) con «¿Cómo realizo esta actividad?» como
+  `::: info` en esa misma pantalla, y la resolución va en las pantallas siguientes.
+  Dentro de una sola diapositiva es la pantalla `case_practice` de §3.
 - **`{{diapositiva}}` no se anida dentro de otra `{{diapositiva}}`**: si aparece,
   la interior se ignora como texto literal (queda dentro de la exterior) y se anota.
 - **`{{diapositiva}}` puede contener varias marcas de destacado** (además de, como
@@ -271,7 +283,8 @@ reconocible, el GPT lo usa **literal** en vez de inventarlo:
   `feedback`). Respeta textos y grafo tal cual; si el guion tiene un ciclo, un `→` a un
   número inexistente o ningún final bueno, corrige lo mínimo y anótalo. Sin guion, el
   GPT monta el árbol (contrato §6) a partir del diálogo o la situación marcada.
-- `{{caso_practico}}`: líneas `- ` tras `Criterios:` → `config.rubric` (`label`).
+- `{{actividad_practica}}` (en una sola diapositiva): líneas `- ` tras `Criterios:` →
+  `config.rubric` (`label`).
 - `{{sopa_letras}}`: una palabra por línea → `config.words`. `{{crucigrama}}`: líneas
   `PALABRA → pista` → `config.entries`. `{{rosco}}`: líneas `Respuesta → pista` →
   `config.items` (`answer`/`clue`).

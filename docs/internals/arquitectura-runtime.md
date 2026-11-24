@@ -140,7 +140,7 @@ Online.odt" en Google Drive; ver memoria `paleta-teleformacion`):
 | Color | Hex | Bloques |
 |---|---|---|
 | Turquesa | `#6DC3C0` | 💡 Consejo (`tip`), 🧠 ¿Sabías que…? (`fact`), 📌 Importante (`important`) |
-| Naranja | `#F4C910` | ⚠️ Atención (`warn`), 💭 Reflexiona (`reflect`), 🧪 Caso práctico (`case`) |
+| Naranja | `#F4C910` | ⚠️ Atención (`warn`), 💭 Reflexiona (`reflect`); también 🧪 Caso práctico (`case`), retirado de los menús y del GPT pero que se sigue mostrando en los cursos antiguos |
 | Violeta | `#7787BF` | ℹ️ Información (`info`) |
 | Rosa | `#F4D6D2` | (color por defecto del bloque personalizado) |
 

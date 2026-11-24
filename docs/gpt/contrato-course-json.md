@@ -327,7 +327,7 @@ evaluable (§6).
   «Tema 2»…): ponlo en el `subtitle` o antepuesto al título («Tema 1. Herramientas…»),
   para que el alumno sepa dónde está.
 - **Los ejercicios prácticos van en su propia pantalla.** `case_practice`, `reflection`
-  y los callouts con tarea (`::: case`, `::: reflect` que proponen un ejercicio) **no se
+  y los callouts con tarea (`::: reflect` que propone un ejercicio) **no se
   pegan al final de una pantalla de contenido** (mal: «Errores y práctica» = lista de
   errores + caso en la misma pantalla). El contenido va en su pantalla y el ejercicio en
   la **siguiente**, cuyo `student_text` es solo el enunciado/introducción del propio
@@ -446,8 +446,10 @@ el editor pone icono y título automáticamente):
 | `important` | 📌 Importante |
 | `fact` | 🧠 ¿Sabías que…? |
 | `reflect` | 💭 Reflexiona |
-| `case` | 🧪 Caso práctico |
 | `info` | ℹ️ Información |
+
+El antiguo `case` (🧪 Caso práctico) está retirado: no lo generes. Un caso con tarea es una
+pantalla «Actividad práctica» (`case_practice`) o una decisión (`scenario_decision`).
 
 - **Bloque personalizado** (cuando ninguno encaje):
   `::: custom | #color | icono | título` … `:::` (color en hex; p. ej.
