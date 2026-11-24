@@ -674,11 +674,21 @@ unidad: por ejemplo, una actividad práctica con el caso, las preguntas y la res
 No cambia el texto ni cómo se cortan las diapositivas. Es la única marca que puede
 abarcar varias diapositivas: ábrela antes de la primera y ciérrala después de la última.
 
-Tras los dos puntos van el **rótulo**, el **color** y el **icono**, separados por `|`.
-Los tres son opcionales: sin color sale amarillo.
+Para que todos los cursos usen los mismos colores, hay **marcos predefinidos**: basta con
+escribir su nombre.
+
+| Escribe esto | Se ve como |
+|---|---|
+| `{{marco: actividad_practica}}` | 🧪 Actividad práctica (amarillo) |
+| `{{marco: sintesis}}` | 📝 Síntesis (turquesa) |
+| `{{marco: reflexiona}}` | 💭 Reflexiona (amarillo) |
+
+Si necesitas otro, escribe tras los dos puntos el **rótulo**, el **color** y el **icono**,
+separados por `|`, por ejemplo `{{marco: Caso real | #7787BF | 📋}}`. Los tres son
+opcionales: sin color sale amarillo.
 
 ```
-{{marco: Actividad práctica | #F4C910 | 🧪}}
+{{marco: actividad_practica}}
 {{diapositiva}}
 Carmen vive en un centro y necesita ayuda para vestirse…
 {{/diapositiva}}
@@ -691,7 +701,7 @@ Carmen vive en un centro y necesita ayuda para vestirse…
 <!-- captura: marco | Diapositiva dentro de un marco «Actividad práctica» -->
 
 El marco también se puede poner, quitar o cambiar después en SCORMEditor, en la sección
-«Marco de color» de cada pantalla.
+«Marco de color» de cada pantalla, donde los marcos predefinidos son botones de un clic.
 
 ## 5. Combinar marcas
 

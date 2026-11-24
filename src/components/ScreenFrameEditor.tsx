@@ -2,15 +2,10 @@ import { useState } from 'react'
 import { PALETTE } from '../store/customBlocks'
 import { IconPicker } from './tiptap/IconPicker'
 import type { Screen } from '../schema/course.schema'
+import { FRAME_PRESETS } from '../schema/framePresets'
 
 type Frame = NonNullable<Screen['frame']>
 
-/** Marcos habituales: un clic deja color, icono y rótulo puestos (luego se pueden cambiar). */
-const PRESETS: (Frame & { name: string })[] = [
-  { name: '🧪 Actividad práctica', color: '#F4C910', icon: '🧪', label: 'Actividad práctica' },
-  { name: '📝 Síntesis', color: '#6DC3C0', icon: '📝', label: 'Síntesis' },
-  { name: '💭 Reflexiona', color: '#F4C910', icon: '💭', label: 'Reflexiona' },
-]
 
 /**
  * «Marco de color» de la pantalla (screen.frame): la carcasa envuelve todo el contenido
@@ -31,9 +26,10 @@ export function ScreenFrameEditor({ frame, onChange }: { frame: Screen['frame'];
         mismo marco a varias pantallas seguidas para que se lean como una sola unidad.
       </p>
       <div className="ed-rta-swatches">
-        {PRESETS.map((p) => (
-          <button key={p.name} type="button" onClick={() => onChange({ color: p.color, label: p.label, icon: p.icon })}>
-            {p.name}
+        {FRAME_PRESETS.map((p) => (
+          <button key={p.key} type="button" title="Marco predefinido: mismo color en todos los cursos"
+            onClick={() => onChange({ color: p.color, label: p.label, icon: p.icon })}>
+            {p.icon} {p.label}
           </button>
         ))}
       </div>

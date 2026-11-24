@@ -465,8 +465,9 @@ los avisos de `validators.ts`):
   aplica al montar; la `key` por `id`+`type` remonta la sección al cambiar de pantalla o
   de tipo para re-aplicar el énfasis sin pisar lo que el autor pliegue a mano).
 - **«Marco de color»** (plegado; el resumen muestra el rótulo o el color si lo hay):
-  `ScreenFrameEditor` edita `screen.frame` (atajos «🧪 Actividad práctica», «📝 Síntesis»,
-  «💭 Reflexiona», paleta corporativa, color libre, icono y rótulo). Sin color se quita el
+  `ScreenFrameEditor` edita `screen.frame` (atajos = marcos predefinidos de
+  `schema/framePresets.ts`, los mismos que la marca `{{marco: <clave>}}`; paleta corporativa,
+  color libre, icono y rótulo). Sin color se quita el
   campo. El árbol marca esas pantallas con un punto de su color (`.ed-frame-dot`).
 - **«Avanzado»** (plegado): tipo de pantalla, tiempo mínimo y obligatoria. El tipo se
   muestra como chip de solo lectura junto al título del formulario (`.ed-form-type`). El
