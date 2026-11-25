@@ -127,7 +127,7 @@ desarrollo compartirán el mismo `objective`.
             {
               "id": "s05",
               "type": "content",
-              "title": "Actividad: definición de la ACP",
+              "title": "Actividad: Definición de la ACP",
               "objective": "Definir la atención centrada en la persona.",
               "student_text": "Tener clara la definición ayuda a reconocer cuándo una práctica del centro pone a la persona en el centro y cuándo responde solo a la rutina. **Lee la pregunta y elige la opción que mejor resume el enfoque.**",
               "interaction": {
@@ -183,7 +183,7 @@ desarrollo compartirán el mismo `objective`.
             {
               "id": "s07",
               "type": "content",
-              "title": "Actividad: los principios en la práctica",
+              "title": "Actividad: Los principios en la práctica",
               "objective": "Reconocer los principios de la ACP.",
               "student_text": "Los principios se reconocen en gestos concretos del día a día. Algunas de estas actuaciones los respetan y otras no. **Toca cada actuación y después el grupo al que pertenece (o arrástrala); cuando termines, pulsa Comprobar.**",
               "interaction": {
@@ -213,7 +213,7 @@ desarrollo compartirán el mismo `objective`.
             {
               "id": "s08",
               "type": "content",
-              "title": "Actividad: el horario de la ducha",
+              "title": "Actividad: El horario de la ducha",
               "objective": "Aplicar la ACP a una decisión cotidiana.",
               "student_text": "Las decisiones pequeñas son las que más dicen de un servicio. La situación es ficticia, pero habitual en cualquier centro. **Lee lo que ocurre y decide cómo actuarías.**",
               "interaction": {
@@ -240,7 +240,7 @@ desarrollo compartirán el mismo `objective`.
             {
               "id": "s09",
               "type": "content",
-              "title": "Actividad: repaso del tema",
+              "title": "Actividad: Repaso del tema",
               "objective": "Reconocer los principios de la ACP.",
               "student_text": "Antes de cerrar el tema, conviene comprobar que las ideas principales se han asentado. **Lee cada tarjeta, piensa la respuesta y pulsa «Mostrar respuesta» para comprobarla.**",
               "interaction": {

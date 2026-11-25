@@ -394,8 +394,9 @@ Antes de escribirlo, decide su función:
   pregunta, se conserva tal cual.
 - **Actividades: «Actividad: …»** en el `title` de toda pantalla de actividad,
   evaluable o no (preguntas, clasificaciones, casos, prácticas de varios pasos,
-  `case_practice`, reflexiones con tarea, juegos de repaso): «Actividad: detección de
-  necesidades». Nunca «Caso:», «Comprueba:», «Reto:», «Practica:», «Completa:»,
+  `case_practice`, reflexiones con tarea, juegos de repaso): «Actividad: Detección de
+  necesidades». Tras los dos puntos, **mayúscula inicial** («Actividad: Una mañana con Encarna», «Actividad:
+  ¿Qué harías?»); solo va en minúscula si la primera palabra la exige (iPhone, kg, ml…). Nunca «Caso:», «Comprueba:», «Reto:», «Practica:», «Completa:»,
   «Repaso:» ni «Checkpoint». Las informativas (`accordion`/`tabs`/`flip_cards`/
   `timeline`) llevan el título del contenido. La carcasa reconoce el prefijo y en las
   evaluables solo añade su icono, sin duplicarlo.

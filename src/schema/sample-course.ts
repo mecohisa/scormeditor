@@ -597,7 +597,7 @@ export const sampleCourse: Course = {
             {
               "id": "s106",
               "type": "reflection",
-              "title": "Actividad: ¿qué tipo usarías tú?",
+              "title": "Actividad: ¿Qué tipo usarías tú?",
               "frame": {
                 "color": "#F4C910",
                 "label": "Caso práctico",
@@ -754,7 +754,7 @@ export const sampleCourse: Course = {
             {
               "id": "s109",
               "type": "unit_quiz",
-              "title": "Actividad: tipos de pantalla",
+              "title": "Actividad: Tipos de pantalla",
               "objective": "Reconocer los tipos de pantalla del editor y cuándo usar cada uno.",
               "student_text": "Cada unidad puede cerrar con un **Test de unidad**: una actividad evaluable con corrección automática.",
               "source_refs": [],

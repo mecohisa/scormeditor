@@ -289,7 +289,7 @@ function buildUnitProject(sec, unitNumber) {
     return {
       id: sid,
       type: 'content',
-      title: `Actividad: ${prompt.replace(/[:.]+$/, '') || 'relaciona'}`,
+      title: `Actividad: ${((t) => t.charAt(0).toUpperCase() + t.slice(1))(prompt.replace(/[:.]+$/, '') || 'relaciona')}`,
       objective: '',
       student_text: 'Relaciona cada concepto con su definición o ejemplo.',
       source_refs: [{ doc: `Moodle: ${courseSourceLabel()}`, locator: `quiz «${q.name}» (relacionar)`, transform: 'conservación' }],

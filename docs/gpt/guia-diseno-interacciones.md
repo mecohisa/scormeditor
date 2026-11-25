@@ -217,8 +217,9 @@ poder diseñar apoyos realmente pers…"`, `title = "- Religión"`).
   `accordion`/`tabs`/`flip_cards`/`timeline` no llevan «a)», «b)», «1.», «2.»… Si el
   fuente enumera así una lista, en `student_text` va como viñetas `- ` o como lista
   numerada markdown `1. `, nunca con la letra o el número dentro del texto del ítem.
-- **Toda pantalla de actividad se titula «Actividad: …»** (`"Actividad: detección de
-  necesidades"`), sea evaluable o no: preguntas, clasificaciones, casos, prácticas de
+- **Toda pantalla de actividad se titula «Actividad: …»** (`"Actividad: Detección de
+  necesidades"`; mayúscula tras los dos puntos salvo palabra que deba ir en minúscula,
+  como iPhone o kg), sea evaluable o no: preguntas, clasificaciones, casos, prácticas de
   varios pasos, `case_practice`, reflexiones con tarea y juegos de repaso. Nunca
   «Caso:», «Comprueba:», «Reto:», «Practica:», «Completa:», «Repaso:» ni
   «Checkpoint…». Las informativas (`accordion`/`tabs`/`flip_cards`/`timeline`) no son
