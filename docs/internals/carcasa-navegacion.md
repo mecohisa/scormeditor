@@ -8,10 +8,11 @@
 - **Cabecera minimal**: la topbar solo lleva tres zonas: `#me-toggle-menu` (☰) a la
   izquierda, `.me-topbar-title` (marca opcional + título del curso) centrada
   (`flex:1 1 auto; text-align:center`, con ellipsis), y `.me-topbar-right` (A−, A+,
-  Imprimir, Ayuda, Cerrar) a la derecha. El resto de herramientas que antes vivían en la topbar
-  se repartió: Glosario/Recursos al final del menú lateral, y Transcripción + el
-  reproductor de audio + Pantalla completa a la barra inferior (ver más abajo). Iconos
-  vía `icons.js`: `printer` Imprimir, `help-circle` Ayuda, `log-out` Cerrar, `menu` ☰.
+  Pantalla completa) a la derecha. El resto de herramientas está en el menú lateral
+  (Glosario/Recursos, al final) y en la barra inferior: Transcripción + el reproductor de
+  audio a la izquierda e Imprimir, Ayuda y Cerrar a la derecha (ver más abajo). Iconos
+  vía `icons.js`: `printer` Imprimir, `help-circle` Ayuda, `log-out` Cerrar, `menu` ☰,
+  `maximize`/`minimize` Pantalla completa.
 - **Tamaño del texto (A− / A+)**: `#me-btn-text-smaller/-larger` (`setupTextSize`, app.js)
   recorren `TEXT_SCALES` = 100/125/150/200 % y fijan `--me-text-scale` en `<html>`, que
   `styles.css` aplica como `html { font-size: calc(100% * var(--me-text-scale, 1)) }`.
@@ -25,7 +26,7 @@
   `suspend_data` (el LMS la guardaría por alumno/intento y engordaría el campo). Cada
   botón se desactiva en su extremo. Con 200 % en móvil el título del curso de la topbar
   puede quedar sin sitio (ellipsis); es un compromiso aceptado.
-- **Cerrar el curso**: `#me-btn-close` (topbar, icono `log-out`, en rojo `--me-error`) llama a `requestExit()`
+- **Cerrar el curso**: `#me-btn-close` (barra inferior, icono `log-out`, en rojo `--me-error`) llama a `requestExit()`
   (app.js) — la misma lógica que el botón «Salir del curso» de la pantalla de
   Resultados: si `evaluateCompletion()` da `incomplete`, pide confirmación
   (`confirmExitIncomplete`, progreso guardado, se puede seguir luego); si no, cierra la
@@ -135,7 +136,7 @@ al final) y `.me-toolbar-nav` (Anterior, progreso, Siguiente).
   con un único hijo flexible (`.me-toolbar-center`, `width:100%; max-width:960px`) — el
   centrado de un solo elemento dentro de un padre `justify-content:center` es exacto
   pase lo que pase, sin necesitar columnas laterales de contrapeso. Esto **solo
-  funciona** porque `#me-btn-fullscreen` sale del flujo normal vía `position:absolute`
+  funciona** porque `.me-toolbar-tools` (Imprimir/Ayuda/Cerrar) sale del flujo normal vía `position:absolute`
   (ver más abajo): si compitiera por espacio como un hermano más, habría que volver a
   columnas simétricas para no desviar el centrado (ver la lección de CSS más abajo).
   Verificado por píxeles: `.me-toolbar-center` tiene el mismo `left`/`right`/`width`
@@ -144,13 +145,15 @@ al final) y `.me-toolbar-nav` (Anterior, progreso, Siguiente).
   espacio sobrante se autoestira en el **hueco central**, entre `.me-toolbar-audio` y
   `.me-toolbar-nav`, que quedan pegados a los márgenes de la diapositiva en vez de
   apelotonados en medio con aire sobrante a los lados.
-- **Pantalla completa** (`#me-btn-fullscreen`): vive al final de `.me-toolbar-audio` en
-  el HTML. En **escritorio** sale del flujo (`position:absolute; top:50%; right:.9rem`,
-  ancla en `.me-toolbar`) y queda pegada al borde derecho de toda la barra, sin competir
-  por espacio con el centrado. En **móvil** vuelve al flujo normal (`position:static`)
-  pero con `margin-left:auto`, así igualmente queda pegada al extremo derecho de la
-  fila de audio (que en móvil se estira de lado a lado) en vez de quedar centrada junto
-  con el resto de controles de audio. Fullscreen API sobre `documentElement` con
+- **Imprimir / Ayuda / Cerrar** (`.me-toolbar-tools`): viven al final de
+  `.me-toolbar-audio` en el HTML. En **escritorio** salen del flujo (`position:absolute;
+  top:50%; right:.9rem`, ancla en `.me-toolbar`) y quedan pegados al borde derecho de
+  toda la barra, sin competir por espacio con el centrado. Entre 1025 y 1300 px el margen
+  junto a la diapositiva no basta para los tres botones: la barra lleva relleno lateral
+  **simétrico** (`calc(7rem + 40px)`), así el bloque central encoge sin pisarlos y sigue
+  centrado. En **móvil** vuelven al flujo (`position:static`) con `margin-left:auto`, al
+  extremo derecho de la fila de audio.
+- **Pantalla completa** (`#me-btn-fullscreen`, cabecera, junto a A−/A+): Fullscreen API sobre `documentElement` con
   fallback `webkit`; icono `maximize`/`minimize` y title/aria-label se sincronizan en
   `fullscreenchange` (cubre también la salida con Esc). Arranca `hidden` y solo se
   muestra si el entorno lo permite (`fullscreenEnabled`): en un iframe de LMS sin

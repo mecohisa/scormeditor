@@ -10,10 +10,10 @@
 <body>
   <a class="me-skip" href="#me-content">Saltar al contenido</a>
   <div id="me-app" class="me-menu-hidden">
-    <!-- Barra superior: ☰ a la izquierda, título centrado, Imprimir/Ayuda/Cerrar
-         a la derecha. El resto de herramientas vive en el menú lateral
+    <!-- Barra superior: ☰ a la izquierda, título centrado, A−/A+ y Pantalla
+         completa a la derecha. El resto de herramientas vive en el menú lateral
          (Glosario, Recursos) o en la barra inferior (Transcripción, audio,
-         Pantalla completa) — ver app.js/buildMenu y el <footer> más abajo. -->
+         Imprimir, Ayuda, Cerrar) — ver app.js/buildMenu y el <footer> más abajo. -->
     <header class="me-topbar" role="banner">
       <button id="me-toggle-menu" class="me-icon-btn" aria-expanded="false" aria-controls="me-menu" title="Mostrar/ocultar menú (Alt+M)" aria-label="Mostrar u ocultar el menú"><span data-icon="menu" aria-hidden="true"></span></button>
       <div class="me-topbar-title">
@@ -25,12 +25,8 @@
              pasos fijos y se recuerda entre sesiones (ver setupTextSize en app.js). -->
         <button id="me-btn-text-smaller" class="me-icon-btn me-textsize-btn" title="Reducir el tamaño del texto" aria-label="Reducir el tamaño del texto"><span class="me-textsize-a me-textsize-a-s" aria-hidden="true">A</span><span aria-hidden="true">−</span></button>
         <button id="me-btn-text-larger" class="me-icon-btn me-textsize-btn" title="Aumentar el tamaño del texto" aria-label="Aumentar el tamaño del texto"><span class="me-textsize-a" aria-hidden="true">A</span><span aria-hidden="true">+</span></button>
-        <button id="me-btn-print" class="me-icon-btn" title="Imprimir" aria-label="Imprimir"><span data-icon="printer" aria-hidden="true"></span></button>
-        <button id="me-btn-help" class="me-icon-btn" title="Ayuda" aria-label="Ayuda"><span data-icon="help-circle" aria-hidden="true"></span></button>
-        <!-- Cierra el curso: si está incompleto pide confirmación (progreso
-             guardado); si no, finaliza la sesión SCORM directamente (ver
-             requestExit en app.js, misma lógica que «Salir del curso»). -->
-        <button id="me-btn-close" class="me-icon-btn" title="Cerrar" aria-label="Cerrar y finalizar el curso"><span data-icon="log-out" aria-hidden="true"></span></button>
+        <!-- Pantalla completa (oculto si el navegador/LMS no lo permite, ver app.js). -->
+        <button id="me-btn-fullscreen" class="me-icon-btn" title="Pantalla completa" aria-label="Pantalla completa" hidden><span data-icon="maximize" aria-hidden="true"></span></button>
       </div>
     </header>
 
@@ -49,9 +45,9 @@
     </div>
 
     <!-- Barra de herramientas / navegación: bloque centrado y acotado al ancho
-         de la diapositiva (.me-toolbar-center, ver styles.css). Pantalla
-         completa vive al final del bloque de audio pero en escritorio sale
-         del flujo y queda pegada al borde derecho de toda la barra. -->
+         de la diapositiva (.me-toolbar-center, ver styles.css). Imprimir/
+         Ayuda/Cerrar viven al final del bloque de audio pero en escritorio salen
+         del flujo y quedan pegados al borde derecho de toda la barra. -->
     <footer class="me-toolbar" role="contentinfo">
       <div class="me-toolbar-center">
         <!-- Opciones de audio: separadas de la navegación por un hueco propio
@@ -85,12 +81,18 @@
               </select>
             </label>
           </div>
-          <!-- Pantalla completa: al final del bloque de audio (oculto si el
-               navegador/LMS no lo permite, ver app.js). En escritorio sale del
-               flujo (position:absolute, ver styles.css) y queda pegada al
-               borde derecho de toda la barra; en móvil vuelve al flujo normal
-               y se queda al final de esta fila. -->
-          <button id="me-btn-fullscreen" class="me-icon-btn" title="Pantalla completa" aria-label="Pantalla completa" hidden><span data-icon="maximize" aria-hidden="true"></span></button>
+          <!-- Imprimir, Ayuda y Cerrar: al final del bloque de audio. En escritorio
+               salen del flujo (position:absolute, ver styles.css) y quedan pegados
+               al borde derecho de toda la barra; en móvil vuelven al flujo, al
+               final de esa fila. -->
+          <div class="me-toolbar-tools">
+            <button id="me-btn-print" class="me-icon-btn" title="Imprimir" aria-label="Imprimir"><span data-icon="printer" aria-hidden="true"></span></button>
+            <button id="me-btn-help" class="me-icon-btn" title="Ayuda" aria-label="Ayuda"><span data-icon="help-circle" aria-hidden="true"></span></button>
+            <!-- Cierra el curso: si está incompleto pide confirmación (progreso
+                 guardado); si no, finaliza la sesión SCORM directamente (ver
+                 requestExit en app.js, misma lógica que «Salir del curso»). -->
+            <button id="me-btn-close" class="me-icon-btn" title="Cerrar" aria-label="Cerrar y finalizar el curso"><span data-icon="log-out" aria-hidden="true"></span></button>
+          </div>
         </div>
 
         <div class="me-toolbar-nav">

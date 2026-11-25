@@ -48,7 +48,7 @@ body {
      encogería por debajo de sus hijos aunque .me-topbar-title sí pueda. */
   min-width: 0;
 }
-/* Título centrado entre el ☰ y el grupo Ayuda/Cerrar: el resto de
+/* Título centrado entre el ☰ y el grupo A−/A+/Pantalla completa: el resto de
    herramientas vive en el menú lateral y en la barra inferior (jul 2026). */
 .me-topbar-title { flex: 1 1 auto; min-width: 0; text-align: center; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .me-brand { font-weight: 700; color: var(--me-primary); margin-right: .4rem; }
@@ -438,7 +438,7 @@ video.me-video, .me-audio { width: 100%; height: auto; aspect-ratio: auto; }
 .me-toolbar {
   /* Centrado clásico (flex + justify-content:center), no grid: con un solo
      hijo flex (.me-toolbar-center) no hace falta repartir espacio entre
-     columnas — #me-btn-fullscreen sale del flujo (position:absolute, ver más
+     columnas — .me-toolbar-tools sale del flujo (position:absolute, ver más
      abajo) y no compite por sitio, así que el centrado no tiene que lidiar
      con su ancho. position:relative aquí es el ancla de ese absolute. */
   position: relative;
@@ -470,17 +470,21 @@ video.me-video, .me-audio { width: 100%; height: auto; aspect-ratio: auto; }
 /* Bloque central: acotado al ancho de la diapositiva (960px, como .me-screen)
    y centrado — width:100% + max-width dentro de un padre flex con
    justify-content:center es el centrado clásico (una sola caja, sin
-   competir con nada: #me-btn-fullscreen ya no cuenta, ver más abajo).
+   competir con nada: .me-toolbar-tools no cuenta, ver más abajo).
    space-between (no center) en su interior: el hueco central se autoestira
    con el espacio sobrante y los dos grupos —audio y navegación— quedan
    pegados a los márgenes de la diapositiva en vez de apelotonados en medio. */
 .me-toolbar-center { width: 100%; max-width: 960px; min-width: 0; display: flex; align-items: center; justify-content: space-between; gap: 1.5rem; flex-wrap: wrap; }
 .me-toolbar-audio, .me-toolbar-nav { display: flex; align-items: center; gap: .6rem; flex-wrap: wrap; max-width: 100%; min-width: 0; }
-/* Al final del bloque de audio en el HTML; en escritorio sale del flujo
-   (position:absolute, ancla en .me-toolbar) y queda pegada al borde derecho
-   de toda la barra — así no compite por espacio con el centrado. En móvil
-   vuelve al flujo normal (ver el media query), al final de esa fila. */
-#me-btn-fullscreen { position: absolute; top: 50%; right: .9rem; transform: translateY(-50%); }
+/* Imprimir/Ayuda/Cerrar: al final del bloque de audio en el HTML; en escritorio
+   salen del flujo (position:absolute, ancla en .me-toolbar) y quedan pegados al
+   borde derecho de toda la barra — así no compiten por espacio con el centrado.
+   En móvil vuelven al flujo normal (ver el media query), al final de esa fila. */
+.me-toolbar-tools { display: flex; align-items: center; gap: .2rem; position: absolute; top: 50%; right: .9rem; transform: translateY(-50%); }
+/* Entre 1025 y ~1300 px el margen a cada lado de la diapositiva (960) no basta
+   para los tres botones: relleno lateral SIMÉTRICO en la barra, así el bloque
+   central encoge en vez de pisarlos y sigue exactamente centrado. */
+@media (min-width: 1025px) and (max-width: 1300px) { .me-toolbar { padding-inline: calc(7rem + 40px); } }
 /* Reproductor de la narración: play/pause · seek+tiempo · 🔊/🔇+volumen ·
    velocidad. Oculto entero si la pantalla no tiene audio_src (app.js). */
 .me-audio-player { display: flex; align-items: center; gap: .35rem; flex-wrap: wrap; }
@@ -1243,20 +1247,20 @@ video.me-video, .me-audio { width: 100%; height: auto; aspect-ratio: auto; }
      primero en el HTML pero se ve el segundo) — ambos de lado a lado
      (align-self:stretch): la navegación para que la barra de progreso (ya
      flex:1 dentro de ella) ocupe el máximo posible, y el de audio para que
-     Pantalla completa pueda anclarse a la derecha del todo (margin-left:auto)
-     sin quedar centrada junto con los controles de audio. */
+     Imprimir/Ayuda/Cerrar puedan anclarse a la derecha del todo
+     (margin-left:auto) sin quedar centrados junto con los controles de audio. */
   .me-toolbar-center { flex-direction: column-reverse; align-items: center; gap: .5rem; }
   .me-toolbar-nav, .me-toolbar-audio { align-self: stretch; }
-  #me-btn-fullscreen { margin-left: auto; }
+  .me-toolbar-tools { margin-left: auto; }
   .me-progress { min-width: 90px; }
   .me-audio-time, .me-volume-slider { display: none; }
   .me-audio-seek input[type=range] { width: 70px; }
   /* Anterior/Siguiente se quedan en solo icono si no hay sitio para el texto */
   .me-nav-btn-label { display: none; }
   .me-nav-btn { padding: .5rem .6rem; }
-  /* Pantalla completa vuelve al flujo normal (su sitio en el HTML, al final
-     de la fila de audio), ya no pegada al borde con position:absolute. */
-  #me-btn-fullscreen { position: static; transform: none; }
+  /* Imprimir/Ayuda/Cerrar vuelven al flujo normal (su sitio en el HTML, al
+     final de la fila de audio), ya no pegados al borde con position:absolute. */
+  .me-toolbar-tools { position: static; transform: none; }
 
   /* Objetivos táctiles cómodos (>=44px) */
   .me-btn, .me-icon-btn { min-height: 44px; }
