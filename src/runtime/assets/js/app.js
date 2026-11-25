@@ -632,26 +632,136 @@
     lb.setAttribute('role', 'dialog');
     lb.setAttribute('aria-modal', 'true');
     lb.setAttribute('aria-label', 'Imagen ampliada');
-    lb.innerHTML = '<button class="me-lightbox-close" aria-label="Cerrar (Esc)">✕</button><img class="me-lightbox-img" alt="">';
+    lb.innerHTML = '<div class="me-lightbox-tools">' +
+      '<button class="me-lightbox-zoom" data-zoom="out" aria-label="Alejar (−)">−</button>' +
+      '<button class="me-lightbox-zoom" data-zoom="in" aria-label="Acercar (+)">+</button>' +
+      '<button class="me-lightbox-close" aria-label="Cerrar (Esc)">✕</button></div>' +
+      '<img class="me-lightbox-img" alt="" draggable="false">';
     document.body.appendChild(lb);
     var img = lb.querySelector('.me-lightbox-img');
     var lastFocus = null;
 
+    // --- Zoom propio (pellizco, doble toque, arrastre, rueda, + / −) --------
+    // No se usa el zoom del navegador porque en pantalla completa (Fullscreen
+    // API) Chrome para Android lo desactiva, y la app de Moodle lo bloquea
+    // siempre. La imagen se transforma con translate+scale (origen en su
+    // centro); `tx/ty` es el desplazamiento respecto a su posición ajustada.
+    var MAX = 6, scale = 1, tx = 0, ty = 0;
+    var pointers = {}, gesture = null, moved = false, lastTap = 0, lastTapX = 0, lastTapY = 0;
+    function apply() {
+      img.style.transform = scale === 1 && !tx && !ty ? '' : 'translate(' + tx + 'px,' + ty + 'px) scale(' + scale + ')';
+      lb.classList.toggle('is-zoomed', scale > 1.001);
+    }
+    function clampPan() {
+      // Sin huecos: la imagen ampliada no puede separarse del borde visible.
+      var mx = Math.max(0, (img.offsetWidth * scale - lb.clientWidth) / 2);
+      var my = Math.max(0, (img.offsetHeight * scale - lb.clientHeight) / 2);
+      tx = Math.max(-mx, Math.min(mx, tx));
+      ty = Math.max(-my, Math.min(my, ty));
+    }
+    // Centro de la imagen sin transformar, en coordenadas de pantalla.
+    function center() {
+      return { x: img.offsetLeft + img.offsetWidth / 2, y: img.offsetTop + img.offsetHeight / 2 };
+    }
+    // Lleva la escala a `next` manteniendo quieto el punto de pantalla (fx, fy),
+    // partiendo de un estado base (s0, x0, y0): así sirve igual para la rueda
+    // (base = estado actual) que para el pellizco (base = estado al empezar).
+    function zoomAround(next, fx, fy, s0, x0, y0) {
+      var c = center();
+      next = Math.max(1, Math.min(MAX, next));
+      var k = next / s0;
+      tx = (fx - c.x) - k * (fx - c.x - x0);
+      ty = (fy - c.y) - k * (fy - c.y - y0);
+      scale = next;
+      if (scale === 1) { tx = 0; ty = 0; }
+      clampPan(); apply();
+    }
+    function zoomStep(factor) {
+      var r = lb.getBoundingClientRect();
+      zoomAround(scale * factor, r.left + r.width / 2, r.top + r.height / 2, scale, tx, ty);
+    }
+    function resetZoom() { scale = 1; tx = 0; ty = 0; pointers = {}; gesture = null; apply(); }
+    function startGesture() {
+      var ids = Object.keys(pointers);
+      if (ids.length >= 2) {
+        var a = pointers[ids[0]], b = pointers[ids[1]];
+        gesture = { kind: 'pinch', d0: Math.hypot(a.x - b.x, a.y - b.y) || 1,
+          mx: (a.x + b.x) / 2, my: (a.y + b.y) / 2, s0: scale, x0: tx, y0: ty };
+      } else if (ids.length === 1) {
+        var p = pointers[ids[0]];
+        gesture = { kind: 'pan', px: p.x, py: p.y, x0: tx, y0: ty };
+      } else gesture = null;
+    }
+    lb.addEventListener('pointerdown', function (e) {
+      if (e.target.closest('button')) return;
+      pointers[e.pointerId] = { x: e.clientX, y: e.clientY, sx: e.clientX, sy: e.clientY, onBg: e.target === lb };
+      if (Object.keys(pointers).length === 1) moved = false;
+      try { lb.setPointerCapture(e.pointerId); } catch (err) { /* sin captura, sigue funcionando */ }
+      startGesture();
+    });
+    lb.addEventListener('pointermove', function (e) {
+      var p = pointers[e.pointerId];
+      if (!p || !gesture) return;
+      p.x = e.clientX; p.y = e.clientY;
+      if (Math.abs(p.x - p.sx) > 8 || Math.abs(p.y - p.sy) > 8) moved = true;
+      if (gesture.kind === 'pinch') {
+        var ids = Object.keys(pointers), a = pointers[ids[0]], b = pointers[ids[1]];
+        var d = Math.hypot(a.x - b.x, a.y - b.y);
+        var mx = (a.x + b.x) / 2, my = (a.y + b.y) / 2;
+        // Escala respecto al punto medio inicial y, después, se arrastra con él.
+        zoomAround(gesture.s0 * d / gesture.d0, gesture.mx, gesture.my, gesture.s0, gesture.x0, gesture.y0);
+        if (scale > 1) { tx += mx - gesture.mx; ty += my - gesture.my; clampPan(); apply(); }
+      } else if (scale > 1) {
+        tx = gesture.x0 + (p.x - gesture.px); ty = gesture.y0 + (p.y - gesture.py);
+        clampPan(); apply();
+      }
+    });
+    function endPointer(e) {
+      if (!pointers[e.pointerId]) return;
+      var p = pointers[e.pointerId];
+      delete pointers[e.pointerId];
+      startGesture(); // de pellizco a arrastre con el dedo que queda, sin saltos
+      if (e.type !== 'pointerup' || moved || Object.keys(pointers).length) return;
+      // Toque en el fondo: cierra. Se decide aquí y no en `click` porque, con la
+      // captura de puntero, el clic llega siempre al visor y no a la imagen.
+      if (p.onBg) { close(); return; }
+      // Doble toque / doble clic: alterna entre ajustada y ampliada en ese punto.
+      var now = Date.now();
+      if (now - lastTap < 320 && Math.abs(p.x - lastTapX) < 30 && Math.abs(p.y - lastTapY) < 30) {
+        lastTap = 0;
+        if (scale > 1) resetZoom(); else zoomAround(2.5, p.x, p.y, scale, tx, ty);
+      } else { lastTap = now; lastTapX = p.x; lastTapY = p.y; }
+    }
+    lb.addEventListener('pointerup', endPointer);
+    lb.addEventListener('pointercancel', endPointer);
+    lb.addEventListener('wheel', function (e) {
+      if (lb.hidden) return;
+      e.preventDefault();
+      zoomAround(scale * Math.exp(-e.deltaY * 0.0015), e.clientX, e.clientY, scale, tx, ty);
+    }, { passive: false });
+    window.addEventListener('resize', function () { if (!lb.hidden) { clampPan(); apply(); } });
+
     function open(src, alt) {
       lastFocus = document.activeElement;
+      resetZoom();
       img.src = src; img.alt = alt || '';
       lb.hidden = false;
       lb.querySelector('.me-lightbox-close').focus();
     }
     function close() {
-      lb.hidden = true; img.removeAttribute('src');
+      lb.hidden = true; img.removeAttribute('src'); resetZoom();
       if (lastFocus && lastFocus.focus) lastFocus.focus();
     }
     lb.addEventListener('click', function (e) {
-      if (e.target === lb || e.target.classList.contains('me-lightbox-close')) close();
+      var z = e.target.closest && e.target.closest('.me-lightbox-zoom');
+      if (z) { zoomStep(z.getAttribute('data-zoom') === 'in' ? 1.5 : 1 / 1.5); return; }
+      if (e.target.classList.contains('me-lightbox-close')) close();
     });
     document.addEventListener('keydown', function (e) {
       if (!lb.hidden && e.key === 'Escape') close();
+      else if (!lb.hidden && (e.key === '+' || e.key === '=')) { e.preventDefault(); zoomStep(1.5); }
+      else if (!lb.hidden && (e.key === '-' || e.key === '_')) { e.preventDefault(); zoomStep(1 / 1.5); }
+      else if (!lb.hidden && e.key === '0') { e.preventDefault(); resetZoom(); }
       else if ((e.key === 'Enter' || e.key === ' ') && e.target.classList && e.target.classList.contains('me-zoomable')) {
         e.preventDefault(); open(e.target.getAttribute('src'), e.target.getAttribute('alt'));
       }

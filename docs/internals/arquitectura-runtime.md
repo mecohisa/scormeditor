@@ -222,6 +222,15 @@ Tres tipos de bloque que el autor rellena con markdown normal y la carcasa maque
   (iconos ◧/▣/▬ = Izquierda/Centrada/Ancho 100%, estados excluyentes) que solo aparece con
   disposición arriba/abajo y mapea a esos dos campos (glifos de texto para alinear en
   altura con Disposición/Proporción; `.ed-seg button` tiene tamaño fijo).
+- **Visor de imágenes (lightbox, `setupLightbox()` en `app.js`)**: toda imagen
+  `.me-zoomable` se abre a pantalla completa con **zoom propio**: pellizco, doble toque o
+  doble clic (×2,5 en ese punto / vuelta a ajustada), arrastre con un dedo o el ratón,
+  rueda, botones −/+ y teclas `+`/`-`/`0`; escala 1–6 con `translate+scale` y el
+  desplazamiento acotado a los bordes. No se confía en el zoom del navegador porque en
+  pantalla completa (Fullscreen API) Chrome para Android lo desactiva y la app de Moodle lo
+  bloquea siempre; por eso el visor lleva `touch-action:none`. Con captura de puntero el
+  `click` llega siempre al visor, así que el «toque en el fondo cierra» se decide en
+  `pointerup` (puntero que empezó en el fondo y no se movió).
 - **Vídeo embebido (YouTube)**: el marco `.me-video` fija la proporción con
   `aspect-ratio` y el `<iframe>` la llena en absoluto (`inset:0; height:100%` — sin alto
   explícito un iframe se queda en sus 150px por defecto, fallo histórico). Alto mínimo de
