@@ -279,7 +279,10 @@ autor solo decide tipo y lugar). Si el autor **ya** escribe el contenido en un f
 reconocible, el GPT lo usa **literal** en vez de inventarlo:
 
 - `{{acordeon}}`/`{{pestañas}}`/`{{tarjetas_imagen}}`: cada ítem abre con `### título` y
-  su texto debajo es el `body`/`text`. `{{tarjetas_volteables}}`/`{{tarjetas_repaso}}`:
+  su texto debajo es el `body`/`text`. Una imagen que el autor pone dentro de un ítem de
+  `{{acordeon}}`/`{{pestañas}}` se queda **en ese ítem, en su sitio**, como imagen en línea
+  (`![alt|60](assets/img/…)`); no se saca a imagen de la pantalla ni a otra pantalla.
+  `{{tarjetas_volteables}}`/`{{tarjetas_repaso}}`:
   `### ` = `front`, texto de debajo = `back`. `{{linea_tiempo}}`: `### etiqueta · título`
   (la parte antes de `·` es el `label`, opcional).
 - `{{opcion_unica}}`/`{{decision}}`: una línea de enunciado + opciones en líneas `- `;
