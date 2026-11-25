@@ -475,12 +475,15 @@ video.me-video, .me-audio { width: 100%; height: auto; aspect-ratio: auto; }
    con el espacio sobrante y los dos grupos —audio y navegación— quedan
    pegados a los márgenes de la diapositiva en vez de apelotonados en medio. */
 .me-toolbar-center { width: 100%; max-width: 960px; min-width: 0; display: flex; align-items: center; justify-content: space-between; gap: 1.5rem; flex-wrap: wrap; }
-.me-toolbar-audio, .me-toolbar-nav { display: flex; align-items: center; gap: .6rem; flex-wrap: wrap; max-width: 100%; min-width: 0; }
+.me-toolbar-audio, .me-toolbar-nav, .me-toolbar-media { display: flex; align-items: center; gap: .6rem; flex-wrap: wrap; max-width: 100%; min-width: 0; }
 /* Imprimir/Ayuda/Cerrar: al final del bloque de audio en el HTML; en escritorio
    salen del flujo (position:absolute, ancla en .me-toolbar) y quedan pegados al
    borde derecho de toda la barra — así no compiten por espacio con el centrado.
    En móvil vuelven al flujo normal (ver el media query), al final de esa fila. */
-.me-toolbar-tools { display: flex; align-items: center; gap: .2rem; position: absolute; top: 50%; right: .9rem; transform: translateY(-50%); }
+.me-toolbar-tools, .me-toolbar-aux { display: flex; align-items: center; gap: .2rem; }
+/* «Salir» con texto solo en móvil (ver el media query); en escritorio, solo icono. */
+.me-close-label { display: none; }
+.me-toolbar-tools { position: absolute; top: 50%; right: .9rem; transform: translateY(-50%); }
 /* Entre 1025 y ~1300 px el margen a cada lado de la diapositiva (960) no basta
    para los tres botones: relleno lateral SIMÉTRICO en la barra, así el bloque
    central encoge en vez de pisarlos y sigue exactamente centrado. */
@@ -1247,11 +1250,9 @@ video.me-video, .me-audio { width: 100%; height: auto; aspect-ratio: auto; }
      primero en el HTML pero se ve el segundo) — ambos de lado a lado
      (align-self:stretch): la navegación para que la barra de progreso (ya
      flex:1 dentro de ella) ocupe el máximo posible, y el de audio para que
-     Imprimir/Ayuda/Cerrar puedan anclarse a la derecha del todo
-     (margin-left:auto) sin quedar centrados junto con los controles de audio. */
+     su rejilla de tres columnas (ver más abajo) reparta el ancho completo. */
   .me-toolbar-center { flex-direction: column-reverse; align-items: center; gap: .5rem; }
   .me-toolbar-nav, .me-toolbar-audio { align-self: stretch; }
-  .me-toolbar-tools { margin-left: auto; }
   .me-progress { min-width: 90px; }
   .me-audio-time, .me-volume-slider { display: none; }
   .me-audio-seek input[type=range] { width: 70px; }
@@ -1260,7 +1261,24 @@ video.me-video, .me-audio { width: 100%; height: auto; aspect-ratio: auto; }
   .me-nav-btn { padding: .5rem .6rem; }
   /* Imprimir/Ayuda/Cerrar vuelven al flujo normal (su sitio en el HTML, al
      final de la fila de audio), ya no pegados al borde con position:absolute. */
-  .me-toolbar-tools { position: static; transform: none; }
+  /* Fila de audio en tres columnas: transcripción + reproductor a la izquierda,
+     «Salir» (con texto) centrado y Imprimir/Ayuda a la derecha. Las laterales
+     son 1fr iguales, así «Salir» queda en el centro exacto de la barra; si el
+     reproductor no cabe en su tercio, la rejilla lo respeta y «Salir» se
+     desplaza un poco en vez de solaparse. .me-toolbar-tools se disuelve
+     (display:contents) para que sus hijos sean celdas de la rejilla. */
+  .me-toolbar-audio { display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); gap: .4rem; }
+  .me-toolbar-media { grid-column: 1; justify-self: start; }
+  .me-toolbar-tools { display: contents; }
+  .me-toolbar-tools #me-btn-close { grid-column: 2; grid-row: 1; gap: .35rem; padding-inline: .7rem; }
+  .me-toolbar-aux { grid-column: 3; grid-row: 1; justify-self: end; }
+  .me-close-label { display: inline; font-size: .95rem; font-weight: 600; }
+  /* Con el reproductor visible no caben las tres cosas en una fila: la
+     transcripción y el reproductor ocupan su propia fila entera y «Salir»
+     (centrado) e Imprimir/Ayuda (a la derecha) bajan a la siguiente. */
+  .me-toolbar-audio:has(.me-audio-player:not([hidden])) .me-toolbar-media { grid-column: 1 / -1; }
+  .me-toolbar-audio:has(.me-audio-player:not([hidden])) #me-btn-close,
+  .me-toolbar-audio:has(.me-audio-player:not([hidden])) .me-toolbar-aux { grid-row: 2; }
 
   /* Objetivos táctiles cómodos (>=44px) */
   .me-btn, .me-icon-btn { min-height: 44px; }

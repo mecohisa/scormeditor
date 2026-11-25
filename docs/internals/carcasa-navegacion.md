@@ -151,8 +151,12 @@ al final) y `.me-toolbar-nav` (Anterior, progreso, Siguiente).
   toda la barra, sin competir por espacio con el centrado. Entre 1025 y 1300 px el margen
   junto a la diapositiva no basta para los tres botones: la barra lleva relleno lateral
   **simétrico** (`calc(7rem + 40px)`), así el bloque central encoge sin pisarlos y sigue
-  centrado. En **móvil** vuelven al flujo (`position:static`) con `margin-left:auto`, al
-  extremo derecho de la fila de audio.
+  centrado. En **móvil** la fila de audio es una rejilla `1fr auto 1fr`: transcripción +
+  reproductor (`.me-toolbar-media`) a la izquierda, **«Salir» con texto** (`.me-close-label`,
+  solo visible en móvil) en el centro exacto e Imprimir/Ayuda (`.me-toolbar-aux`) a la
+  derecha; `.me-toolbar-tools` se disuelve con `display:contents`. Si el reproductor está
+  visible (`:has(.me-audio-player:not([hidden]))`) ocupa una fila entera y «Salir» e
+  Imprimir/Ayuda bajan a la siguiente, porque en 360 px no cabe todo en una.
 - **Pantalla completa** (`#me-btn-fullscreen`, cabecera, junto a A−/A+): Fullscreen API sobre `documentElement` con
   fallback `webkit`; icono `maximize`/`minimize` y title/aria-label se sincronizan en
   `fullscreenchange` (cubre también la salida con Esc). Arranca `hidden` y solo se

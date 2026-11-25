@@ -53,6 +53,9 @@
         <!-- Opciones de audio: separadas de la navegación por un hueco propio
              (.me-toolbar-center > gap), no por un divisor visible. -->
         <div class="me-toolbar-audio">
+          <!-- Transcripción + reproductor juntos: en móvil ocupan la columna
+               izquierda de la fila (ver .me-toolbar-audio en el media query). -->
+          <div class="me-toolbar-media">
           <button id="me-btn-transcript" class="me-icon-btn" title="Transcripción (Alt+T)" aria-label="Transcripción">
             <span data-icon="file-text" aria-hidden="true"></span></button>
 
@@ -81,17 +84,20 @@
               </select>
             </label>
           </div>
+          </div>
           <!-- Imprimir, Ayuda y Cerrar: al final del bloque de audio. En escritorio
                salen del flujo (position:absolute, ver styles.css) y quedan pegados
                al borde derecho de toda la barra; en móvil vuelven al flujo, al
                final de esa fila. -->
           <div class="me-toolbar-tools">
-            <button id="me-btn-print" class="me-icon-btn" title="Imprimir" aria-label="Imprimir"><span data-icon="printer" aria-hidden="true"></span></button>
-            <button id="me-btn-help" class="me-icon-btn" title="Ayuda" aria-label="Ayuda"><span data-icon="help-circle" aria-hidden="true"></span></button>
+            <div class="me-toolbar-aux">
+              <button id="me-btn-print" class="me-icon-btn" title="Imprimir" aria-label="Imprimir"><span data-icon="printer" aria-hidden="true"></span></button>
+              <button id="me-btn-help" class="me-icon-btn" title="Ayuda" aria-label="Ayuda"><span data-icon="help-circle" aria-hidden="true"></span></button>
+            </div>
             <!-- Cierra el curso: si está incompleto pide confirmación (progreso
                  guardado); si no, finaliza la sesión SCORM directamente (ver
                  requestExit en app.js, misma lógica que «Salir del curso»). -->
-            <button id="me-btn-close" class="me-icon-btn" title="Cerrar" aria-label="Cerrar y finalizar el curso"><span data-icon="log-out" aria-hidden="true"></span></button>
+            <button id="me-btn-close" class="me-icon-btn" title="Cerrar" aria-label="Cerrar y finalizar el curso"><span data-icon="log-out" aria-hidden="true"></span><span class="me-close-label" aria-hidden="true">Salir</span></button>
           </div>
         </div>
 
