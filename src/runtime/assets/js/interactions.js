@@ -908,7 +908,16 @@
           }
         }
         setPicked(pickedId === id ? null : id);
-        if (pickedId) ctx.announce('«' + chipText(pickedId) + '» seleccionado. Elige dónde colocarlo con «Colocar aquí».');
+        if (pickedId) {
+          ctx.announce('«' + chipText(pickedId) + '» seleccionado. Elige dónde colocarlo con «Colocar aquí».');
+          // Con teclado (clic sin puntero: e.detail === 0), el foco salta al primer «Colocar
+          // aquí» de otra zona; si no, habría que tabular por todas las piezas restantes.
+          if (e.detail === 0) {
+            var dest = [].slice.call(el.querySelectorAll('.me-dnd-zone:not(.is-current) .me-dnd-drop'))
+              .filter(function (b) { return !b.disabled && b.offsetParent !== null; })[0];
+            if (dest) dest.focus();
+          }
+        }
         return;
       }
       if (e.target.closest('.me-dnd-cancel')) { cancelPick(); return; }
@@ -3447,9 +3456,10 @@
       // state_codec.js (estimateSuspendSize) usa la MISMA fórmula.
       var azMaxLen = Math.min(120, Math.max(40, q.answer.length + 10));
       playBox.innerHTML =
-        '<p class="me-az-clue"><span class="me-az-starts">Empieza por ' + esc(q.letter) + '</span> ' + rich(q.clue) + '</p>' +
+        // aria-describedby: al recibir el foco, el lector lee la definición de la letra.
+        '<p class="me-az-clue" id="' + meDomId(data, 'az-clue') + '"><span class="me-az-starts">Empieza por ' + esc(q.letter) + '</span> ' + rich(q.clue) + '</p>' +
         '<div class="me-az-controls">' +
-        '<input class="me-az-input" type="text" autocomplete="off" maxlength="' + azMaxLen + '" aria-label="Tu respuesta">' +
+        '<input class="me-az-input" type="text" autocomplete="off" maxlength="' + azMaxLen + '" aria-label="Tu respuesta" aria-describedby="' + meDomId(data, 'az-clue') + '">' +
         '<button type="button" class="me-btn me-primary me-az-send">Responder</button>' +
         '<button type="button" class="me-btn me-az-pass">Pasapalabra</button></div>' +
         '<div class="me-iv-fb" hidden></div>';
@@ -3499,7 +3509,9 @@
         nb.focus();
       }
       playBox.querySelector('.me-az-send').addEventListener('click', answer);
-      input.addEventListener('keydown', function (e) { if (e.key === 'Enter') answer(); });
+      // preventDefault: sin él, la pulsación de Intro llega como clic al botón «Siguiente
+      // letra» que answer() acaba de enfocar y salta la letra sin dejar ver la solución.
+      input.addEventListener('keydown', function (e) { if (e.key === 'Enter') { e.preventDefault(); answer(); } });
       playBox.querySelector('.me-az-pass').addEventListener('click', function () {
         ctx.announce('Pasapalabra. La letra ' + items[current].letter + ' volverá después.');
         advance();
