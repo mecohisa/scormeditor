@@ -41,7 +41,9 @@
       </button>
 
       <!-- Área principal -->
-      <main id="me-content" class="me-content" tabindex="-1" aria-live="polite"></main>
+      <!-- tabindex="0": el área tiene scroll propio y debe poder enfocarse con Tab
+           para desplazarla con las flechas (WCAG 2.1.1, regla scrollable-region-focusable). -->
+      <main id="me-content" class="me-content" tabindex="0" aria-label="Contenido de la pantalla" aria-live="polite"></main>
     </div>
 
     <!-- Barra de herramientas / navegación: bloque centrado y acotado al ancho

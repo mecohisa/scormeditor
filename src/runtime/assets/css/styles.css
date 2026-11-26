@@ -144,6 +144,8 @@ body {
    hace scroll con normalidad. */
 .me-content { overflow-y: auto; padding: 1.5rem clamp(1rem, 4vw, 3rem); display: flex; flex-direction: column; }
 .me-content:focus { outline: none; }
+/* Al llegar con Tab (es enfocable para poder desplazarla con las flechas), foco visible por dentro. */
+.me-content:focus-visible { outline: 3px solid var(--me-primary); outline-offset: -3px; }
 /* Tarjeta de pantalla: elevación con sombra suave + filo superior de acento.
    Entra con un fade+slide sutil en cada navegación (el nodo se recrea). */
 .me-screen {

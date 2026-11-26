@@ -28,7 +28,9 @@
 
     focusMain: function () {
       var main = document.getElementById('me-content');
-      if (main) { main.setAttribute('tabindex', '-1'); main.focus(); }
+      // tabindex 0 (no -1): el área tiene scroll propio y también debe poder
+      // alcanzarse con Tab para desplazarla con las flechas (WCAG 2.1.1).
+      if (main) { main.setAttribute('tabindex', '0'); main.focus(); }
     },
 
     // Atajos globales: Alt+→ siguiente, Alt+← anterior, Alt+M menú, Alt+T transcripción
