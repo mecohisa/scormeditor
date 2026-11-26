@@ -32,7 +32,9 @@
 
     <div class="me-body">
       <!-- Menú lateral -->
-      <nav id="me-menu" class="me-menu" aria-label="Índice del curso"></nav>
+      <!-- inert mientras está plegado (reflectMenuUI en app.js): oculto con transform,
+           sus enlaces no deben alcanzarse con Tab (WCAG 2.4.3). Arranca plegado. -->
+      <nav id="me-menu" class="me-menu" aria-label="Índice del curso" inert></nav>
 
       <!-- Pestaña de plegado del índice (solo escritorio; en móvil queda el ☰) -->
       <button id="me-menu-tab" class="me-menu-tab" aria-expanded="false" aria-controls="me-menu"
@@ -42,8 +44,10 @@
 
       <!-- Área principal -->
       <!-- tabindex="0": el área tiene scroll propio y debe poder enfocarse con Tab
-           para desplazarla con las flechas (WCAG 2.1.1, regla scrollable-region-focusable). -->
-      <main id="me-content" class="me-content" tabindex="0" aria-label="Contenido de la pantalla" aria-live="polite"></main>
+           para desplazarla con las flechas (WCAG 2.1.1, regla scrollable-region-focusable).
+           Sin aria-live: releería la pantalla entera en cada cambio; el cambio de
+           pantalla se anuncia con A11Y.announce (goTo en app.js). -->
+      <main id="me-content" class="me-content" tabindex="0" aria-label="Contenido de la pantalla"></main>
     </div>
 
     <!-- Barra de herramientas / navegación: bloque centrado y acotado al ancho
@@ -72,7 +76,8 @@
               <input id="me-audio-seek" type="range" min="0" max="1000" value="0" step="1" aria-label="Progreso de la narración">
               <span id="me-audio-time" class="me-audio-time" aria-hidden="true">0:00 / 0:00</span>
             </div>
-            <button id="me-btn-audio" class="me-icon-btn is-on" aria-pressed="true" aria-label="Silenciar narración"
+            <!-- Rótulo fijo + aria-pressed (true = sonido activado), ver reflectAudioButton. -->
+            <button id="me-btn-audio" class="me-icon-btn is-on" aria-pressed="true" aria-label="Sonido de la narración"
               title="Activar o desactivar el sonido de la narración">
               <span data-icon="volume-on" aria-hidden="true"></span></button>
             <input id="me-audio-volume" class="me-volume-slider" type="range" min="0" max="1" step="0.05" value="1" aria-label="Volumen">
@@ -115,6 +120,9 @@
 
           <button id="me-next" class="me-btn me-primary me-nav-btn" aria-label="Pantalla siguiente">
             <span class="me-nav-btn-label">Siguiente</span><span data-icon="arrow-right" aria-hidden="true"></span></button>
+          <!-- Cuenta atrás visible del tiempo mínimo de la pantalla (startMinTimer en
+               app.js). No es región viva: se describe en Siguiente (aria-describedby). -->
+          <span id="me-next-wait" class="me-next-wait" hidden></span>
         </div>
       </div>
     </footer>

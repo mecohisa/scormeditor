@@ -109,8 +109,9 @@ ese contrato; no conoce el tipo concreto.
 - **Accesibilidad de las zonas**: cada zona es `role="group"` con `aria-labelledby` a su
   título (id `me-dnd-<id>-t<n>`), **no** un botón: dentro hay chips (`role=button`) y
   antes quedaban botones anidados y el `aria-label` de la zona tapaba las piezas ya
-  colocadas. El destino accionable por teclado es el `<button>` «Colocar aquí» (aria-label
-  «Colocar en «categoría»»). `lockAssign` retira roles/tabindex de los chips y desactiva
+  colocadas. El destino accionable por teclado es el `<button>` «Colocar aquí» (sin
+  aria-label: el destino va detrás como `.sr-only` «: «categoría»», para que el nombre
+  accesible empiece por el texto visible, WCAG 2.5.3). `lockAssign` retira roles/tabindex de los chips y desactiva
   esos botones al resolverse. `match_pairs` comparte este modo con `classification`
   (solo cambian los textos: «casilla con la que se relaciona»); no impone 1:1.
 - **Informativas** (`accordion`, `tabs`, `flip_cards`, `video`, `hotspots`,
@@ -171,11 +172,31 @@ apiladas en la misma celda de grid para que la altura sea la del contenido mayor
 alternado, **no** el atributo `hidden`. La impresión no las expande por JS (`setupPrint`):
 `print.css` aplana el giro y muestra las dos caras. `front`/`back` se renderizan con
 `block()` (markdown de bloque completo: listas, bloques personalizados…), igual que el
-resto de tipos «título + detalle»; ambas caras viven dentro de un único `<button>` (el
-truco del volteo lo exige), así que `.me-card-front`/`.me-card-back` fuerzan
-`flex-direction: column` para que varios bloques se apilen en vertical en vez de quedar
-en fila (con `overflow: hidden` eso recortaba silenciosamente todo salvo el primer
-párrafo).
+resto de tipos «título + detalle». La tarjeta `.me-card` es un **contenedor `<div>`, no un
+botón** (el reverso puede llevar listas y enlaces, que no caben en un `<button>`): el
+control es `.me-card-toggle`, un `<button>` hermano de las caras (`aria-expanded` +
+`aria-controls` al reverso, nombre «Girar la tarjeta: <anverso en texto plano>» + «(vista)»)
+superpuesto a toda la tarjeta con `pointer-events: none`, de modo que el clic con ratón cae
+en las caras y lo recoge el contenedor (un clic en un enlace no gira). El estado girado es
+la clase `.is-flipped`; la cara oculta lleva `aria-hidden` + `inert` (y `tabindex=-1` en
+sus enlaces como respaldo). Al girar se anuncia el reverso en texto plano. Las caras
+fuerzan `flex-direction: column` para que varios bloques se apilen en vertical (con
+`overflow: hidden` en fila se recortaba todo salvo el primer párrafo).
+
+### Accesibilidad común (Comprobar, modal de feedback, marcas)
+- **Comprobar** nace con `aria-disabled="true"` (no `disabled`): sigue enfocable y, si se
+  pulsa sin respuesta completa, el `check()` de cada tipo anuncia qué falta. Solo el
+  `lock()` al resolverse lo deshabilita de verdad. Todo `check()` que use `wireCheck`
+  debe validar la respuesta antes de puntuar.
+- **Modal de feedback** (`showFeedbackModal`): `role=dialog` con `aria-labelledby` al
+  mensaje y `aria-describedby` a la explicación, Tab atrapado y Esc cierra. La caja
+  `.me-feedback` en línea se rellena a la vez **sin región viva** (registro releíble, no se
+  anuncia dos veces). Al cerrar, si el destino del foco ya no es enfocable (Comprobar
+  deshabilitado), cae a esa caja o al contenedor (`tabindex=-1`), nunca a `<body>`.
+- `.me-attempts` y `.me-sort-tally` no son regiones vivas en los tipos de este fichero
+  que anuncian con `ctx.announce` (el texto de intentos restantes va en el anuncio).
+- Las marcas ✔/✖ por `::after` llevan su equivalente `.sr-only` (`setMarkSr`: «correcta»,
+  «bien colocado», «tu elección, …»); el ✓ de visto, «(visto)»/«(vista)» (`seenMarkup`).
 
 ### `case_practice` — sin campo de texto
 Decisión deliberada: el alumno piensa/escribe su respuesta **en papel** (hint
@@ -377,8 +398,12 @@ Comprobar ni `attempts` (como hotspots). `config: { words: [string] }` (3–12 l
   relleno se sesga a las letras de las propias palabras.
 - **UX**: tocar la primera letra (`.is-picked`) y la última; la recta (8 direcciones,
   también al revés) se compara con las pendientes. Acierto → celdas `.is-found` + palabra
-  tachada con ✓ en la lista lateral + `ctx.announce`. Cada celda es un `<button>` con
-  `aria-label` de fila/columna (teclado/táctil de serie).
+  tachada con ✓ en la lista lateral + `ctx.announce` (deletreando las letras marcadas).
+  Cada celda es un `<button>` con `aria-label` de fila/columna (+ «, encontrada»), la
+  inicial con `aria-pressed`; el tablero es una sola parada de Tab (*roving tabindex*:
+  flechas, Inicio/Fin, Ctrl+Inicio/Fin). Se queda en `role=group` + botones en vez de
+  `role=grid`: las filas tendrían que ser `display:contents`, poco fiable en el árbol
+  accesible. Verde del texto encontrado `#0c5a26` (≥6,5:1 sobre su fondo).
 - **Puntuación proporcional**: `score = points × encontradas/total`;
   `completed`/`correct` solo con todas encontradas. Al completar se muestra el feedback
   de acierto.
@@ -391,7 +416,14 @@ Comprobar ni `attempts` (como hotspots). `config: { words: [string] }` (3–12 l
 **pausa** en cada `time` y muestra la pregunta en un overlay sobre el vídeo
 (`.me-iv-overlay`); al responder (1 intento por pregunta, sin campo `attempts`) se ve el
 feedback y «Continuar» reanuda. Estado `{answered: {idx: {choice, correct}}}` persistido;
-las respondidas no se re-disparan (tampoco al hacer seek).
+las respondidas no se re-disparan (tampoco al hacer seek). Con la pregunta abierta, el
+`<video>`/iframe queda `inert` (+`tabindex=-1`) y al continuar recupera el foco; con
+≤600 px de ancho (container query sobre `.me-iv-box`, respaldo `@media`) el overlay pasa
+al flujo, **debajo** del vídeo (WCAG 1.4.10). Solo la primera pista `<track>` es `default`.
+- **Subtítulos del vídeo propio**: `config.tracks` (mismo shape que
+  `visual_resource.tracks`) y `config.has_voice` (solo del editor: la carcasa lo ignora;
+  activa `MEDIA_NO_SUBS` si no hay pista). Se editan en la actividad cuando hay `src`;
+  ambos son opcionales y sin ellos todo funciona como siempre.
 - **video_file**: nativo (`timeupdate`/`seeked`).
 - **YouTube**: puente postMessage del IFrame API (`?enablejsapi=1`, mensajes
   `listening`/`command`/`infoDelivery`) **sin cargar JS externo** — verificado
@@ -423,12 +455,20 @@ para restaurar desde `suspend_data`). Inspirados en el catálogo de eXeLearning.
   numeración) dice qué dirección(es) pasan por ella; `curDir` es la dirección activa
   (`across`/`down`, módulo del factory): por teclado (Tab) o por el propio autoavance se
   mantiene mientras la casilla la admita; en una casilla de **cruce** (admite las dos),
-  clicarla dos veces seguidas (mismo `data-k` que el click anterior) alterna la dirección,
-  igual que en un crucigrama de periódico.
+  clicarla dos veces seguidas (mismo `data-k` que el click anterior) **o Espacio/Intro**
+  alterna la dirección, igual que en un crucigrama de periódico; las flechas mueven a la
+  casilla más próxima (saltando huecos). Cada casilla se nombra por su(s) palabra(s)
+  («3 vertical, letra 2 de 5; 1 horizontal, letra 4 de 7») con `aria-describedby` a la
+  pista; las pistas son botones que llevan a la primera casilla de su palabra. Tras
+  Comprobar, icono ✔/✖ (`.me-cw-mark`) + `aria-invalid`, nunca solo color.
 - **`hidden_image`** (evaluable, autovalidante): `config {image, alt, questions}` (mismas
   preguntas que `video`). La imagen se cubre con 12 losetas; cada **acierto** destapa su
   parte (orden de revelado aleatorio determinista) y al responder todas se desvela
   entera. Una pregunta cada vez bajo la imagen (`questionCard`), 1 intento por pregunta.
+  **Sin avance temporizado** (WCAG 2.2.1): tras responder, «Siguiente pregunta» recibe el
+  foco y, al pulsarlo, el foco va al enunciado nuevo (`tabindex=-1`). Lo mismo en
+  `az_quiz` con «Siguiente letra» (la respuesta correcta queda a la vista); ninguno
+  mueve el foco en el primer pintado.
   Validadores: `HI_NO_IMAGE`, `HI_NO_QUESTIONS`, `HI_Q_*`.
 - **`az_quiz`** (evaluable, autovalidante, tipo pasapalabra): `config.items [{clue,
   answer}]` — la **letra se deriva de la inicial de la respuesta** (también en el editor,
@@ -439,8 +479,9 @@ para restaurar desde `suspend_data`). Inspirados en el catálogo de eXeLearning.
   así que la huella de `suspend_data` no cambia) podría reordenar el rosco entero y
   desplazar lo ya respondido de OTRAS preguntas al reanudar. `state_codec.js`
   (`azQuizItems`) usa el mismo orden de autor, sin ordenar por letra, para que sus
-  posiciones coincidan con `origIdx`. Chips del rosco con estados (actual con pulso /
-  acierto verde / fallo rojo); respuesta escrita (Enter envía) comparada con `normLetters` y
+  posiciones coincidan con `origIdx`. Chips del rosco con estados (actual con pulso de 3
+  ciclos y `aria-current` / acierto verde con ✔ / fallo rojo con ✖, y el estado en texto
+  oculto «A: acertada»); respuesta escrita (Enter envía) comparada con `normLetters` y
   **Pasapalabra** deja la letra para la siguiente vuelta. Al fallar se muestra la
   respuesta correcta. El campo de respuesta lleva `maxlength` (`Math.min(120,
   Math.max(40, respuesta.length + 10))`, nunca por debajo de la propia respuesta
@@ -462,7 +503,14 @@ para restaurar desde `suspend_data`). Inspirados en el catálogo de eXeLearning.
   cols?, rows?}` (2–5, def. 3×3). Piezas por `background-position`, barajadas
   deterministas (nunca nace resuelto); **tocar dos piezas las intercambia** (mismo
   criterio accesible del drag&drop). `completed` solo al resolverlo (persistido
-  `{order, solved}`). Validador: `PZ_NO_IMAGE`.
+  `{order, solved}`). Cada pieza se nombra por su identidad y su sitio («Trozo 4 de 9
+  (fila 2, columna 1), en la posición 7, en su sitio»), con `aria-pressed` en la
+  seleccionada y anuncio al seleccionar/intercambiar; el `alt` de la imagen va en texto
+  oculto enlazado al grupo. Validador: `PZ_NO_IMAGE`.
+- **Tableros pequeños** (sopa y crucigrama): casillas de 24 px a 2.1rem; si a 24 px no
+  caben (p. ej. 13–14 columnas a 320 px), el tablero se desplaza en horizontal dentro de
+  `.me-ws-scroll`/`.me-cw-scroll` en vez de encoger (WCAG 2.5.8 + 1.4.10). Sin
+  `tabindex` propio: sus casillas son enfocables y el foco arrastra el desplazamiento.
 
 ### Prácticas de varios pasos (`scenario_steps`, `decision_tree`, `calculator`)
 Tres tipos evaluables pensados para casos aplicados (inspirados en visores comerciales de

@@ -61,7 +61,10 @@ body {
 /* Body */
 .me-body { display: grid; grid-template-columns: 280px 1fr; overflow: hidden; position: relative; }
 #me-app.me-menu-hidden .me-body { grid-template-columns: 0 1fr; }
-#me-app.me-menu-hidden .me-menu { transform: translateX(-100%); }
+/* Plegado: además del transform, visibility:hidden diferida hasta acabar el
+   deslizamiento (respaldo de nav.inert, ver reflectMenuUI en app.js): sus
+   enlaces salen del orden de Tab también donde no haya inert (WCAG 2.4.3). */
+#me-app.me-menu-hidden .me-menu { transform: translateX(-100%); visibility: hidden; transition: transform .25s ease, visibility 0s linear .25s; }
 
 /* Pestaña de plegado del índice: asa gris plana pegada al borde derecho del
    menú (flecha ◂). Con el menú plegado asoma en el lateral izquierdo (flecha ▸).
@@ -83,7 +86,7 @@ body {
 
 .me-menu {
   background: var(--me-surface); border-right: 1px solid var(--me-border);
-  overflow-y: auto; padding: .75rem; transition: transform .25s ease;
+  overflow-y: auto; padding: .75rem; transition: transform .25s ease, visibility 0s;
 }
 .me-menu-mtitle { font-weight: 700; margin: .5rem 0 .25rem; font-size: .85rem; text-transform: uppercase; color: var(--me-muted); }
 .me-menu-utitle { font-weight: 600; margin: .5rem 0 .15rem; font-size: .9rem; display: flex; align-items: baseline; justify-content: space-between; gap: .5rem; }
@@ -116,6 +119,10 @@ body {
 .me-menu-link.is-current { background: color-mix(in srgb, var(--me-accent) 18%, white); border-left-color: var(--me-accent); font-weight: 600; }
 .me-menu-link.is-done .me-menu-check { color: var(--me-ok); font-weight: 700; }
 .me-menu-link:focus-visible { outline: 3px solid var(--me-primary); outline-offset: 1px; }
+/* Pantalla que la navegación aún no deja abrir (aria-disabled, refreshMenuChecks):
+   atenuada pero legible (--me-muted, 6:1 sobre blanco) y sin hover. */
+.me-menu-link.is-locked { color: var(--me-muted); cursor: not-allowed; }
+.me-menu-link.is-locked:hover { background: none; }
 
 /* Materiales transversales del curso (Glosario, Recursos) y Evaluación (Test
    final/Resultados): mismo fondo sutil que un tema (.me-menu-unit), para que
@@ -208,7 +215,10 @@ body {
   font-size: .72rem; font-weight: 600; letter-spacing: .03em; text-transform: uppercase;
   padding: .18rem .6rem; border-radius: 99px;
   background: color-mix(in srgb, var(--me-primary) 12%, white);
-  color: var(--me-primary);
+  /* Texto oscurecido (70 % primario + negro): el primario a secas sobre su
+     propio tinte daba ~4,3:1; así ≥ 7:1 con el azul por defecto y el del demo,
+     con margen de sobra también durante el fundido de entrada (WCAG 1.4.3). */
+  color: color-mix(in srgb, var(--me-primary) 70%, black);
 }
 @keyframes me-screen-in {
   from { opacity: 0; transform: translateY(10px); }
@@ -223,6 +233,9 @@ body {
 }
 .me-crumb-sep { margin: 0 .45em; opacity: .55; }
 .me-screen h1 { margin: 0 0 .9rem; font-size: 1.9rem; font-weight: 800; letter-spacing: -.015em; line-height: 1.2; }
+/* El <h1> recibe el foco por programa al cambiar de pantalla (A11Y.focusMain,
+   tabindex=-1): no es un control, así que sin anillo de foco. */
+h1[tabindex="-1"]:focus { outline: none; }
 /* Pantalla evaluable (.me-screen-scored, ver renderer.js): título y descripción en
    una tarjeta amarilla — mismo amarillo corporativo de acción/actividad que los
    callouts ::: warn/reflect/case. Solo título+texto: el recurso visual (imagen/
@@ -315,6 +328,11 @@ body {
 .me-callout-summary { border-left-color: #6dc3c0; background: color-mix(in srgb, #6dc3c0 18%, white); }
 .me-callout-case { border-left-color: #f4c910; background: color-mix(in srgb, #f4c910 22%, white); }
 .me-callout-info { border-left-color: #7787bf; background: color-mix(in srgb, #7787bf 16%, white); }
+/* Enlaces dentro de las cajas: el primario a secas da ~4,3:1 sobre los fondos
+   tintados (Atención, Información); 70 % primario + negro deja ≥ 6:1 con el
+   azul por defecto y ≥ 4,5:1 con todas las paletas del editor (WCAG 1.4.3).
+   Doble clase para ganar a `.me-prose a` y a los enlaces blancos de portada. */
+.me-prose .me-callout a, .me-callout a { color: color-mix(in srgb, var(--me-primary) 70%, black); }
 /* Bloques con estructura (renderer.js: ::: stats | compare | dodont) */
 .me-block { margin: 1.1rem 0; }
 .me-block > p:first-child { margin-top: 0; }
@@ -427,7 +445,7 @@ video.me-video, .me-audio { width: 100%; height: auto; aspect-ratio: auto; }
 .me-guide-key-progress { min-width: 5.5rem; border-radius: 99px; background: color-mix(in srgb, var(--me-accent) 45%, white); border-color: transparent; }
 .me-guide-key-close { color: var(--me-error); }
 .me-guide-key-check { background: var(--me-surface); }
-.me-guide-key-scored { border-radius: 99px; border-color: transparent; font-size: .66rem; letter-spacing: .03em; text-transform: uppercase; background: color-mix(in srgb, var(--me-primary) 12%, white); color: var(--me-primary); }
+.me-guide-key-scored { border-radius: 99px; border-color: transparent; font-size: .66rem; letter-spacing: .03em; text-transform: uppercase; background: color-mix(in srgb, var(--me-primary) 12%, white); color: color-mix(in srgb, var(--me-primary) 70%, black); }
 .me-guide-a-s { font-size: .7em; }
 .me-guide-footer { margin: .4rem 0 0; font-size: .9rem; color: var(--me-muted); text-align: center; }
 
@@ -479,6 +497,13 @@ video.me-video, .me-audio { width: 100%; height: auto; aspect-ratio: auto; }
    pegados a los márgenes de la diapositiva en vez de apelotonados en medio. */
 .me-toolbar-center { width: 100%; max-width: 960px; min-width: 0; display: flex; align-items: center; justify-content: space-between; gap: 1.5rem; flex-wrap: wrap; }
 .me-toolbar-audio, .me-toolbar-nav, .me-toolbar-media { display: flex; align-items: center; gap: .6rem; flex-wrap: wrap; max-width: 100%; min-width: 0; }
+/* Cuenta atrás del tiempo mínimo («Podrás continuar en 0:20», startMinTimer en
+   app.js): globo fuera del flujo, encima de Siguiente, para no mover la barra. */
+.me-toolbar-nav { position: relative; }
+.me-next-wait { position: absolute; right: 0; bottom: calc(100% + .45rem); z-index: 5; white-space: nowrap;
+  padding: .2rem .55rem; border-radius: 99px; background: var(--me-surface); border: 1px solid var(--me-border);
+  box-shadow: var(--me-shadow-1); color: var(--me-text); font-size: .8rem; font-weight: 600; pointer-events: none; }
+.me-next-wait[hidden] { display: none; }
 /* Imprimir/Ayuda/Cerrar: al final del bloque de audio en el HTML; en escritorio
    salen del flujo (position:absolute, ancla en .me-toolbar) y quedan pegados al
    borde derecho de toda la barra — así no compiten por espacio con el centrado.
@@ -527,9 +552,14 @@ video.me-video, .me-audio { width: 100%; height: auto; aspect-ratio: auto; }
 /* min-width generoso en escritorio (hay espacio de sobra en el hueco central
    autoestirado); el media query de abajo lo recorta en móvil. */
 .me-progress { position: relative; flex: 1 1 auto; height: 26px; min-width: 240px; background: var(--me-border); border-radius: 99px; overflow: hidden; display: flex; align-items: center; justify-content: center; }
-.me-progress-done { position: absolute; inset: 0 auto 0 0; height: 100%; width: 0; background: color-mix(in srgb, var(--me-accent) 32%, white); transition: width .3s ease; }
-.me-progress-bar { position: absolute; inset: 0 auto 0 0; height: 100%; width: 0; background: var(--me-accent); transition: width .3s ease; }
-.me-progress-bar::after { content: ''; position: absolute; top: 0; bottom: 0; right: 0; width: 3px; background: color-mix(in srgb, var(--me-accent) 65%, black); }
+/* Contraste no textual (WCAG 1.4.11): los rellenos turquesa apenas se separan
+   del carril (1,06:1 y 1,55:1), así que todo lo visitado lleva una franja
+   inferior y un borde final en acento + 50 % negro (≥ 4,3:1 contra el carril
+   con todas las paletas; 5,2:1 con la corporativa), y el marcador de posición
+   usa el mismo tono (≥ 3:1 contra carril, tramo visitado y barra). */
+.me-progress-done { position: absolute; inset: 0 auto 0 0; height: 100%; width: 0; background: color-mix(in srgb, var(--me-accent) 32%, white); box-shadow: inset 0 -4px 0 color-mix(in srgb, var(--me-accent) 50%, black), inset -2px 0 0 color-mix(in srgb, var(--me-accent) 50%, black); transition: width .3s ease; }
+.me-progress-bar { position: absolute; inset: 0 auto 0 0; height: 100%; width: 0; background: var(--me-accent); box-shadow: inset 0 -4px 0 color-mix(in srgb, var(--me-accent) 50%, black); transition: width .3s ease; }
+.me-progress-bar::after { content: ''; position: absolute; top: 0; bottom: 0; right: 0; width: 3px; background: color-mix(in srgb, var(--me-accent) 50%, black); }
 /* Barra arrastrable (setupProgressScrub en app.js): cursor de agarre y sin scroll táctil. */
 .me-progress { cursor: pointer; touch-action: none; user-select: none; }
 .me-progress.is-scrubbing { cursor: grabbing; }
@@ -537,7 +567,9 @@ video.me-video, .me-audio { width: 100%; height: auto; aspect-ratio: auto; }
 .me-progress:focus-visible { outline: 3px solid var(--me-primary); outline-offset: 2px; }
 .me-progress-tip { position: fixed; z-index: 150; transform: translateX(-50%); max-width: min(90vw, 420px); padding: .35rem .6rem; border-radius: 6px; background: #1f2933; color: #fff; font-size: .85rem; line-height: 1.3; box-shadow: 0 4px 14px rgba(0,0,0,.3); pointer-events: none; }
 .me-progress-tip[hidden] { display: none; }
-.me-position { position: relative; z-index: 1; color: var(--me-text); font-size: .85rem; font-weight: 600; text-shadow: 0 1px 1px rgba(255,255,255,.6); }
+.me-position { position: relative; z-index: 1; color: var(--me-text); font-size: .85rem; font-weight: 600; text-shadow: 0 1px 1px rgba(255,255,255,.6);
+  /* Píldora clara: el marcador oscuro de la posición no corta el número al pasar por debajo. */
+  padding: 0 .45rem; border-radius: 99px; background: rgba(255,255,255,.72); }
 /* Anterior/Siguiente: menos anchos (menos padding) y con icono de flecha
    propio (icons.js) en vez del triángulo tipográfico. */
 /* .me-btn.me-nav-btn (no solo .me-nav-btn): más especificidad que .me-btn para
@@ -547,13 +579,19 @@ video.me-video, .me-audio { width: 100%; height: auto; aspect-ratio: auto; }
 
 /* Buttons */
 .me-btn { font: inherit; padding: .5rem .9rem; border-radius: 6px; border: 1px solid var(--me-border); background: var(--me-surface); cursor: pointer; transition: border-color .15s ease, box-shadow .15s ease, transform .1s ease; }
-.me-btn:hover:not(:disabled) { border-color: var(--me-primary); box-shadow: var(--me-shadow-1); }
-.me-btn:active:not(:disabled) { transform: translateY(1px); box-shadow: none; }
-.me-btn:disabled { opacity: .5; cursor: not-allowed; }
+.me-btn:hover:not(:disabled):not([aria-disabled="true"]) { border-color: var(--me-primary); box-shadow: var(--me-shadow-1); }
+.me-btn:active:not(:disabled):not([aria-disabled="true"]) { transform: translateY(1px); box-shadow: none; }
+/* aria-disabled (Anterior/Siguiente bloqueados, refreshNavState): mismo aspecto
+   que disabled pero el botón sigue enfocable y explica el motivo al pulsarlo. */
+.me-btn:disabled, .me-btn[aria-disabled="true"] { opacity: .5; cursor: not-allowed; }
 .me-primary { background: var(--me-primary); color: #fff; border-color: var(--me-primary); }
 /* Botón Comprobar: destacado en color primario y centrado, con aire respecto a la actividad */
 .me-check { display: block; margin: 1.1rem auto .2rem; padding: .55rem 1.8rem; background: var(--me-primary); color: #fff; border-color: var(--me-primary); font-weight: 600; }
-.me-check:hover:not(:disabled) { background: color-mix(in srgb, var(--me-primary) 88%, black); }
+.me-check:hover:not(:disabled):not([aria-disabled=true]) { background: color-mix(in srgb, var(--me-primary) 88%, black); }
+/* Comprobar sin respuesta completa: aria-disabled (sigue enfocable con Tab y, al
+   pulsarlo, anuncia qué falta) con el mismo aspecto que :disabled. */
+.me-check[aria-disabled=true] { opacity: .5; cursor: not-allowed; }
+.me-check[aria-disabled=true]:hover, .me-check[aria-disabled=true]:active { border-color: var(--me-primary); box-shadow: none; transform: none; }
 .me-attempts { display: block; text-align: center; color: var(--me-muted); font-size: .82rem; min-height: 1.2em; }
 .me-ghost { background: transparent; }
 .me-icon-btn { background: none; border: none; font-size: 1.1rem; cursor: pointer; padding: .25rem .5rem; border-radius: 6px; display: inline-flex; align-items: center; justify-content: center; }
@@ -615,12 +653,14 @@ video.me-video, .me-audio { width: 100%; height: auto; aspect-ratio: auto; }
 .me-result-hero.is-ok { background: #e7f6ec; border: 1px solid var(--me-ok); color: #0c5a26; }
 .me-result-hero.is-error { background: #fdecea; border: 1px solid var(--me-error); color: #7a1a14; }
 .me-result-hero.is-warn { background: #fff7e0; border: 1px solid var(--me-warn, #F4C910); color: #6a4b00; }
-.me-result-score { font-size: 2.6rem; font-weight: 800; line-height: 1; }
+.me-result-score { margin: 0; font-size: 2.6rem; font-weight: 800; line-height: 1; }
 .me-result-state { font-size: 1.2rem; font-weight: 700; margin-top: .3rem; }
 .me-result-min { font-size: .9rem; opacity: .8; margin-top: .3rem; }
 .me-accordion { display: grid; gap: .4rem; }
 .me-acc-head { display: flex; align-items: center; gap: .5rem; width: 100%; text-align: left; padding: .6rem .8rem; background: var(--me-bg); border: 1px solid var(--me-border); border-radius: 6px; font: inherit; font-weight: 600; cursor: pointer; transition: background .15s ease, border-color .15s ease; }
-.me-acc-head::before { content: '+'; display: inline-block; flex: none; font-size: 1.1em; font-weight: 700; line-height: 1; color: var(--me-primary); transition: transform .2s ease; }
+/* «+» decorativo: texto alternativo vacío (no entra en el nombre del botón);
+   la primera declaración es el respaldo para navegadores sin esa sintaxis. */
+.me-acc-head::before { content: '+'; content: '+' / ''; display: inline-block; flex: none; font-size: 1.1em; font-weight: 700; line-height: 1; color: var(--me-primary); transition: transform .2s ease; }
 .me-acc-head[aria-expanded="true"]::before { transform: rotate(45deg); }
 .me-acc-title { flex: 1; }
 .me-seen-check { flex: none; color: var(--me-ok); font-weight: 700; opacity: 0; transition: opacity .2s ease; }
@@ -639,15 +679,20 @@ video.me-video, .me-audio { width: 100%; height: auto; aspect-ratio: auto; }
 .me-tabs [role=tab]:hover { color: var(--me-text); }
 .me-tabs [role=tab][aria-selected=true] { background: var(--me-surface); border-bottom-color: var(--me-surface); color: var(--me-text); font-weight: 600; box-shadow: inset 0 2px 0 var(--me-accent); }
 .me-tabs [role=tab].is-seen .me-seen-check { opacity: 1; }
-.me-tabs [role=tab].me-pulse { animation: me-pulse-glow 1.6s ease-out infinite; }
+.me-tabs [role=tab].me-pulse { animation: me-pulse-glow 1.6s ease-out 3; }
 [role=tabpanel] { padding: .75rem .8rem; animation: me-reveal .2s ease-out; }
-/* Flip cards con volteo 3D real: el botón da la perspectiva, .me-flip-inner rota
-   y las dos caras (apiladas en la misma celda de grid para que la altura sea la
-   del contenido mayor) ocultan su reverso. */
+/* Flip cards con volteo 3D real: el contenedor .me-card da la perspectiva,
+   .me-flip-inner rota y las dos caras (apiladas en la misma celda de grid para
+   que la altura sea la del contenido mayor) ocultan su reverso. El control es
+   .me-card-toggle: un <button> superpuesto a toda la tarjeta (su anillo de foco
+   rodea la tarjeta) sin eventos de puntero, para que el clic caiga en las caras
+   (lo recoge el contenedor) y los enlaces del reverso sean pulsables. */
 .me-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: .6rem; }
 .me-card { position: relative; min-height: 110px; border: none; background: none; padding: 0; cursor: pointer; font: inherit; perspective: 900px; }
+.me-card-toggle { position: absolute; inset: 0; z-index: 2; margin: 0; padding: 0; border: 0; border-radius: 8px; background: transparent; pointer-events: none; }
+.me-card-toggle .me-seen-check { display: none; } /* el ✓ visible es el de la lengüeta (.me-flip-tab) */
 .me-flip-inner { display: grid; width: 100%; height: 100%; min-height: 110px; transform-style: preserve-3d; transition: transform .5s cubic-bezier(.2, .7, .25, 1); }
-.me-card[aria-pressed=true] .me-flip-inner { transform: rotateY(180deg); }
+.me-card.is-flipped .me-flip-inner { transform: rotateY(180deg); }
 .me-card-front, .me-card-back {
   grid-area: 1 / 1; backface-visibility: hidden; -webkit-backface-visibility: hidden;
   position: relative; overflow: hidden;
@@ -681,9 +726,10 @@ video.me-video, .me-audio { width: 100%; height: auto; aspect-ratio: auto; }
   70% { box-shadow: 0 0 0 9px transparent; }
   100% { box-shadow: 0 0 0 0 transparent; }
 }
+/* 3 ciclos y se para (2.2.2: nada se mueve más de 5 s sin poder pararlo). */
 .me-acc-head.me-pulse,
 .me-check.me-pulse,
-.me-card.me-pulse .me-card-front { animation: me-pulse-glow 1.6s ease-out infinite; }
+.me-card.me-pulse .me-card-front { animation: me-pulse-glow 1.6s ease-out 3; }
 .me-sort-hint { color: var(--me-muted); font-size: .9rem; margin: .25rem 0 .6rem; }
 .me-sort { list-style: none; padding: 0; display: grid; gap: .4rem; }
 .me-sort-item { display: flex; align-items: center; gap: .5rem; padding: .5rem .6rem; border: 1px solid var(--me-border); border-radius: 6px; background: var(--me-surface); cursor: grab; }
@@ -733,7 +779,8 @@ video.me-video, .me-audio { width: 100%; height: auto; aspect-ratio: auto; }
 .me-dnd-pool { background: var(--me-surface); }
 .me-dnd-title { margin: 0 0 .4rem; font-weight: 600; font-size: .9rem; }
 .me-dnd-list { display: flex; flex-direction: column; gap: .4rem; min-height: 40px; }
-.me-chip { display: flex; align-items: center; gap: .3rem; padding: .5rem .6rem; border: 1px solid var(--me-border); border-radius: 6px; background: var(--me-surface); cursor: grab; }
+/* Borde de control ≥ 3:1 (1.4.11); --me-border se queda para lo decorativo. */
+.me-chip { display: flex; align-items: center; gap: .3rem; padding: .5rem .6rem; border: 1px solid #8a94a3; border-radius: 6px; background: var(--me-surface); cursor: grab; }
 .me-chip:active { cursor: grabbing; }
 .me-chip.is-dragging { opacity: .5; border-style: dashed; border-color: var(--me-primary); }
 .me-chip.is-picked { border-color: var(--me-primary); background: color-mix(in srgb, var(--me-primary) 10%, var(--me-surface)); box-shadow: 0 0 0 2px color-mix(in srgb, var(--me-primary) 35%, transparent); }
@@ -759,7 +806,7 @@ video.me-video, .me-audio { width: 100%; height: auto; aspect-ratio: auto; }
   .me-dnd-pool .me-dnd-list { flex-direction: row; flex-wrap: wrap; }
 }
 .me-scenario { background: var(--me-bg); padding: .75rem; border-radius: 6px; margin-bottom: .75rem; }
-.me-option { display: block; width: 100%; text-align: left; margin-bottom: .4rem; }
+.me-option { display: block; width: 100%; text-align: left; margin-bottom: .4rem; border-color: #8a94a3; } /* borde de control ≥ 3:1 */
 /* Caso por decisiones (scenario_steps): puntos de progreso, paso actual y resumen. */
 .me-steps-dots { list-style: none; display: flex; gap: .35rem; margin: 0 0 .6rem; padding: 0; }
 .me-steps-dots li { width: .7rem; height: .7rem; border-radius: 50%; background: var(--me-border); }
@@ -794,9 +841,13 @@ video.me-video, .me-audio { width: 100%; height: auto; aspect-ratio: auto; }
 .me-dt-bar-txt strong { font-size: 1rem; }
 .me-dt-bar-txt small { opacity: .85; font-size: .8rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 /* Fondo del chat: tono crema con un punteado suave (CSS puro, sin imágenes). */
-.me-dt-chat { list-style: none; margin: 0; padding: .9rem .8rem; display: flex; flex-direction: column; gap: .35rem;
+/* .me-dt-chat es el contenedor con scroll (enfocable, role=log); la lista de
+   mensajes (.me-dt-list) va dentro. */
+.me-dt-chat { margin: 0; padding: .9rem .8rem;
   max-height: 28rem; overflow-y: auto; scroll-behavior: smooth;
   background-color: #efeae2; background-image: radial-gradient(rgba(0, 0, 0, .045) 1px, transparent 1.2px); background-size: 14px 14px; }
+.me-dt-chat:focus-visible { outline: 3px solid var(--me-primary); outline-offset: -3px; }
+.me-dt-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: .35rem; }
 .me-dt-msg { position: relative; align-self: flex-start; max-width: 82%; padding: .4rem .65rem .45rem; border-radius: 0 10px 10px 10px;
   background: #fff; color: #111b21; box-shadow: 0 1px .5px rgba(11, 20, 26, .13); animation: me-dt-in .22s ease-out; }
 .me-dt-msg::before { content: ''; position: absolute; top: 0; left: -7px; border: 7px solid transparent;
@@ -859,11 +910,15 @@ video.me-video, .me-audio { width: 100%; height: auto; aspect-ratio: auto; }
 .me-calc-in, .me-calc-out { display: grid; gap: .45rem; }
 /* Rejilla etiqueta | caja | unidad: las cajas quedan alineadas aunque las unidades midan distinto. */
 .me-calc-row { display: grid; grid-template-columns: minmax(0, 1fr) auto 3.5rem; align-items: center; gap: .3rem .5rem; }
-.me-calc-input { font: inherit; width: 8.5rem; padding: .4rem .55rem; border: 1px solid var(--me-border); border-radius: 6px; text-align: right; }
+.me-calc-input { font: inherit; width: 8.5rem; padding: .4rem .55rem; border: 1px solid #8a94a3; border-radius: 6px; text-align: right; } /* borde ≥ 3:1 */
 .me-calc-input:focus-visible { outline: 3px solid var(--me-primary); outline-offset: 1px; }
 .me-calc-input.is-right { border-color: var(--me-ok); background: #e7f6ec; }
 .me-calc-input.is-wrong { border-color: var(--me-error); background: #fdecea; animation: me-shake .3s ease; }
 .me-calc-unit { color: var(--me-muted); }
+/* Estado de cada resultado tras Comprobar, en texto + icono (no solo el color de la caja). */
+.me-calc-status { grid-column: 1 / -1; justify-self: end; font-size: .9rem; font-weight: 600; }
+.me-calc-status.is-ok { color: #0c5a26; }
+.me-calc-status.is-bad { color: #7a1a14; }
 .me-calc-sol { grid-column: 1 / -1; justify-self: end; font-size: .9rem; color: #7a1a14; }
 .me-calc.is-tool .me-calc-out { padding: .7rem .9rem; border-radius: var(--me-radius); background: var(--me-bg); }
 .me-calc-value { display: inline-block; min-width: 8.5rem; text-align: right; font-weight: 700; font-size: 1.1rem; }
@@ -879,14 +934,17 @@ video.me-video, .me-audio { width: 100%; height: auto; aspect-ratio: auto; }
 .me-hotspot-img { max-width: 100%; display: block; }
 /* Glow permanente: anillo blanco + halo del color primario, legible sobre
    cualquier fotografía; el pulso (me-pulse) anima por encima hasta el 1er clic. */
-.me-hotspot { position: absolute; border: 2px solid var(--me-primary); background: rgba(11,95,255,.15); border-radius: 4px; cursor: pointer; display: flex; align-items: center; justify-content: center; padding: 0; box-shadow: 0 0 0 2px rgba(255,255,255,.75), 0 0 12px 3px color-mix(in srgb, var(--me-primary) 55%, transparent); }
+/* min-width/min-height: objetivo táctil ≥24 px (WCAG 2.5.8) aunque la zona del
+   autor, en %, quede menor en una imagen estrecha. */
+.me-hotspot { position: absolute; min-width: 24px; min-height: 24px; border: 2px solid var(--me-primary); background: rgba(11,95,255,.15); border-radius: 4px; cursor: pointer; display: flex; align-items: center; justify-content: center; padding: 0; box-shadow: 0 0 0 2px rgba(255,255,255,.75), 0 0 12px 3px color-mix(in srgb, var(--me-primary) 55%, transparent); }
 .me-hotspot:hover { background: color-mix(in srgb, var(--me-primary) 30%, transparent); }
 .me-hotspot::after { content: '+'; width: 1.3rem; height: 1.3rem; display: flex; align-items: center; justify-content: center; background: var(--me-surface); color: var(--me-primary); border-radius: 50%; font-weight: 700; font-size: 1rem; line-height: 1; box-shadow: var(--me-shadow-1); }
 .me-hotspot.is-right { border-color: var(--me-ok); background: color-mix(in srgb, var(--me-ok) 28%, transparent); }
 .me-hotspot.is-right::after { content: '✔'; color: var(--me-ok); }
 .me-hotspot.is-wrong { border-color: var(--me-error); background: color-mix(in srgb, var(--me-error) 28%, transparent); }
 .me-hotspot.is-wrong::after { content: '✖'; color: var(--me-error); }
-.me-hotspot.me-pulse { animation: me-hotspot-pulse 1.6s ease-out infinite; }
+/* Pulsos de invitación limitados a 3 ciclos (WCAG 2.2.2: nada se mueve >5 s). */
+.me-hotspot.me-pulse { animation: me-hotspot-pulse 1.6s ease-out 3; }
 @keyframes me-hotspot-pulse {
   0% { box-shadow: 0 0 0 2px rgba(255,255,255,.75), 0 0 0 0 color-mix(in srgb, var(--me-primary) 60%, transparent); }
   70% { box-shadow: 0 0 0 2px rgba(255,255,255,.75), 0 0 0 10px transparent; }
@@ -905,6 +963,11 @@ video.me-video, .me-audio { width: 100%; height: auto; aspect-ratio: auto; }
 /* Modo escrito, ya resuelto: la respuesta esperada junto al hueco fallado. */
 .me-blank-sol { margin: 0 .3rem 0 .1rem; font-size: .88em; font-weight: 600; color: var(--me-ok); }
 .me-blank-sol::before { content: "→ "; color: var(--me-muted); }
+/* Marca ✔/✖ tras cada hueco corregido: el resultado no depende solo del color. */
+.me-blank-mark { margin: 0 .25rem 0 0; font-weight: 700; }
+.me-blank-mark.is-ok { color: var(--me-ok); }
+.me-blank-mark.is-error { color: var(--me-error); }
+.me-blank-mark[hidden] { display: none; }
 
 /* Línea de tiempo (timeline) */
 .me-tl { list-style: none; margin: .75rem 0 0; padding: 0 0 0 1.1rem; border-left: 3px solid color-mix(in srgb, var(--me-accent) 55%, white); display: grid; gap: .5rem; }
@@ -1018,7 +1081,7 @@ video.me-video, .me-audio { width: 100%; height: auto; aspect-ratio: auto; }
 .me-ba-label-a { right: .6rem; }
 .me-ba-divider { position: absolute; top: 0; bottom: 0; left: var(--me-ba-pos, 50%); width: 3px; background: #fff; transform: translateX(-50%); pointer-events: none; box-shadow: 0 0 6px rgba(0, 0, 0, .45); }
 .me-ba-handle { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: #fff; color: #333; border-radius: 99px; padding: .35rem .5rem; font-size: .85rem; line-height: 1; box-shadow: var(--me-shadow-2); }
-.me-ba-handle.me-pulse { animation: me-pulse-glow 1.6s ease-out infinite; }
+.me-ba-handle.me-pulse { animation: me-pulse-glow 1.6s ease-out 3; }
 /* El range invisible cubre todo el comparador: arrastre táctil/ratón y teclado. */
 .me-ba-range { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0; cursor: ew-resize; margin: 0; }
 .me-ba:has(.me-ba-range:focus-visible) { outline: 3px solid var(--me-primary); outline-offset: 2px; }
@@ -1026,7 +1089,14 @@ video.me-video, .me-audio { width: 100%; height: auto; aspect-ratio: auto; }
 
 /* --- Sopa de letras --------------------------------------------------------- */
 .me-ws { display: grid; grid-template-columns: minmax(0, 1fr) minmax(140px, auto); gap: 1rem; margin-top: .5rem; align-items: start; }
-.me-ws-grid { display: grid; grid-template-columns: repeat(var(--me-ws-size, 10), minmax(0, 2.1rem)); gap: 2px; justify-content: center; }
+/* Celdas entre 24 px (mínimo de WCAG 2.5.8) y 2.1rem. Si a 24 px no caben
+   (14×24 + 13×2 = 362 px > ~290 px útiles a 320 px de ancho), el tablero no
+   encoge más: min-width:min-content lo mantiene entero y .me-ws-scroll lo
+   desplaza en horizontal. Sus celdas son enfocables, así que el foco
+   (flechas/Tab) arrastra el desplazamiento sin una parada de Tab extra. */
+.me-ws-scroll { min-width: 0; overflow-x: auto; }
+.me-ws-grid { display: grid; grid-template-columns: repeat(var(--me-ws-size, 10), minmax(24px, 2.1rem)); gap: 2px; justify-content: center; min-width: min-content; }
+.me-ws-cell:focus-visible { outline: 3px solid var(--me-primary); outline-offset: 1px; position: relative; z-index: 1; }
 .me-ws-cell {
   aspect-ratio: 1; display: grid; place-items: center; padding: 0;
   background: var(--me-surface); border: 1px solid var(--me-border); border-radius: 4px;
@@ -1035,10 +1105,12 @@ video.me-video, .me-audio { width: 100%; height: auto; aspect-ratio: auto; }
 }
 .me-ws-cell:hover { border-color: var(--me-primary); }
 .me-ws-cell.is-picked { background: var(--me-primary); border-color: var(--me-primary); color: #fff; }
-.me-ws-cell.is-found { background: color-mix(in srgb, var(--me-ok) 18%, white); border-color: var(--me-ok); color: var(--me-ok); }
+/* Texto #0c5a26 (verde oscuro) en vez de --me-ok: sobre el fondo verde 18 %
+   da ~6,5:1 (con --me-ok era ~3,9:1) y sobre el chip al 10 % ~7:1 (≥4,5:1). */
+.me-ws-cell.is-found { background: color-mix(in srgb, var(--me-ok) 18%, white); border-color: var(--me-ok); color: #0c5a26; }
 .me-ws-words { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: .35rem; }
 .me-ws-word { padding: .25rem .7rem; border: 1px solid var(--me-border); border-radius: 99px; background: var(--me-surface); font-size: .9rem; width: fit-content; }
-.me-ws-word.is-found { text-decoration: line-through; color: var(--me-ok); border-color: var(--me-ok); background: color-mix(in srgb, var(--me-ok) 10%, white); }
+.me-ws-word.is-found { text-decoration: line-through; color: #0c5a26; border-color: var(--me-ok); background: color-mix(in srgb, var(--me-ok) 10%, white); }
 .me-ws-word.is-found::after { content: ' ✓'; }
 @media (max-width: 640px) {
   .me-ws { grid-template-columns: 1fr; }
@@ -1071,10 +1143,26 @@ video.me-video, .me-audio { width: 100%; height: auto; aspect-ratio: auto; }
 .me-iv-list { display: flex; flex-direction: column; gap: .7rem; margin-top: .6rem; }
 .me-iv-list-head { font-weight: 600; margin: 0; }
 .me-iv-list .me-iv-q { box-shadow: var(--me-shadow-1); border: 1px solid var(--me-border); }
+/* Ancho estrecho (WCAG 1.4.10): la pregunta no cabe superpuesta al vídeo, así
+   que el overlay pasa al flujo y se muestra DEBAJO, con el aspecto del modo
+   lista. Contenedor (zona de contenido estrecha aunque la ventana no lo sea) y,
+   como respaldo para navegadores sin container queries, la ventana. */
+.me-iv-box { container: me-iv / inline-size; }
+@container me-iv (max-width: 600px) {
+  .me-iv-overlay { position: static; inset: auto; background: none; padding: 0; margin-top: .6rem; display: block; overflow: visible; }
+  .me-iv-overlay .me-iv-q { max-width: none; box-shadow: var(--me-shadow-1); border: 1px solid var(--me-border); }
+}
+@media (max-width: 600px) {
+  .me-iv-overlay { position: static; inset: auto; background: none; padding: 0; margin-top: .6rem; display: block; overflow: visible; }
+  .me-iv-overlay .me-iv-q { max-width: none; box-shadow: var(--me-shadow-1); border: 1px solid var(--me-border); }
+}
 
 /* --- Crucigrama -------------------------------------------------------------- */
 .me-cw { display: grid; grid-template-columns: minmax(0, auto) minmax(200px, 1fr); gap: 1.2rem; margin-top: .5rem; align-items: start; }
-.me-cw-grid { display: grid; grid-template-columns: repeat(var(--me-cw-cols, 8), 2.1rem); gap: 2px; }
+/* Como la sopa: casillas de 24 px a 2.1rem; si no caben a 24 px, el tablero
+   se desplaza en horizontal dentro de .me-cw-scroll en vez de encoger. */
+.me-cw-scroll { min-width: 0; overflow-x: auto; }
+.me-cw-grid { display: grid; grid-template-columns: repeat(var(--me-cw-cols, 8), 2.1rem); gap: 2px; min-width: min-content; }
 .me-cw-void { aspect-ratio: 1; }
 .me-cw-box { position: relative; aspect-ratio: 1; }
 .me-cw-num { position: absolute; top: 1px; left: 3px; font-size: .55rem; font-style: normal; color: var(--me-muted); z-index: 1; pointer-events: none; }
@@ -1085,12 +1173,20 @@ video.me-video, .me-audio { width: 100%; height: auto; aspect-ratio: auto; }
 }
 .me-cw-cell.is-right { border-color: var(--me-ok); background: color-mix(in srgb, var(--me-ok) 14%, white); }
 .me-cw-cell.is-wrong { border-color: var(--me-error); background: color-mix(in srgb, var(--me-error) 10%, white); }
+/* Icono del resultado en la esquina inferior derecha (no solo color). */
+.me-cw-mark { position: absolute; right: 2px; bottom: 0; font-size: .6rem; font-weight: 700; line-height: 1; pointer-events: none; }
+.me-cw-box.is-right .me-cw-mark { color: var(--me-ok); }
+.me-cw-box.is-wrong .me-cw-mark { color: var(--me-error); }
 .me-cw-clues-head { font-weight: 700; margin: 0 0 .2rem; }
 .me-cw-clue-list { margin: 0 0 .8rem; padding-left: 1.4rem; }
+/* Pista = botón que lleva a su palabra, con aspecto de texto de lista. */
+.me-cw-clue { font: inherit; color: inherit; text-align: left; background: none; border: 0; padding: .1rem .2rem; margin: 0 0 0 -.2rem; border-radius: 4px; cursor: pointer; min-height: 24px; }
+.me-cw-clue:hover { background: color-mix(in srgb, var(--me-primary) 8%, white); }
+.me-cw-clue:focus-visible { outline: 3px solid var(--me-primary); outline-offset: 1px; }
 .me-cw-len { color: var(--me-muted); font-size: .85em; }
 @media (max-width: 640px) {
   .me-cw { grid-template-columns: 1fr; }
-  .me-cw-grid { grid-template-columns: repeat(var(--me-cw-cols, 8), minmax(0, 2.1rem)); justify-content: center; }
+  .me-cw-grid { grid-template-columns: repeat(var(--me-cw-cols, 8), minmax(24px, 2.1rem)); justify-content: center; }
 }
 
 /* --- Imagen oculta ------------------------------------------------------------ */
@@ -1104,12 +1200,23 @@ video.me-video, .me-audio { width: 100%; height: auto; aspect-ratio: auto; }
 .me-hi-end { font-weight: 600; }
 
 /* --- Rosco A-Z (pasapalabra) --------------------------------------------------- */
-.me-az-letters { display: flex; flex-wrap: wrap; gap: .35rem; margin: .5rem 0 .8rem; }
+.me-az-letters { display: flex; flex-wrap: wrap; gap: .35rem; margin: .5rem 0 .8rem; padding: 0; list-style: none; }
 .me-az-letter {
+  position: relative;
   width: 2.1rem; height: 2.1rem; display: grid; place-items: center; border-radius: 50%;
   background: var(--me-surface); border: 2px solid var(--me-border); font-weight: 700;
 }
-.me-az-letter.is-current { border-color: var(--me-primary); color: var(--me-primary); animation: me-pulse-glow 1.6s ease-out infinite; }
+/* Pulso de la letra actual: 3 ciclos (WCAG 2.2.2); el borde primario queda. */
+.me-az-letter.is-current { border-color: var(--me-primary); color: var(--me-primary); animation: me-pulse-glow 1.6s ease-out 3; }
+/* Icono ✔/✖ en la esquina: el estado no depende solo del color. */
+.me-az-ico {
+  position: absolute; top: -.35rem; right: -.35rem; width: 1rem; height: 1rem;
+  display: grid; place-items: center; border-radius: 50%; background: var(--me-surface);
+  font-size: .6rem; line-height: 1; box-shadow: var(--me-shadow-1);
+}
+.me-az-letter.is-right .me-az-ico { color: var(--me-ok); }
+.me-az-letter.is-wrong .me-az-ico { color: var(--me-error); }
+.me-az-next { margin-top: .6rem; }
 .me-az-letter.is-right { background: var(--me-ok); border-color: var(--me-ok); color: #fff; }
 .me-az-letter.is-wrong { background: var(--me-error); border-color: var(--me-error); color: #fff; }
 .me-az-clue { margin: 0 0 .5rem; }
@@ -1155,7 +1262,9 @@ video.me-video, .me-audio { width: 100%; height: auto; aspect-ratio: auto; }
   background: var(--me-accent); border-color: var(--me-accent); color: #123b39;
   font-weight: 700; padding: .55rem 1.9rem;
 }
-#me-btn-exit:hover { background: color-mix(in srgb, var(--me-accent) 82%, black); border-color: color-mix(in srgb, var(--me-accent) 82%, black); color: #fff; }
+/* Hover: el acento se aclara y el texto oscuro se mantiene (≥ 5,9:1 con todas
+   las paletas); antes, blanco sobre acento + 18 % negro daba 3,03:1. */
+#me-btn-exit:hover { background: color-mix(in srgb, var(--me-accent) 75%, white); border-color: color-mix(in srgb, var(--me-accent) 50%, black); color: #123b39; }
 /* Secciones plegables reutilizando el accordion (desglose, detalle del informe) */
 .me-fold { margin-top: 1rem; }
 /* Confirmación de salida con el curso incompleto */

@@ -5,15 +5,24 @@ import type { ScormConfig } from '../schema/course.schema'
 import { allScreens } from '../schema/traverse'
 import { SegIcons } from './SegIcons'
 import { Icon } from './Icon'
+import { MIN_TEXT_CONTRAST, contrastRatio, fmtRatio } from '../validation/accessibility'
 
 // Paletas típicas seleccionables de un clic: por defecto (la corporativa de
 // SCORMEditor) + 4 combinaciones habituales. `primary` es el color de ACCIÓN
 // (botones, enlaces, focus) y `accent` el de ESTRUCTURA (portadas, menú, barra
 // de progreso) — ver «Lenguaje visual de la carcasa» en arquitectura-runtime.md.
 // No agotan las opciones: los pickers de debajo siguen abiertos a cualquier hex.
+// Accesibilidad (WCAG 1.4.3, nivel AA): todo `primary` debe dar ≥ 4,5:1 con el
+// blanco (texto blanco en botones y primario como texto/enlace sobre blanco; es
+// la misma razón en ambos sentidos). Razones actuales: Corporativo 5,13 ·
+// Mecohisa 4,82 · Bosque 5,02 · Granate 7,88 · Violeta 7,10 · Grafito 10,35.
+// El Mecohisa original (#8492b6, 3,10:1) se oscureció manteniendo tono y
+// saturación HSL (223°, 25 %) de luminosidad 62 % a 50 %. `accent` no se mide:
+// la carcasa no lo usa como color de texto sobre blanco. Lo vigila el validador
+// (THEME_LOW_CONTRAST) también para colores elegidos a mano.
 const PALETTES: { name: string; primary: string; accent: string }[] = [
   { name: 'Corporativo', primary: '#0b5fff', accent: '#6dc3c0' },
-  { name: 'Mecohisa', primary: '#8492b6', accent: '#f5ca00' },
+  { name: 'Mecohisa', primary: '#5f71a0', accent: '#f5ca00' },
   { name: 'Bosque', primary: '#15803d', accent: '#86c9a0' },
   { name: 'Granate', primary: '#9d174d', accent: '#e8879f' },
   { name: 'Violeta', primary: '#6d28d9', accent: '#a78bfa' },
@@ -33,6 +42,23 @@ const SPEED_SEGS = [
   { value: 'normal', icon: 'Normal', title: 'Velocidad por defecto' },
   { value: 'slow', icon: 'Lenta', title: 'Entradas más largas' },
 ]
+
+/** Contraste del color de acción con el blanco (WCAG 1.4.3): mismo cálculo que
+ *  el validador (THEME_LOW_CONTRAST), a la vista mientras se elige el color. */
+function PrimaryContrastHint({ color }: { color: string }) {
+  const ratio = contrastRatio(color, '#ffffff')
+  if (ratio === null) return null
+  const ok = ratio >= MIN_TEXT_CONTRAST
+  return (
+    <p className={`ed-hint ${ok ? 'ed-check-ok' : 'ed-check-ko'}`} role="status">
+      <Icon name={ok ? 'circle-check' : 'circle-x'} size={14} /> Contraste del color de acción con el
+      blanco: <strong>{fmtRatio(ratio)}</strong>{' '}
+      {ok
+        ? '(cumple el mínimo de 4,5:1 de la WCAG 1.4.3).'
+        : '— no llega al mínimo de 4,5:1 (WCAG 1.4.3): el texto de los botones y los enlaces no se leerá bien. Elige un tono más oscuro.'}
+    </p>
+  )
+}
 
 /**
  * Sección «Ajustes del curso»: reglas SCORM de finalización y aprobado
@@ -139,6 +165,7 @@ export function AppearanceSection() {
           la barra de progreso. La marca aparece en la barra superior del curso; si la dejas vacía,
           la cabecera muestra únicamente el título del curso.
         </p>
+        <PrimaryContrastHint color={shell.primary_color} />
       </fieldset>
 
       <fieldset className="ed-group">

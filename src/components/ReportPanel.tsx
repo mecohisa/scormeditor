@@ -1,6 +1,6 @@
-import { useMemo } from 'react'
+import { useMemo, useState } from 'react'
 import { useCourseStore } from '../store/courseStore'
-import { buildReport, generateReportHtml, generateReportMarkdown } from '../report/report'
+import { buildReport, conformanceLabel, generateA11yStatementHtml, generateReportHtml, generateReportMarkdown } from '../report/report'
 import { IssueItem } from './IssueList'
 import { Icon } from './Icon'
 
@@ -9,6 +9,12 @@ export function ReportPanel() {
   const goToScreen = useCourseStore((s) => s.goToScreen)
   const setActiveTab = useCourseStore((s) => s.setActiveTab)
   const data = useMemo(() => buildReport(course), [course])
+  // Campos de la declaración de accesibilidad: se rellenan antes de generarla y
+  // no se guardan en el proyecto (no son parte de course.json).
+  const publishedVersions = (course.scorm.layouts || []).length
+  const [a11yEntity, setA11yEntity] = useState(course.course.authoring_entity || '')
+  const [a11yContact, setA11yContact] = useState('')
+  const [a11yVersion, setA11yVersion] = useState(publishedVersions ? `Versión publicada n.º ${publishedVersions}` : 'Borrador (sin publicar)')
 
   function download(text: string, name: string, type: string) {
     const blob = new Blob([text], { type })
@@ -149,7 +155,60 @@ export function ReportPanel() {
           </div>
         ))}
 
-        <h2>6. Riesgos detectados (errores)</h2>
+        <h2>6. Accesibilidad (UNE-EN 301 549 / WCAG 2.1 nivel AA)</h2>
+        <p>
+          <strong>Situación (autoevaluación):</strong>{' '}
+          <span className={data.conformance.status === 'full' ? 'ed-check-ok' : 'ed-check-ko'}>
+            {conformanceLabel(data.conformance)}
+          </span>{' '}
+          · {data.conformance.errors} error{data.conformance.errors === 1 ? '' : 'es'} y{' '}
+          {data.conformance.warnings} aviso{data.conformance.warnings === 1 ? '' : 's'} de accesibilidad.
+          «Plenamente conforme» exige 0 errores y 0 avisos; los avisos piden una comprobación
+          manual (p. ej. subtítulos de YouTube) que el validador no puede hacer por sí solo.
+        </p>
+        {data.accessibility.length === 0 ? (
+          <p><em>Sin hallazgos de accesibilidad.</em></p>
+        ) : (
+          data.accessibility.map((g) => (
+            <div key={g.criterion.id}>
+              <h3>{g.criterion.id} {g.criterion.name} (nivel {g.criterion.level})</h3>
+              <ul className="ed-issues">
+                {g.issues.map((i, idx) => <IssueItem key={idx} issue={i} />)}
+              </ul>
+            </div>
+          ))
+        )}
+        <fieldset className="ed-group">
+          <legend>Declaración de accesibilidad</legend>
+          <p className="ed-hint">
+            Genera la declaración de accesibilidad del curso (HTML imprimible: ábrelo y usa
+            Imprimir → Guardar como PDF). La situación de cumplimiento se calcula con el
+            validador; es una autoevaluación y no equivale a homologación ni acreditación.
+          </p>
+          <div className="ed-row">
+            <label className="ed-field">
+              <span>Entidad responsable</span>
+              <input value={a11yEntity} placeholder="p. ej. Mecohisa Formación" onChange={(e) => setA11yEntity(e.target.value)} />
+            </label>
+            <label className="ed-field">
+              <span>Contacto para comunicaciones de accesibilidad</span>
+              <input value={a11yContact} placeholder="correo, teléfono o formulario" onChange={(e) => setA11yContact(e.target.value)} />
+            </label>
+            <label className="ed-field ed-field-narrow">
+              <span>Versión del curso</span>
+              <input value={a11yVersion} onChange={(e) => setA11yVersion(e.target.value)} />
+            </label>
+          </div>
+          <button className="ed-primary" disabled={!a11yEntity.trim() || !a11yContact.trim()}
+            title={!a11yEntity.trim() || !a11yContact.trim() ? 'Rellena la entidad y el contacto' : undefined}
+            onClick={() => download(
+              generateA11yStatementHtml(course, { entity: a11yEntity, contact: a11yContact, version: a11yVersion }),
+              'declaracion-accesibilidad.html', 'text/html')}>
+            Generar declaración de accesibilidad
+          </button>
+        </fieldset>
+
+        <h2>7. Riesgos detectados (errores)</h2>
         {data.risks.length === 0 ? (
           <p><em>Sin errores bloqueantes.</em></p>
         ) : (
@@ -158,7 +217,7 @@ export function ReportPanel() {
           </ul>
         )}
 
-        <h2>7. Pendientes de validación normativa / por la entidad</h2>
+        <h2>8. Pendientes de validación normativa / por la entidad</h2>
         {data.pending.length === 0 ? (
           <p><em>Sin avisos.</em></p>
         ) : (

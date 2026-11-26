@@ -639,7 +639,6 @@
       '<img class="me-lightbox-img" alt="" draggable="false">';
     document.body.appendChild(lb);
     var img = lb.querySelector('.me-lightbox-img');
-    var lastFocus = null;
 
     // --- Zoom propio (pellizco, doble toque, arrastre, rueda, + / −) --------
     // No se usa el zoom del navegador porque en pantalla completa (Fullscreen
@@ -741,16 +740,21 @@
     }, { passive: false });
     window.addEventListener('resize', function () { if (!lb.hidden) { clampPan(); apply(); } });
 
+    // Diálogo modal: fondo inerte, Tab atrapado, Esc cierra y el foco vuelve a
+    // la imagen que lo abrió (A11Y.trapFocus).
+    var release = null;
     function open(src, alt) {
-      lastFocus = document.activeElement;
+      if (!lb.hidden) return;
       resetZoom();
       img.src = src; img.alt = alt || '';
       lb.hidden = false;
+      release = A11Y.trapFocus(lb, { onEscape: close, fallback: A11Y.focusMain });
       lb.querySelector('.me-lightbox-close').focus();
     }
     function close() {
+      if (lb.hidden) return;
       lb.hidden = true; img.removeAttribute('src'); resetZoom();
-      if (lastFocus && lastFocus.focus) lastFocus.focus();
+      if (release) { var r = release; release = null; r(); }
     }
     lb.addEventListener('click', function (e) {
       var z = e.target.closest && e.target.closest('.me-lightbox-zoom');
@@ -758,8 +762,8 @@
       if (e.target.classList.contains('me-lightbox-close')) close();
     });
     document.addEventListener('keydown', function (e) {
-      if (!lb.hidden && e.key === 'Escape') close();
-      else if (!lb.hidden && (e.key === '+' || e.key === '=')) { e.preventDefault(); zoomStep(1.5); }
+      // Esc lo gestiona A11Y.trapFocus (onEscape: close).
+      if (!lb.hidden && (e.key === '+' || e.key === '=')) { e.preventDefault(); zoomStep(1.5); }
       else if (!lb.hidden && (e.key === '-' || e.key === '_')) { e.preventDefault(); zoomStep(1 / 1.5); }
       else if (!lb.hidden && e.key === '0') { e.preventDefault(); resetZoom(); }
       else if ((e.key === 'Enter' || e.key === ' ') && e.target.classList && e.target.classList.contains('me-zoomable')) {
@@ -796,13 +800,21 @@
     // antes (modal); «Continuar» reintenta el avance ya sin interceptar.
     if (delta > 0 && finalLeave && finalLeave(function () { finalLeave = null; goRelative(delta); })) return;
     var t = current + delta;
-    if (t < 0 || t >= SCREENS.length) return;
+    // Anterior/Siguiente nunca llevan `disabled` (se quedarían sin foco al
+    // llegar a un extremo, ver refreshNavState): en los extremos se explica.
+    if (t < 0) { A11Y.announce('Ya estás en la primera pantalla.'); return; }
+    if (t >= SCREENS.length) { A11Y.announce('Esta es la última pantalla.'); return; }
     if (delta > 0 && !AUTHOR && !screenSatisfied(current)) { A11Y.announce(blockReason(current)); return; }
     if (!canNavigateTo(t)) { A11Y.announce('Pantalla no disponible todavía.'); return; }
     goTo(t, false, true);
   }
 
-  function goTo(idx, isRestore, fromNav) {
+  function goTo(idx, isRestore) {
+    // Si se navega desde un control de la barra inferior (Anterior/Siguiente,
+    // barra de progreso), el foco se queda en él: sobrevive al re-render y el
+    // alumno puede seguir pulsando (WCAG 2.4.3). Se mira antes de re-renderizar.
+    var act = document.activeElement;
+    var keepFocus = !!(act && act.closest && act.closest('.me-toolbar'));
     saveTime();
     if (activeController) activeController = null;
     // Corta cualquier audio de ítem (accordion/tabs/…) que siguiera sonando de
@@ -848,6 +860,7 @@
           ixAfterSave(sc, st, prevResult, r);
           recomputeAndPersist();
           refreshNavState();
+          refreshMenuChecks(); // ✓ y bloqueos del índice al completar la actividad
         },
         announce: A11Y.announce,
         // Coordinación con la narración de pantalla: los ítems que se narran al
@@ -899,24 +912,61 @@
     refreshMenuChecks();
     refreshNavState();
     document.getElementById('me-position').textContent = (idx + 1) + ' / ' + SCREENS.length;
-    // Al navegar con Anterior/Siguiente, si el menú lateral está visible el foco
-    // se mueve al tema actual del menú (para orientarse en el índice); si no,
-    // al contenido. En restauración no se roba el foco.
+    // Título de la pestaña: «pantalla — curso» (WCAG 2.4.2).
+    var courseTitle = (COURSE.course && COURSE.course.title) || 'Curso SCORM';
+    var screenLabel = menuScreenLabel(entry.screen);
+    document.title = screenLabel ? screenLabel + ' — ' + courseTitle : courseTitle;
+    // Cambio de pantalla (WCAG 4.1.3/2.4.3): si el foco estaba en la barra
+    // inferior se queda allí y se anuncia «Pantalla N de M: título»; si no, va
+    // al <h1> de la pantalla (que el lector ya lee al enfocarlo, por eso solo se
+    // anuncia la posición). En restauración no se roba el foco ni se anuncia.
     if (!isRestore) {
-      if (fromNav && menuVisible()) focusCurrentMenuLink();
-      else A11Y.focusMain();
+      var where = 'Pantalla ' + (idx + 1) + ' de ' + SCREENS.length;
+      if (keepFocus && act.isConnected !== false) A11Y.announce(where + (screenLabel ? ': ' + screenLabel : ''));
+      else { A11Y.focusMain(); A11Y.announce(where); }
     }
     recomputeAndPersist();
     startMinTimer();
   }
 
+  // Tiempo mínimo de la pantalla: cuenta atrás visible junto a Siguiente
+  // («Podrás continuar en 0:20», #me-next-wait) que se refresca cada segundo SIN
+  // región viva (no se anuncia cada segundo); al vencer se anuncia una sola vez
+  // «Ya puedes continuar» si no queda nada más pendiente (WCAG 3.3.x / 2.2.1).
+  var minTimer = null;
   function startMinTimer() {
+    if (minTimer) { clearInterval(minTimer); minTimer = null; }
     refreshNavState();
-    var entry = SCREENS[current];
-    if (!entry) return; // curso sin pantallas
-    var min = entry.isFinalTest ? 0 : (entry.screen.min_time_seconds || 0);
-    if (min > 0) {
-      setTimeout(function () { refreshNavState(); }, min * 1000 + 100);
+    if (!SCREENS[current] || waitRemaining() <= 0) return; // curso sin pantallas o sin espera
+    minTimer = setInterval(function () {
+      if (waitRemaining() > 0) { refreshWait(); return; }
+      clearInterval(minTimer); minTimer = null;
+      refreshNavState();
+      refreshMenuChecks();
+      if (!AUTHOR && screenSatisfied(current)) A11Y.announce('Ya puedes continuar.');
+    }, 1000);
+  }
+  // Segundos que faltan del tiempo mínimo de la pantalla actual (0 si no aplica:
+  // modo autor, pantalla no obligatoria o test final).
+  function waitRemaining() {
+    var e = SCREENS[current];
+    if (!e || e.isFinalTest || AUTHOR || !isRequired(current)) return 0;
+    var min = e.screen.min_time_seconds || 0;
+    return Math.max(0, Math.ceil(min - (Date.now() - screenEnter) / 1000));
+  }
+  function refreshWait() {
+    var el = document.getElementById('me-next-wait');
+    var next = document.getElementById('me-next');
+    if (!el || !next) return;
+    var left = waitRemaining();
+    if (left > 0) {
+      el.textContent = 'Podrás continuar en ' + formatTime(left);
+      el.hidden = false;
+      next.setAttribute('aria-describedby', 'me-next-wait');
+    } else {
+      el.hidden = true;
+      el.textContent = '';
+      next.removeAttribute('aria-describedby');
     }
   }
 
@@ -947,7 +997,11 @@
     return minTimeOk(idx) && interactionOk(idx);
   }
   function blockReason(idx) {
-    if (!minTimeOk(idx)) return 'Permanece un poco más en esta pantalla antes de continuar.';
+    if (!minTimeOk(idx)) {
+      var left = idx === current ? waitRemaining() : 0;
+      return 'Permanece un poco más en esta pantalla antes de continuar.' +
+        (left > 0 ? ' Podrás continuar en ' + formatTime(left) + '.' : '');
+    }
     // Solo se llega aquí con la pantalla sin satisfacer: en el test final eso
     // significa que aún no se ha comprobado.
     if (SCREENS[idx].isFinalTest) return 'Comprueba el test para continuar.';
@@ -1225,6 +1279,11 @@
   // superior y pestaña lateral): aria-expanded y sentido de la flecha.
   function reflectMenuUI() {
     var visible = menuVisible();
+    // Plegado (escritorio) o slide-over cerrado (móvil) el menú solo se aparta
+    // con transform: inert lo saca del orden de Tab y del árbol accesible
+    // (WCAG 2.4.3/1.3.2). styles.css añade visibility:hidden diferida como
+    // respaldo para navegadores sin inert.
+    document.getElementById('me-menu').inert = !visible;
     document.getElementById('me-toggle-menu').setAttribute('aria-expanded', String(visible));
     var tab = document.getElementById('me-menu-tab');
     tab.setAttribute('aria-expanded', String(visible));
@@ -1347,6 +1406,8 @@
   function reflectAudioButton() {
     var btn = document.getElementById('me-btn-audio');
     if (!btn) return;
+    // Rótulo fijo («Sonido de la narración», index.html) + aria-pressed = sonido
+    // activado: el lector dice «pulsado» cuando suena, no al revés.
     btn.setAttribute('aria-pressed', String(audioEnabled));
     btn.classList.toggle('is-on', audioEnabled);
     btn.querySelector('[data-icon]').innerHTML = global.MEIcons.svg(audioEnabled ? 'volume-on' : 'volume-off');
@@ -1427,6 +1488,8 @@
     var dur = isFinite(a.duration) && a.duration > 0 ? a.duration : 0;
     if (!seekDragging) seekEl.value = dur ? String(Math.round((a.currentTime / dur) * 1000)) : '0';
     if (timeEl) timeEl.textContent = formatTime(a.currentTime) + ' / ' + formatTime(dur);
+    // El lector dice «1:23 de 4:10» en vez del valor bruto 0–1000 del range.
+    seekEl.setAttribute('aria-valuetext', formatTime(a.currentTime) + ' de ' + formatTime(dur));
   }
   function formatTime(s) {
     s = Math.max(0, Math.round(s || 0));
@@ -1463,53 +1526,80 @@
       openModalHtml('Ayuda', '<ul><li><strong>Alt + →</strong> Siguiente</li><li><strong>Alt + ←</strong> Anterior</li><li><strong>Alt + M</strong> Menú</li><li><strong>Alt + T</strong> Transcripción</li></ul><p>Usa Tab para navegar por los controles.</p><p>Con los botones <strong>A−</strong> y <strong>A+</strong> de la barra superior puedes cambiar el tamaño del texto; se recuerda en este dispositivo.</p>');
     }
   }
+  // Modal genérico (Transcripción, Glosario, Recursos, Documentos, Ayuda):
+  // diálogo accesible vía A11Y.trapFocus — fondo inerte, Tab atrapado, Esc
+  // cierra y el foco vuelve al control que lo abrió (WCAG 2.1.2/2.4.3/2.4.11).
+  // Si se abre otro con uno ya abierto (p. ej. Alt+T), se reutiliza la trampa
+  // y se conserva el control de origen.
+  var modalRelease = null;
   function openModalHtml(title, bodyHtml) {
     var modal = document.getElementById('me-modal');
     modal.querySelector('.me-modal-title').textContent = title;
     modal.querySelector('.me-modal-body').innerHTML = bodyHtml;
     modal.hidden = false;
+    if (!modalRelease) modalRelease = A11Y.trapFocus(modal, { onEscape: closeModals, fallback: A11Y.focusMain });
     modal.querySelector('.me-modal-close').focus();
   }
-  function closeModals() { document.getElementById('me-modal').hidden = true; A11Y.focusMain(); }
+  function closeModals() {
+    var modal = document.getElementById('me-modal');
+    if (modal.hidden) return;
+    modal.hidden = true;
+    if (modalRelease) { var r = modalRelease; modalRelease = null; r(); }
+    else A11Y.focusMain();
+  }
 
   function refreshNavState() {
     var prev = document.getElementById('me-prev');
     var next = document.getElementById('me-next');
+    // aria-disabled, NO disabled: el botón sigue siendo enfocable (no pierde el
+    // foco al quedar bloqueado justo tras pulsarlo) y al pulsarlo goRelative
+    // anuncia el motivo (blockReason). El aspecto atenuado sale de
+    // [aria-disabled="true"] en styles.css.
     // Sin pantallas no hay nada que navegar (curso vacío en el editor).
-    if (!SCREENS.length) { prev.disabled = true; next.disabled = true; return; }
+    if (!SCREENS.length) { setNavDisabled(prev, true); setNavDisabled(next, true); refreshWait(); return; }
     // Con el test paginado en pantalla, los botones también mueven preguntas:
     // solo se bloquean cuando ni la pregunta ni la diapositiva pueden avanzar.
-    prev.disabled = current <= 0 && !(finalNav && !finalNav.atFirst());
+    setNavDisabled(prev, current <= 0 && !(finalNav && !finalNav.atFirst()));
     var last = current >= SCREENS.length - 1;
     var blocked = last || (!AUTHOR && !screenSatisfied(current));
-    next.disabled = blocked && !(finalNav && !finalNav.atLast());
+    setNavDisabled(next, blocked && !(finalNav && !finalNav.atLast()));
+    refreshWait();
     // Solo se toca el texto (no el icono de flecha): un textContent aquí
     // borraría el <span data-icon> del botón en cada navegación.
     var nextLabel = next.querySelector('.me-nav-btn-label');
     if (nextLabel) nextLabel.textContent = last ? 'Fin' : 'Siguiente';
+  }
+  function setNavDisabled(btn, off) {
+    btn.disabled = false; // por si un estado anterior lo dejó con disabled real
+    if (off) btn.setAttribute('aria-disabled', 'true');
+    else btn.removeAttribute('aria-disabled');
   }
   // El menú lateral está visible cuando #me-app NO lleva la clase me-menu-hidden
   // (cubre tanto el plegado de escritorio como el slide-over cerrado en móvil).
   function menuVisible() {
     return !document.getElementById('me-app').classList.contains('me-menu-hidden');
   }
-  // Lleva el foco al tema actual del menú lateral y lo hace visible en el scroll.
-  function focusCurrentMenuLink() {
-    var link = document.querySelector('.me-menu-link.is-current');
-    if (!link) { A11Y.focusMain(); return; }
-    link.focus();
-    if (link.scrollIntoView) link.scrollIntoView({ block: 'nearest' });
-  }
 
+  // Estado de cada pantalla en el índice (WCAG 1.3.1/4.1.2): aria-current en la
+  // actual; «completada» como texto para lectores (el ✓ es aria-hidden); y las
+  // que la navegación aún no deja abrir, con aria-disabled + atenuadas
+  // (.is-locked) — siguen enfocables y al pulsarlas se explica por qué no.
   function refreshMenuChecks() {
     document.querySelectorAll('.me-menu-link').forEach(function (b) {
       var i = parseInt(b.getAttribute('data-idx'), 10);
       var e = SCREENS[i];
       var done = STATE.visited[e.screen.id] && screenSatisfied(i);
+      var locked = i !== current && !canNavigateTo(i);
       b.classList.toggle('is-done', !!done);
       b.classList.toggle('is-current', i === current);
+      b.classList.toggle('is-locked', locked);
+      if (i === current) b.setAttribute('aria-current', 'page'); else b.removeAttribute('aria-current');
+      if (locked) b.setAttribute('aria-disabled', 'true'); else b.removeAttribute('aria-disabled');
       var chk = b.querySelector('.me-menu-check');
       if (chk) chk.textContent = done ? '✓' : '';
+      var sr = b.querySelector('.me-menu-sr');
+      if (!sr) { sr = document.createElement('span'); sr.className = 'sr-only me-menu-sr'; b.appendChild(sr); }
+      sr.textContent = done ? ' (completada)' : '';
     });
     // Contador «hechas/total» y mini-barra de progreso de cada unidad.
     document.querySelectorAll('.me-menu-unit[data-count]').forEach(function (unit) {
@@ -1550,13 +1640,13 @@
       '<div class="me-modal-head"><h2 class="me-modal-title">' + opts.title + '</h2></div>' +
       '<p class="me-exit-msg">' + opts.body + '</p>' +
       '<div class="me-exit-actions">' + btns + '</div></div>';
-    var last = document.activeElement;
+    // Diálogo accesible (A11Y.trapFocus): fondo inerte, Tab atrapado, Esc
+    // cierra y el foco vuelve a quien lo abrió.
+    var release = null;
     function close() {
       overlay.remove();
-      document.removeEventListener('keydown', onKey);
-      if (last && last.focus) last.focus();
+      if (release) { var r = release; release = null; r(); }
     }
-    function onKey(e) { if (e.key === 'Escape') close(); }
     overlay.addEventListener('click', function (e) { if (e.target === overlay) close(); });
     overlay.querySelectorAll('button[data-act]').forEach(function (b) {
       b.addEventListener('click', function () {
@@ -1565,8 +1655,8 @@
         if (a.onClick) a.onClick();
       });
     });
-    document.addEventListener('keydown', onKey);
     document.body.appendChild(overlay);
+    release = A11Y.trapFocus(overlay, { onEscape: close, fallback: A11Y.focusMain });
     var first = overlay.querySelector('.me-primary') || overlay.querySelector('button[data-act]');
     if (first) first.focus();
   }
@@ -1971,7 +2061,10 @@
     var estado = incomplete ? '⚠ Curso incompleto' : (pass ? '✔ APTO' : '✖ NO APTO');
     var html = '<article class="me-screen me-screen-results"><h1>Resultados</h1>' +
       '<div class="me-result-hero ' + cls + '">' +
-      '<div class="me-result-score" aria-label="' + score + '%">' + score + '%</div>' +
+      // Sin aria-label sobre un div genérico (no se anuncia): la cifra animada
+      // es aria-hidden (no se lee 60 veces) y el valor va en texto sr-only.
+      '<p class="me-result-score"><span class="sr-only">Nota: ' + score + ' %</span>' +
+      '<span class="me-result-num" aria-hidden="true">' + score + '%</span></p>' +
       '<div class="me-result-state">' + estado + '</div>' +
       '<div class="me-result-min">Nota mínima para aprobar: ' + min + '%</div></div>';
     var evalItems = p.items.filter(function (it) { return it.scored; });
@@ -2013,7 +2106,7 @@
 
     // Refuerzo del logro: la nota sube animada y, si está APTO, confeti (una
     // vez por sesión). Con prefers-reduced-motion no se anima nada.
-    var scoreEl = content.querySelector('.me-result-score');
+    var scoreEl = content.querySelector('.me-result-num');
     if (scoreEl) animateNumber(scoreEl, score, '%');
     if (pass && !incomplete) celebrate();
   }
@@ -2107,6 +2200,8 @@
     refreshMenuChecks();
     A11Y.announce('Nuevo intento iniciado. Las actividades se han reiniciado.');
     goTo(0, true);
+    // El botón pulsado desaparece con el re-render: el foco pasa al título.
+    A11Y.focusMain();
   }
 
   // Confirmación al salir con el curso incompleto: el progreso queda guardado
@@ -2130,21 +2225,20 @@
       '<button type="button" class="me-btn me-primary me-exit-stay">Seguir en el curso</button>' +
       '<button type="button" class="me-btn me-exit-go">Salir de todos modos</button>' +
       '</div></div>';
-    var last = document.activeElement;
+    // Diálogo accesible (A11Y.trapFocus), como testDialog.
+    var release = null;
     function close() {
       overlay.remove();
-      document.removeEventListener('keydown', onKey);
-      if (last && last.focus) last.focus();
+      if (release) { var r = release; release = null; r(); }
     }
-    function onKey(e) { if (e.key === 'Escape') close(); }
     overlay.addEventListener('click', function (e) { if (e.target === overlay) close(); });
     overlay.querySelector('.me-exit-stay').addEventListener('click', close);
     overlay.querySelector('.me-exit-go').addEventListener('click', function () {
       close();
       exitCourse();
     });
-    document.addEventListener('keydown', onKey);
     document.body.appendChild(overlay);
+    release = A11Y.trapFocus(overlay, { onEscape: close, fallback: A11Y.focusMain });
     overlay.querySelector('.me-exit-stay').focus();
   }
 
@@ -2202,40 +2296,77 @@
     setTimeout(function () {
       var url = AUTHOR ? '' : lmsCourseUrl();
       var auto = !!(url && (COURSE.scorm.rules || {}).auto_return);
+      // Despedida como diálogo modal (la carcasa de detrás queda inerte: la
+      // sesión ya está cerrada). Sin role=status: era una región viva y el
+      // contador se anunciaba cada segundo; se anuncia una vez al aparecer.
+      var AUTO_SECONDS = 20; // WCAG 2.2.1: margen holgado + se detiene con cualquier tecla o clic
       var bye = document.createElement('div');
       bye.className = 'me-exit-done';
-      bye.setAttribute('role', 'status');
+      bye.setAttribute('role', 'dialog');
+      bye.setAttribute('aria-modal', 'true');
+      bye.setAttribute('aria-labelledby', 'me-exit-done-title');
       bye.innerHTML = '<div class="me-exit-done-card">' +
         '<div class="me-exit-done-icon" aria-hidden="true">✔</div>' +
-        '<h1>Sesión finalizada</h1>' +
+        '<h1 id="me-exit-done-title">Sesión finalizada</h1>' +
         (url
           ? '<p>Tu progreso ha quedado registrado.</p>' +
             '<button type="button" class="me-btn me-primary me-exit-return">Volver al curso</button>' +
-            (auto ? '<p class="me-exit-auto">Volviendo al curso en <span class="me-exit-count">5</span> s · ' +
+            (auto ? '<p class="me-exit-auto">Volviendo al curso en <span class="me-exit-count">' + AUTO_SECONDS + '</span> s · ' +
               '<button type="button" class="me-exit-keep">Quedarme aquí</button></p>' : '')
           : '<p>Tu progreso ha quedado registrado.<br>Ya puedes cerrar esta pestaña para volver al campus.</p>') +
         '</div>';
       document.body.appendChild(bye);
-      if (!url) return;
+      A11Y.trapFocus(bye); // sin release: no hay vuelta a la carcasa
+      if (!url) {
+        bye.querySelector('h1').setAttribute('tabindex', '-1');
+        bye.querySelector('h1').focus();
+        A11Y.announce('Sesión finalizada. Tu progreso ha quedado registrado. Ya puedes cerrar esta pestaña.');
+        return;
+      }
       var timer = null;
+      function stopCountdown() {
+        if (!timer) return;
+        clearInterval(timer); timer = null;
+        document.removeEventListener('keydown', stopCountdown, true);
+        document.removeEventListener('pointerdown', stopCountdown, true);
+        var line = bye.querySelector('.me-exit-auto');
+        if (!line) return;
+        var hadFocus = line.contains(document.activeElement);
+        line.textContent = 'Cuenta atrás detenida: vuelve al curso cuando quieras.';
+        // Diferido: si fue Intro sobre «Quedarme aquí», el keypress/click de esa
+        // misma tecla no debe caer en «Volver al curso».
+        if (hadFocus) setTimeout(function () { bye.querySelector('.me-exit-return').focus(); }, 50);
+      }
       bye.querySelector('.me-exit-return').addEventListener('click', function () {
-        if (timer) clearInterval(timer);
+        if (timer) { clearInterval(timer); timer = null; }
         goToLmsCourse(url);
       });
-      bye.querySelector('.me-exit-return').focus();
-      if (!auto) return;
-      var left = 5;
+      if (!auto) {
+        bye.querySelector('.me-exit-return').focus();
+        A11Y.announce('Sesión finalizada. Tu progreso ha quedado registrado.');
+        return;
+      }
+      // Foco inicial en «Quedarme aquí» (la opción que detiene la vuelta).
+      var keep = bye.querySelector('.me-exit-keep');
+      keep.addEventListener('click', stopCountdown); // respaldo: el pointerdown/keydown ya la detienen
+      keep.focus();
+      A11Y.announce('Sesión finalizada. Volverás al curso automáticamente en ' + AUTO_SECONDS +
+        ' segundos. Pulsa cualquier tecla para quedarte aquí.');
+      var left = AUTO_SECONDS;
       timer = setInterval(function () {
         left--;
         var n = bye.querySelector('.me-exit-count');
         if (n) n.textContent = String(left);
-        if (left <= 0) { clearInterval(timer); goToLmsCourse(url); }
+        if (left <= 0) { clearInterval(timer); timer = null; goToLmsCourse(url); }
       }, 1000);
-      bye.querySelector('.me-exit-keep').addEventListener('click', function () {
-        clearInterval(timer);
-        var line = bye.querySelector('.me-exit-auto');
-        if (line) line.parentNode.removeChild(line);
-      });
+      // Cualquier tecla o clic detiene la cuenta (en captura, antes que nada).
+      // Se engancha en el siguiente tick: el Intro/clic que abrió la despedida
+      // ya pasó, pero así no hay carrera con su keyup/pointerup.
+      setTimeout(function () {
+        if (!timer) return;
+        document.addEventListener('keydown', stopCountdown, true);
+        document.addEventListener('pointerdown', stopCountdown, true);
+      }, 0);
     }, 400);
   }
 

@@ -59,11 +59,20 @@ informe de revisión.
 
 | Código | Sev | Causa raíz | Corrección canónica | Quién |
 |---|:-:|---|---|:-:|
-| `IMG_NO_ALT` | ⛔ | Imagen sin texto alternativo (en `visual_resource`, `image_cards`, `before_after`, `hidden_image` o `puzzle`) | Si la imagen la incluiste tú: redacta un `alt` que describa lo que muestra. Si la subió el editor humano (no puedes verla): déjala y díselo — **no inventes** qué muestra | Según |
+| `IMG_NO_ALT` | ⛔ | Imagen sin texto alternativo (en `visual_resource`, `image_cards`, `before_after`, `hidden_image`, `puzzle` o la imagen base de `hotspots`) | Si la imagen la incluiste tú: redacta un `alt` que describa lo que muestra. Si la subió el editor humano (no puedes verla): déjala y díselo — **no inventes** qué muestra | Según |
 | `VIDEO_NO_TRANSCRIPT` | ⛔ | Vídeo sin `transcript` (salvo `transcript_hidden: true`) | Si el fuente da la información, redáctala; si no, deja `editor_note` pidiéndola | Según |
 | `AUDIO_NO_TRANSCRIPT` | ⛔ | Pantalla con locución (`audio_src`) sin `transcript` (salvo `transcript_hidden: true`) | Duplica el contenido de la pantalla en `transcript` (Regla Nº1: el texto ya existe) | GPT |
 | `TRANSCRIPT_HIDDEN_AUDIO` | ⚠ | Pantalla con locución (`audio_src`) y `transcript_hidden: true` | No pongas `transcript_hidden` (es decisión del editor humano); si ya estaba, déjalo | Editor |
-| `MEDIA_NO_SUBS` | ⛔ | Medio con `has_voice:true` sin `tracks` VTT | Si no tienes el VTT no marques `has_voice:true`; el fichero de subtítulos lo aporta el editor humano (deja `editor_note`) | Según |
+| `MD_IMG_NO_ALT` | ⛔ | Imagen en el texto (`![](assets/…)` o `![ \|50](…)`) sin alt; o vídeo de YouTube con esa sintaxis sin título | Escribe el alt entre los corchetes (`![descripción\|50](ruta)`); si es un vídeo, su título. Si la imagen la subió el editor humano y no la ves, **no inventes**: avísale | Según |
+| `ALT_POOR` | ⚠ | Alt igual al nombre del archivo, que empieza por «imagen de»/«foto de», o de más de 250 caracteres | Reescríbelo describiendo lo que se ve, sin «imagen de»; si es largo, resume en el alt y lleva el detalle al texto de la pantalla | Según |
+| `HS_NO_LABEL` | ⛔ | Zona de `hotspots` sin `label` | Lo arregla el editor humano en el editor de zonas (tipo vetado al GPT) | Editor |
+| `TRANSCRIPT_HIDDEN_VIDEO` | ⛔ | Pantalla con vídeo y `transcript_hidden: true` sin transcripción en la interacción `video` | No pongas `transcript_hidden`; si ya estaba, es decisión del editor humano: avísale de que debe quitarlo y redactar la transcripción | Editor |
+| `YT_CAPTIONS_CHECK` | ⚠ | Vídeo de YouTube (recurso, interacción o en el texto): hay que comprobar que tiene subtítulos revisados en español | Comprobación manual del editor humano. **No tocar** | Editor |
+| `VIDEO_AD_CHECK` | ⚠ | Vídeo: si muestra información visual no narrada hace falta describirla (WCAG 1.2.5) | Si el fuente describe lo que se ve en el vídeo, añádelo a `transcript`; si no, déjalo para el editor humano | Según |
+| `LINK_TEXT_VAGUE` | ⚠ | Enlace cuyo texto es «aquí», «pincha aquí», «enlace», «link», «más», «ver» o una URL | Cambia el texto del enlace por el nombre del destino (`[Guía de prevención del Ministerio](https://…)`) sin tocar la URL | GPT |
+| `HEADING_SKIP` | ⚠ | `###` antes del primer `##` en una pantalla que sí usa `##` | Convierte ese `###` en `##` (o reordena para que cuelgue de un `##`) | GPT |
+| `THEME_LOW_CONTRAST` | ⛔ | `shell.primary_color` con menos de 4,5:1 de contraste con el blanco (WCAG 1.4.3) | Pon un color de acción más oscuro del mismo tono (p. ej. paleta «Mecohisa» `#5f71a0`); o lo elige el editor humano en Ajustes → Interfaz | Según |
+| `MEDIA_NO_SUBS` | ⛔ | Medio con `has_voice:true` sin `tracks` VTT (recurso visual, o interacción `video` con archivo y `config.has_voice`) | Si no tienes el VTT no marques `has_voice:true`; el fichero de subtítulos lo aporta el editor humano (deja `editor_note`) | Según |
 | `NARR_NO_TRANSCRIPT` | ⚠ | Curso narrado y pantalla sin `transcript` (salvo vídeo con voz o `transcript_hidden`) | Duplica el contenido de la pantalla en `transcript` (es la entrada del TTS) | GPT |
 | `NARR_NO_AUDIO` | ℹ | Hay transcripción pero falta el audio de locución (no aplica a pantallas con vídeo con voz, `has_voice`, ni con `transcript_hidden`) | Pendiente del TTS: lo genera el editor humano en SCORMEditor. **No tocar** | Editor |
 | `NARR_ITEM_NO_AUDIO` | ℹ | Curso narrado: un ítem de accordion/tabs/flip_cards/timeline/image_cards/flashcards tiene texto pero no audio propio | Estos tipos ocultan su contenido tras el revelado y se narran por ítem (no en el audio de pantalla): pendiente del TTS por ítem, lo genera el editor humano en SCORMEditor. **No tocar** | Editor |
@@ -125,6 +134,7 @@ editor.
 | `EMBED_NO_COMPLETE` | ⛔ | `html_embed` con `config.require_completion:true` pero su código no llama a `MeEmbed.complete()` | No es tu tarea escribir la llamada dentro del código: si tú activaste `require_completion` por error, quítalo (`false`/omite la clave); si no, avisa al humano de que falta añadir `MeEmbed.complete()` a su JS (contrato «MeEmbed v1», `docs/html-embed-contract.md`) | Editor |
 | `EMBED_STATE_MAX` | ⛔ | `html_embed` con `config.state_max` fuera de 0–300 | Ajusta `state_max` al rango 0–300 (0 = no guarda estado) | GPT |
 | `EMBED_STATE_MAX_DEFAULT` | ℹ | `html_embed` sin `config.state_max` explícito (usa 100 por defecto) | Informativo: pon `state_max: 0` si el interactivo no guarda estado, o `5 + 2·N` si guarda índices de N elementos — reduce el peor caso del medidor «Memoria» sin arriesgar nada | Según |
+| `EMBED_A11Y` | ⚠ | Aviso fijo en todo `html_embed`: su accesibilidad (teclado, foco visible, contraste, etiquetas) es responsabilidad del autor | Comprobación manual del editor humano. **No tocar** | Editor |
 | `EMBED_STATE_UNUSED` | ⚠ | `html_embed` con presupuesto de estado (`state_max` > 0, por defecto 100) pero su código no llama a `MeEmbed.saveState()` | Si no vas a guardar estado, pon `state_max: 0` para no reservar memoria sin uso | GPT |
 | `BA_NO_IMAGES` | ⛔ | `before_after` sin las dos imágenes | Las imágenes las elige y sube el editor humano. No inventes rutas | Editor |
 | `BA_SCORED` | ⚠ | `before_after` con `scored:true` | Pon `scored:false`: es un comparador informativo | GPT |
@@ -147,6 +157,7 @@ editor.
 | `CW_INCOMPLETE` | ⛔ | Entrada sin palabra o sin pista | Completa `word` y `clue` | GPT |
 | `AZ_EMPTY` | ⛔ | Rosco sin definiciones | Añade `items` (`clue` + `answer`); la letra del rosco es la **inicial de la respuesta** | GPT |
 | `AZ_INCOMPLETE` | ⛔ | Entrada del rosco sin definición o sin respuesta | Completa `clue` y `answer` | GPT |
+| `IX_VISUAL_REQUIRED` | ⚠ | `puzzle`, `word_search` o `crossword` que puntúa o bloquea el avance (pantalla `required` con `require_interactions`): no tiene equivalente para personas ciegas | Pon `scored:false` y `required:false` en esa pantalla (juego de refuerzo), o añade una actividad equivalente accesible (p. ej. `single_choice`/`fill_blanks` sobre lo mismo) que sí puntúe | GPT |
 | `AZ_DUP_LETTER` | ⚠ | Varias respuestas empiezan por la misma inicial | Cambia una por un sinónimo o término del tema con otra inicial | GPT |
 
 ## Test y nota (SCORM)

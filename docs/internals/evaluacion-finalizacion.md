@@ -109,8 +109,10 @@ puntuación) y el botón Salir — confeti si está completo, nada de desglose n
     esta pestaña». No contempla la apertura de Moodle en ventana emergente (decisión del
     usuario: no la usan).
   - **Vuelta automática** (`rules.auto_return`, casilla «Al cerrar, volver solo al curso de
-    Moodle» en Ajustes del curso, apagada por defecto): cuenta atrás de 5 s con «Quedarme
-    aquí» para cancelarla. Apagada por defecto porque a algunos alumnos los desorienta que
+    Moodle» en Ajustes del curso, apagada por defecto): cuenta atrás de 20 s (WCAG 2.2.1) con
+    el foco inicial en «Quedarme aquí»; cualquier tecla o clic la detiene. La despedida es
+    un diálogo (carcasa inerte) sin región viva: se anuncia una vez al aparecer, no cada
+    segundo. Apagada por defecto porque a algunos alumnos los desorienta que
     la página cambie sola. Con el curso **incompleto** pide confirmación primero
   (`confirmExitIncomplete`, modal propia con clases `.me-modal`): avisa de que no habrá
   calificación y de que el progreso queda guardado para reanudar (mensaje adaptado si

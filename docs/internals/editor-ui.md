@@ -174,7 +174,10 @@ cancelLabel, danger })` (`src/store/confirm.ts`, store zustand) devuelve
 `Promise<boolean>` para usar con `await` desde código imperativo. El modal
 (`ConfirmModal`, montado una vez en `App`) se centra, tiene Aceptar/Cancelar,
 Enter=aceptar/Esc=cancelar y variante `danger` (icono de alerta rojo, botón rojo).
-Preferir esto a `window.confirm`.
+Preferir esto a `window.confirm`. Con `issues` (lista de `Issue` del validador) el modal
+se ensancha y muestra la lista con `IssueItem` (cada fila salta a su pantalla y cierra el
+diálogo como «Cancelar»); en ese modo el foco empieza en Cancelar y Enter no confirma —
+lo usa el aviso de accesibilidad al exportar SCORM (`informes-validacion.md`).
 
 ## Sincronización Editor ↔ Vista estudiante (bidireccional)
 - **Editor → Vista:** al abrir la pestaña, la vista arranca en la pantalla seleccionada.

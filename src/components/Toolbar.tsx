@@ -23,6 +23,7 @@ import { CloudModal } from './CloudModal'
 import { startTour } from './GuidedTour'
 import { InlineRename } from './InlineRename'
 import { confirmDialog, confirmDialogTri } from '../store/confirm'
+import { a11yIssues } from '../validation/accessibility'
 import { orphanAssetPaths } from '../schema/assetRefs'
 import { isCloudConfigured } from '../cloud/client'
 import { useCloudSessionStore } from '../cloud/session'
@@ -139,7 +140,24 @@ export function Toolbar() {
       // y se pide confirmación explícita antes de generar el paquete (el
       // runtime degradará detalle automáticamente al guardar, pero es mejor
       // que el autor lo sepa y decida, ver docs/suspend-data.md).
-      if (validateCourse(course).issues.some((i) => i.code === 'SUSPEND_OVER_LIMIT')) {
+      const issues = validateCourse(course).issues
+      // Accesibilidad (UNE-EN 301 549 / WCAG 2.1 AA, necesaria para acreditar la
+      // formación en modalidad virtual): con errores se avisa y se pide
+      // confirmación, con la lista enlazada a cada pantalla. Qué códigos cuentan
+      // lo define `A11Y_CODES` (validation/accessibility.ts); los avisos no frenan.
+      const a11yErrors = a11yIssues(issues).filter((i) => i.severity === 'error')
+      if (a11yErrors.length > 0) {
+        const n = a11yErrors.length
+        const ok = await confirmDialog({
+          title: 'Paquete no accesible',
+          message: `Este paquete no cumple la UNE-EN 301 549: ${n} error${n === 1 ? '' : 'es'} de accesibilidad. Pulsa uno para ir a corregirlo, o exporta igualmente (por ejemplo, para una revisión interna).`,
+          issues: a11yErrors,
+          confirmLabel: 'Exportar igualmente',
+          danger: true,
+        })
+        if (!ok) return
+      }
+      if (issues.some((i) => i.code === 'SUSPEND_OVER_LIMIT')) {
         const ok = await confirmDialog({
           title: 'Progreso SCORM por encima del límite',
           message: 'En el peor de los casos (el alumno ve y responde todo el curso), el progreso guardado superaría el límite de 4096 caracteres de cmi.suspend_data. El runtime lo degradará automáticamente al guardar para intentar que quepa, pero es mejor reducir el contenido con más detalle guardado. ¿Exportar de todas formas?',

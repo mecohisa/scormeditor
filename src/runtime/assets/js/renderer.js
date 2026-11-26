@@ -222,10 +222,10 @@
         if (ytId) {
           html += '<figure class="me-md-img"><div class="me-video"' + (iw ? ' style="width:' + iw + '%"' : '') +
             '><iframe src="https://www.youtube-nocookie.com/embed/' + esc(ytId) +
-            '" title="' + esc(im[1] || 'Vídeo') + '" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen loading="lazy"></iframe></div>' + caption + '</figure>';
+            '" title="' + esc(im[1] || plainText(im[4]) || 'Vídeo') + '" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen loading="lazy"></iframe></div>' + caption + '</figure>';
         } else {
-          html += '<figure class="me-md-img"><img class="me-zoomable" src="' + esc(asset(im[3])) +
-            '" alt="' + esc(im[1]) + '" loading="lazy" tabindex="0" role="button" aria-label="Ampliar imagen"' +
+          html += '<figure class="me-md-img"><img src="' + esc(asset(im[3])) +
+            '" alt="' + esc(im[1]) + '" loading="lazy"' + zoomAttrs(im[1]) +
             (iw ? ' style="width:' + iw + '%"' : '') + '>' + caption + '</figure>';
         }
         continue;
@@ -243,6 +243,21 @@
     closeLists();
     return html;
   }
+  // Imagen ampliable con el visor (.me-zoomable; delegación en setupLightbox,
+  // app.js). El nombre accesible incluye el alt («Ampliar imagen: …»): con un
+  // aria-label fijo el alt nunca se leería (WCAG 1.1.1/4.1.2). Sin alt (imagen
+  // decorativa) no se puede ampliar ni recibe el foco: no hay nada que contar.
+  // Misma pauta en el modal de image_cards (interactions.js).
+  function zoomAttrs(alt) {
+    alt = (alt || '').trim();
+    return alt ? ' class="me-zoomable" tabindex="0" role="button" aria-label="Ampliar imagen: ' + esc(alt) + '"' : '';
+  }
+  // Texto plano de un texto corto con markdown ligero (para atributos como el
+  // title de un iframe): sin marcas de negrita/cursiva y con los enlaces
+  // reducidos a su texto. Se escapa después, al insertarlo.
+  function plainText(s) {
+    return String(s || '').replace(/\[([^\]]*)\]\([^)]*\)/g, '$1').replace(/[*_]+/g, '').trim();
+  }
   function inline(s) {
     // Texto enriquecido: **negrita**, *cursiva* y enlaces [texto](url).
     return global.Interactions.rich(s);
@@ -256,7 +271,7 @@
     // comparador antes/después sí usan `rich()`).
     if (vr.kind === 'image') {
       return '<figure class="me-figure"><img src="' + esc(asset(vr.src)) + '" alt="' + esc(vr.alt || '') +
-        '" class="me-zoomable" tabindex="0" role="button" aria-label="Ampliar imagen">' +
+        '"' + zoomAttrs(vr.alt) + '>' +
         (vr.caption ? '<figcaption>' + rich(vr.caption) + '</figcaption>' : '') + '</figure>';
     }
     if (vr.kind === 'video_youtube') {
@@ -264,13 +279,18 @@
       var ratio = ['4x3', '1x1', '9x16'].indexOf(vr.media_ratio) >= 0 ? vr.media_ratio : '16x9';
       // El pie, si lo hay, viaja también en el `title` del iframe (accesible
       // sin depender del figcaption) además de mostrarse debajo, como la imagen.
+      // Sin pie, el alt; sin ninguno, «Vídeo: <título de la pantalla>» (un
+      // «Vídeo» a secas no distingue un iframe de otro).
+      var vTitle = plainText(vr.caption) || (vr.alt || '').trim() || ('Vídeo' + (renderingTitle ? ': ' + renderingTitle : ''));
       return '<figure class="me-figure"><div class="me-video me-ratio-' + ratio + '"><iframe src="https://www.youtube-nocookie.com/embed/' + esc(youtubeId(vr.src) || vr.src) +
-        '" title="' + esc(vr.caption || 'Vídeo') + '" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen loading="lazy"></iframe></div>' +
+        '" title="' + esc(vTitle) + '" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen loading="lazy"></iframe></div>' +
         (vr.caption ? '<figcaption>' + rich(vr.caption) + '</figcaption>' : '') + '</figure>';
     }
     if (vr.kind === 'video_file') {
-      var t = (vr.tracks || []).map(function (tr) {
-        return '<track kind="' + esc(tr.kind || 'subtitles') + '" src="' + esc(asset(tr.src)) + '" srclang="' + esc(tr.lang) + '" label="' + esc(tr.label) + '" default>';
+      // `default` solo en la primera pista: con varias marcadas el atributo deja
+      // de significar nada (el navegador se queda con una cualquiera).
+      var t = (vr.tracks || []).map(function (tr, ti) {
+        return '<track kind="' + esc(tr.kind || 'subtitles') + '" src="' + esc(asset(tr.src)) + '" srclang="' + esc(tr.lang) + '" label="' + esc(tr.label) + '"' + (ti === 0 ? ' default' : '') + '>';
       }).join('');
       return '<figure class="me-figure"><video class="me-video" controls preload="metadata"' + (vr.poster ? ' poster="' + esc(asset(vr.poster)) + '"' : '') + '><source src="' + esc(asset(vr.src)) + '">' + t + '</video>' +
         (vr.caption ? '<figcaption>' + rich(vr.caption) + '</figcaption>' : '') + '</figure>';
@@ -504,8 +524,12 @@
       '<source src="' + esc(asset(s.audio_src)) + '"></audio>';
   }
 
+  // Título de la pantalla que se está renderizando (title de los iframes de
+  // vídeo sin pie ni alt, ver mediaBlock).
+  var renderingTitle = '';
   function render(container, screen, ctx) {
     var tpl = templates[screen.type] || templates.content;
+    renderingTitle = (screen.title || '').trim();
     var html = tpl(screen, ctx);
     // Pantalla evaluable: la interacción puntúa (interaction.scored) y las
     // actividades cuentan para la nota (ctx.showScoredBadge, según score_source).

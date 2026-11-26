@@ -2366,7 +2366,7 @@ export const sampleCourse: Course = {
               "type": "content",
               "title": "Sopa de letras",
               "objective": "Reconocer los juegos didácticos autoevaluables y las piezas avanzadas.",
-              "student_text": "**Sopa de letras**: se autoevalúa sola, sin botón Comprobar — toca la primera y la última letra de cada palabra.",
+              "student_text": "**Sopa de letras**: se autoevalúa sola, sin botón Comprobar — toca la primera y la última letra de cada palabra. Es un juego de refuerzo: no puntúa ni es obligatorio, porque no tiene equivalente para personas ciegas (accesibilidad, WCAG 1.1.1).",
               "source_refs": [],
               "visual_resource": {
                 "kind": "none",
@@ -2399,14 +2399,14 @@ export const sampleCourse: Course = {
                   "incorrect": "",
                   "explanation": ""
                 },
-                "scored": true,
+                "scored": false,
                 "points": 1,
                 "attempts": 1,
                 "retries": 0,
                 "source_refs": []
               },
               "interaction_layout": "bottom",
-              "required": true,
+              "required": false,
               "min_time_seconds": 0,
               "audio_src": "",
               "transcript": "",
@@ -2431,7 +2431,7 @@ export const sampleCourse: Course = {
               "type": "content",
               "title": "Crucigrama",
               "objective": "Reconocer los juegos didácticos autoevaluables y las piezas avanzadas.",
-              "student_text": "**Crucigrama**: como Rellenar huecos, con botón Comprobar e intentos limitados.",
+              "student_text": "**Crucigrama**: como Rellenar huecos, con botón Comprobar e intentos limitados. Es un juego de refuerzo: no puntúa ni es obligatorio, porque no tiene equivalente para personas ciegas (accesibilidad, WCAG 1.1.1).",
               "source_refs": [],
               "visual_resource": {
                 "kind": "none",
@@ -2472,14 +2472,14 @@ export const sampleCourse: Course = {
                   "incorrect": "Quedan palabras por corregir.",
                   "explanation": ""
                 },
-                "scored": true,
+                "scored": false,
                 "points": 1,
                 "attempts": 2,
                 "retries": 0,
                 "source_refs": []
               },
               "interaction_layout": "bottom",
-              "required": true,
+              "required": false,
               "min_time_seconds": 0,
               "audio_src": "",
               "transcript": "",
@@ -2678,7 +2678,7 @@ export const sampleCourse: Course = {
               "type": "content",
               "title": "Puzzle de imagen",
               "objective": "Reconocer los juegos didácticos autoevaluables y las piezas avanzadas.",
-              "student_text": "**Puzzle**: recompón la imagen tocando dos piezas para intercambiarlas entre sí.",
+              "student_text": "**Puzzle**: recompón la imagen tocando dos piezas para intercambiarlas entre sí. Es un juego de refuerzo: no puntúa ni es obligatorio, porque no tiene equivalente para personas ciegas (accesibilidad, WCAG 1.1.1).",
               "source_refs": [],
               "visual_resource": {
                 "kind": "none",
@@ -2709,14 +2709,14 @@ export const sampleCourse: Course = {
                   "incorrect": "",
                   "explanation": ""
                 },
-                "scored": true,
+                "scored": false,
                 "points": 1,
                 "attempts": 1,
                 "retries": 0,
                 "source_refs": []
               },
               "interaction_layout": "bottom",
-              "required": true,
+              "required": false,
               "min_time_seconds": 0,
               "audio_src": "",
               "transcript": "",

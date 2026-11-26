@@ -6,6 +6,7 @@ import { countFlaggedForReview } from '../schema/review'
 import { MAX_ATTACHMENTS, MAX_ATTACHMENT_BYTES, MAX_ATTACHMENTS_TOTAL_BYTES, fmtBytes } from '../schema/attachments'
 import { getStateCodec } from '../scorm/stateCodec'
 import { CALC_ID_RE, CALC_RESERVED, computeResults, type CalcResult, type CalcVariable } from '../calc/formula'
+import { MIN_TEXT_CONTRAST, contrastRatio, fmtRatio, headingSkip, interactionTexts, mdImages, poorAlt, vagueLinks } from './accessibility'
 
 export type Severity = 'error' | 'warning' | 'info'
 
@@ -82,6 +83,8 @@ function checkScreen(ctx: Ctx, s: Screen, loc: string) {
     add('TRANSCRIPT_HIDDEN_AUDIO', 'warning', 'La pantalla tiene locución y la transcripción está oculta: quien no pueda oírla no tiene alternativa textual.')
   if ((vr.kind === 'video_file' || vr.kind === 'audio') && vr.has_voice && (vr.tracks || []).length === 0)
     add('MEDIA_NO_SUBS', 'error', 'Medio con voz sin subtítulos (VTT).')
+
+  checkScreenA11y(ctx, s, add)
 
   // Narración pendiente (solo en cursos con locución; ver Ctx.narrated). Los
   // placeholders ya cargan con SKELETON y los casos con vídeo/audio sin
@@ -321,6 +324,110 @@ function checkScreen(ctx: Ctx, s: Screen, loc: string) {
   }
 }
 
+// --- Accesibilidad por pantalla (UNE-EN 301 549 / WCAG 2.1 AA) ---------------
+// Qué códigos son «de accesibilidad» y su criterio WCAG: `A11Y_CODES` en
+// accessibility.ts (fuente única para el diálogo de exportación y el Informe).
+// Los clásicos (IMG_NO_ALT, VIDEO_NO_TRANSCRIPT, MEDIA_NO_SUBS…) siguen arriba y
+// en las reglas por tipo de interacción; aquí van los que miran la pantalla entera.
+const VISUAL_GAMES: Record<string, string> = { puzzle: 'El puzzle', word_search: 'La sopa de letras', crossword: 'El crucigrama' }
+
+function checkScreenA11y(ctx: Ctx, s: Screen, add: (code: string, severity: Severity, message: string) => void) {
+  const it = s.interaction
+  const c = ((it?.config || {}) as Record<string, any>)
+  const vr = s.visual_resource
+
+  // Textos con markdown ligero de la pantalla: cuerpo, transcripción e interacción.
+  const texts = [s.student_text, s.transcript, ...(it ? interactionTexts(it) : [])].filter((t) => t && t.trim())
+  const md = texts.flatMap((t) => mdImages(t))
+
+  // Imágenes en línea sin alt (y vídeos de YouTube con esa sintaxis sin título).
+  md.forEach((m) => {
+    if (m.alt) return
+    if (m.isYoutube)
+      add('MD_IMG_NO_ALT', 'error', `Vídeo de YouTube incrustado en el texto sin título: escríbelo entre los corchetes, ![Título del vídeo](${m.src}). Es el nombre que anuncia el lector de pantalla (WCAG 1.1.1 y 4.1.2).`)
+    else
+      add('MD_IMG_NO_ALT', 'error', `Imagen en el texto (${m.src}) sin texto alternativo: escribe la descripción entre los corchetes, ![descripción](ruta) (WCAG 1.1.1).`)
+  })
+
+  // Calidad del alt (solo si lo hay: la ausencia ya es IMG_NO_ALT/MD_IMG_NO_ALT).
+  const alts: { alt: string; src: string }[] = []
+  if (vr.kind === 'image') alts.push({ alt: vr.alt, src: vr.src })
+  md.filter((m) => !m.isYoutube).forEach((m) => alts.push({ alt: m.alt, src: m.src }))
+  if (it && ['hotspots', 'hidden_image', 'puzzle'].includes(it.type)) alts.push({ alt: String(c.alt || ''), src: String(c.image || '') })
+  if (it?.type === 'before_after') {
+    alts.push({ alt: String(c.before_alt || ''), src: String(c.before_image || '') })
+    alts.push({ alt: String(c.after_alt || ''), src: String(c.after_image || '') })
+  }
+  if (it?.type === 'image_cards')
+    ((c.cards || []) as { image?: string; alt?: string }[]).forEach((x) => alts.push({ alt: String(x.alt || ''), src: String(x.image || '') }))
+  alts.forEach(({ alt, src }) => {
+    const why = poorAlt(alt, src)
+    if (why) add('ALT_POOR', 'warning', `Texto alternativo mejorable: ${why} (WCAG 1.1.1).`)
+  })
+
+  // Enlaces cuyo texto no dice adónde llevan.
+  texts.flatMap((t) => vagueLinks(t)).forEach((t) =>
+    add('LINK_TEXT_VAGUE', 'warning', `Enlace con texto poco descriptivo («${t}»): el texto del enlace debe decir adónde lleva, p. ej. [Guía de prevención del Ministerio](https://…) (WCAG 2.4.4).`))
+
+  // Estructura de encabezados del cuerpo.
+  const skipped = headingSkip(s.student_text)
+  if (skipped)
+    add('HEADING_SKIP', 'warning', `El subapartado «${skipped}» (###) aparece antes de cualquier apartado (##): el lector de pantalla salta de nivel. Conviértelo en ## o pon antes el apartado del que cuelga (WCAG 1.3.1).`)
+
+  // Vídeos de la pantalla: recurso visual, interacción `video` y YouTube en el texto.
+  const ivFile = it?.type === 'video' && String(c.src || '').trim() !== ''
+  const ivYoutube = it?.type === 'video' && !ivFile && String(c.youtube || '').trim() !== ''
+  const mdYoutube = md.some((m) => m.isYoutube)
+  const hasYoutube = (vr.kind === 'video_youtube' && vr.src.trim() !== '') || ivYoutube || mdYoutube
+  const hasVideo = hasYoutube || (vr.kind === 'video_file' && vr.src.trim() !== '') || ivFile
+
+  // Transcripción oculta en una pantalla con vídeo: sin alternativa textual del
+  // contenido visual (1.2.3). La transcripción propia de la interacción `video`
+  // (config.transcript) sí se muestra aunque la pantalla la oculte: vale de alternativa.
+  const isVideoScreen = vr.kind === 'video_file' || vr.kind === 'video_youtube' || s.type === 'video'
+  if (isVideoScreen && s.transcript_hidden && !String(c.transcript || '').trim())
+    add('TRANSCRIPT_HIDDEN_VIDEO', 'error', 'La pantalla tiene vídeo y la transcripción está oculta: quien no pueda verlo u oírlo no tiene alternativa textual. Desmarca «Sin transcripción para el alumno» y redáctala (WCAG 1.2.3).')
+
+  // Interacción `video` con archivo propio: mismas pistas VTT que el recurso visual.
+  if (ivFile && c.has_voice === true && !((c.tracks || []) as { src?: string }[]).some((t) => String(t?.src || '').trim()))
+    add('MEDIA_NO_SUBS', 'error', 'Vídeo con voz sin subtítulos (VTT): añade la pista en la actividad de vídeo (WCAG 1.2.2).')
+
+  if (hasYoutube)
+    add('YT_CAPTIONS_CHECK', 'warning', 'Comprueba que el vídeo de YouTube tiene subtítulos revisados en español (no solo los automáticos): los automáticos no bastan para la WCAG 1.2.2.')
+  if (hasVideo)
+    add('VIDEO_AD_CHECK', 'warning', 'Si el vídeo muestra información visual que no se narra (texto en pantalla, acciones), descríbela en la transcripción o añade audiodescripción (WCAG 1.2.5).')
+
+  if (!it) return
+
+  // Hotspots: la imagen base necesita alt y cada zona, su nombre (es un botón).
+  if (it.type === 'hotspots') {
+    if (String(c.image || '').trim() && !String(c.alt || '').trim())
+      add('IMG_NO_ALT', 'error', 'La imagen de los puntos calientes no tiene texto alternativo (alt) (WCAG 1.1.1).')
+    ;((c.spots || []) as { label?: string }[]).forEach((sp, i) => {
+      if (!String(sp?.label || '').trim())
+        add('HS_NO_LABEL', 'error', `La zona ${i + 1} de los puntos calientes no tiene etiqueta: el lector de pantalla solo diría «Zona ${i + 1}» y no se sabría qué es (WCAG 4.1.2).`)
+    })
+  }
+
+  if (it.type === 'html_embed')
+    add('EMBED_A11Y', 'warning', 'La accesibilidad del código pegado es responsabilidad del autor: comprueba teclado, foco visible, contraste y etiquetas (WCAG 2.1.1, 2.4.7, 1.4.3 y 4.1.2).')
+
+  // Juegos muy visuales que puntúan o bloquean el avance. «Bloquea» = misma regla
+  // que la carcasa (`interactionOk`/`screenSatisfied` en app.js): pantalla
+  // obligatoria (`required`) + `require_interactions`, y además que eso tenga
+  // efecto: navegación no libre, o finalización por evaluación (la actividad
+  // es requisito para completar). «Puntúa» = `scored` con una nota que la cuente.
+  const game = VISUAL_GAMES[it.type]
+  if (game) {
+    const rules = ctx.course.scorm.rules
+    const blocks = s.required && rules.require_interactions &&
+      ((rules.navigation ?? 'mixed') !== 'free' || (rules.completion_mode ?? 'evaluation') === 'evaluation')
+    const scores = it.scored && rules.score_source !== 'final_test'
+    if (blocks || scores)
+      add('IX_VISUAL_REQUIRED', 'warning', `${game} es una actividad muy visual y no tiene equivalente para personas ciegas, pero ${scores ? 'puntúa' : 'es obligatoria para avanzar o completar el curso'}: ofrece una alternativa equivalente o haz que no sea obligatoria ni puntúe (WCAG 1.1.1 y 2.1.1).`)
+  }
+}
+
 // --- Conversación ramificada (decision_tree): el grafo de momentos ---------
 // Mismo criterio que el runtime: empieza en el primer nodo; una respuesta sin
 // destino existente no cuenta, y un nodo sin respuestas válidas es un final.
@@ -533,6 +640,18 @@ function checkGlobal(ctx: Ctx) {
     else if (scoredActivities === 0)
       ctx.push({ code: 'SCORM_MIXED_NO_ACTIVITIES', severity: 'warning', message: 'La nota es mixta pero no hay actividades evaluables: solo contará el test final.', location: 'SCORM' })
   }
+  // Contraste del color de acción (botones con texto blanco, enlaces y foco
+  // sobre blanco): la razón es la misma en ambos sentidos, basta una medida.
+  // El color de estructura (`accent_color`) no se mide: la carcasa lo usa en
+  // fondos teñidos, bordes y barras, nunca como color de texto sobre blanco.
+  const primaryRatio = contrastRatio(c.shell.primary_color, '#ffffff')
+  if (primaryRatio !== null && primaryRatio < MIN_TEXT_CONTRAST)
+    ctx.push({
+      code: 'THEME_LOW_CONTRAST', severity: 'error',
+      message: `El color de acción del curso (${c.shell.primary_color}) solo alcanza ${fmtRatio(primaryRatio)} de contraste con el blanco: el texto de los botones y los enlaces necesita al menos 4,5:1 (WCAG 1.4.3). Elige un tono más oscuro en Ajustes → Interfaz.`,
+      location: 'Interfaz (Apariencia)',
+    })
+
   if (!c.scorm.identifier.trim())
     ctx.push({ code: 'SCORM_NO_ID', severity: 'error', message: 'Falta el identificador SCORM.', location: 'SCORM' })
 

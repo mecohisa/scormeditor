@@ -176,28 +176,62 @@
     replay(box);
   }
 
-  // Feedback en ventana modal (además de la caja en línea, que queda como registro):
-  // la caja inferior puede quedar fuera de la vista. Se cierra con el botón, clicando
-  // fuera o con Esc; al cerrar devuelve el foco a `returnFocus`.
+  // Feedback en ventana modal (además de la caja en línea, que queda como registro
+  // releíble debajo): la caja inferior puede quedar fuera de la vista. Se cierra con
+  // el botón, clicando fuera o con Esc; Tab queda atrapado dentro mientras está
+  // abierto. Al cerrar devuelve el foco a `returnFocus`; si ya no se puede enfocar
+  // (p. ej. Comprobar deshabilitado al resolverse, o fuera del DOM) cae a la caja
+  // en línea o, en su defecto, al contenedor de la interacción (nunca a <body>).
+  var fbSeq = 0;
+  function canFocus(node) {
+    if (!node || !node.focus || node.disabled) return false;
+    var doc = node.ownerDocument;
+    if (!(node.isConnected != null ? node.isConnected : doc.contains(node))) return false;
+    return !node.closest('[hidden]') && node.getClientRects().length > 0;
+  }
+  function focusFallback(el) {
+    var box = el.querySelector('.me-feedback');
+    var target = box && !box.hidden ? box : el;
+    if (!target.hasAttribute('tabindex')) target.setAttribute('tabindex', '-1');
+    target.focus();
+  }
   function showFeedbackModal(el, ok, data, returnFocus) {
     var doc = el.ownerDocument;
     var inline = el.querySelector('.me-feedback');
-    if (inline) inline.hidden = true; // el modal sustituye a la caja en línea (que solo se pinta al restaurar)
+    if (inline) {
+      // Registro en línea sin región viva: el modal (y ctx.announce) ya lo anuncian;
+      // así no se lee dos veces, pero queda visible y releíble tras cerrar.
+      inline.removeAttribute('role');
+      inline.removeAttribute('aria-live');
+      showFeedback(el, ok, data);
+    }
     var old = doc.querySelector('.me-fbmodal');
     if (old) old.remove();
     var msg = ok ? (data.feedback.correct || 'Correcto.') : (data.feedback.incorrect || 'Revisa tu respuesta.');
-    var expl = data.feedback.explanation ? '<p class="me-expl">' + rich(data.feedback.explanation) + '</p>' : '';
+    var uid = 'me-fb-' + (++fbSeq);
+    var expl = data.feedback.explanation ? '<p class="me-expl" id="' + uid + '-d">' + rich(data.feedback.explanation) + '</p>' : '';
     var m = doc.createElement('div');
     m.className = 'me-modal me-fbmodal';
-    m.innerHTML = '<div class="me-modal-card me-fbmodal-card ' + (ok ? 'is-ok' : 'is-error') + '" role="dialog" aria-modal="true" aria-label="Resultado">' +
-      '<div class="me-fbmodal-body"><strong>' + (ok ? '✔ ' : '✖ ') + rich(msg) + '</strong>' + expl + '</div>' +
+    m.innerHTML = '<div class="me-modal-card me-fbmodal-card ' + (ok ? 'is-ok' : 'is-error') + '" role="dialog" aria-modal="true" aria-labelledby="' + uid + '-t"' +
+      (expl ? ' aria-describedby="' + uid + '-d"' : '') + '>' +
+      '<div class="me-fbmodal-body"><strong id="' + uid + '-t">' + (ok ? '✔ ' : '✖ ') + rich(msg) + '</strong>' + expl + '</div>' +
       '<div class="me-fbmodal-foot"><button type="button" class="me-btn me-fbmodal-close">Cerrar</button></div></div>';
     function close() {
       doc.removeEventListener('keydown', onKey, true);
       m.remove();
-      if (returnFocus && returnFocus.focus) returnFocus.focus();
+      if (canFocus(returnFocus)) returnFocus.focus();
+      else focusFallback(el);
     }
-    function onKey(e) { if (e.key === 'Escape') { e.stopPropagation(); close(); } }
+    function onKey(e) {
+      if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); close(); return; }
+      if (e.key !== 'Tab') return;
+      // Trampa de foco: ciclo entre el primer y el último enfocable del diálogo.
+      var f = [].slice.call(m.querySelectorAll('a[href], button:not([disabled]), [tabindex]:not([tabindex="-1"])'));
+      if (!f.length) return;
+      var firstF = f[0], lastF = f[f.length - 1], act = doc.activeElement;
+      if (e.shiftKey && (act === firstF || !m.contains(act))) { e.preventDefault(); lastF.focus(); }
+      else if (!e.shiftKey && (act === lastF || !m.contains(act))) { e.preventDefault(); firstF.focus(); }
+    }
     m.addEventListener('click', function (e) { if (e.target === m) close(); });
     m.querySelector('.me-fbmodal-close').addEventListener('click', close);
     doc.addEventListener('keydown', onKey, true);
@@ -218,37 +252,79 @@
     try { return !!(global.matchMedia && global.matchMedia('(pointer: coarse)').matches); } catch (e) { return false; }
   }
 
-  // Botón Comprobar: nace desactivado; cuando `ready()` (respuesta completa) se cumple,
-  // se activa y, si el cambio viene del usuario (`pulse`), late para invitar a comprobar.
-  // El pulso se apaga al clicar y vuelve si se cambia la respuesta.
+  // Botón Comprobar: nace «desactivado» con aria-disabled (NO `disabled`), para que
+  // siga siendo enfocable con Tab y, si se pulsa sin respuesta completa, el check()
+  // de cada tipo anuncie qué falta. Cuando `ready()` se cumple, se activa y, si el
+  // cambio viene del usuario (`pulse`), late para invitar a comprobar. El pulso se
+  // apaga al clicar y vuelve si se cambia la respuesta. Al resolverse, el lock() de
+  // cada tipo sí lo deshabilita de verdad (`disabled`).
   function wireCheck(el, ready) {
     var btn = el.querySelector('.me-check');
     if (!btn) return function () {};
-    btn.disabled = true;
+    btn.setAttribute('aria-disabled', 'true');
     btn.addEventListener('click', function () { btn.classList.remove('me-pulse'); });
     return function (pulse) {
       var ok = ready();
-      btn.disabled = !ok;
+      if (ok) btn.removeAttribute('aria-disabled'); else btn.setAttribute('aria-disabled', 'true');
       btn.classList.toggle('me-pulse', !!(ok && pulse));
     };
+  }
+
+  // Texto plano (sin marcas de markdown de bloque ni en línea) para anuncios y
+  // nombres accesibles: quita encabezados, viñetas, citas y vallas ::: de bloque.
+  function plainText(s) {
+    return stripTags(String(s == null ? '' : s)
+      .replace(/^\s*:::.*$/gm, '')
+      .replace(/^\s{0,3}(#{1,6}\s+|>\s?|[-*+]\s+|\d+[.)]\s+)/gm, ''))
+      .replace(/\s+/g, ' ').trim();
+  }
+
+  // Marca «visto» de accordion/tabs/flip_cards: el ✓ es decorativo (aria-hidden) y
+  // el estado se expone como texto oculto «(visto)»/«(vista)» que se actualiza.
+  function seenMarkup(on, word) {
+    return '<span class="me-seen-check" aria-hidden="true">✓</span>' +
+      '<span class="sr-only me-seen-sr" data-word="' + word + '">' + (on ? ' (' + word + ')' : '') + '</span>';
+  }
+  function markSeen(node) {
+    node.classList.add('is-seen');
+    var sr = node.querySelector('.me-seen-sr');
+    if (sr) sr.textContent = ' (' + sr.getAttribute('data-word') + ')';
+  }
+
+  // Resultado de una pieza/opción para lectores de pantalla (el ✔/✖ visible va
+  // por ::after, que no siempre se lee): span sr-only que se pone o se quita.
+  function setMarkSr(node, text) {
+    var sr = node.querySelector(':scope > .me-mark-sr');
+    if (!text) { if (sr) sr.remove(); return; }
+    if (!sr) {
+      sr = node.ownerDocument.createElement('span');
+      sr.className = 'sr-only me-mark-sr';
+      node.appendChild(sr);
+    }
+    sr.textContent = ' (' + text + ')';
   }
 
   // Indicador textual de intentos junto al botón Comprobar (`.me-attempts`),
   // para evaluables con `attempts` finitos (attemptsOf > 0). Con intentos
   // ilimitados no hay nada que agotar, así que no se muestra nada. Se llama
   // al pintar (fresca o restaurada) y tras cada check(), con los intentos ya
-  // consumidos y si el intento actual fue correcto.
+  // consumidos y si el intento actual fue correcto. Devuelve el texto pintado
+  // para que el check() lo incluya en su ctx.announce (en los tipos cuyo
+  // `.me-attempts` no es región viva, así no se anuncia dos veces).
   function attemptsHint(el, maxAtt) {
     var node = el.querySelector('.me-attempts');
-    if (!node || maxAtt <= 0) return function () {};
+    if (!node || maxAtt <= 0) return function () { return ''; };
     return function (used, correct) {
-      if (correct) { node.textContent = ''; return; }
+      if (correct) { node.textContent = ''; return ''; }
       var remaining = Math.max(0, maxAtt - used);
       node.textContent = used === 0 ? ('Intentos disponibles: ' + maxAtt + '.')
         : remaining === 0 ? 'Sin más intentos.'
         : 'Te ' + (remaining === 1 ? 'queda 1 intento' : 'quedan ' + remaining + ' intentos') + '.';
+      return node.textContent;
     };
   }
+  // Coletilla del anuncio tras un fallo con intentos restantes (« Te quedan 2 intentos.»).
+  function attemptsTail(text) { return text && text !== 'Sin más intentos.' ? ' ' + text : ''; }
 
   // --- 1. Accordion ----------------------------------------------------------
   register('accordion', function (el, data, ctx) {
@@ -258,10 +334,10 @@
     items.forEach(function (it, i) {
       var id = 'acc-' + i;
       html += '<div class="me-acc-item">' +
-        '<button class="me-acc-head' + (seen[i] ? ' is-seen' : '') + '" aria-expanded="false" aria-controls="' + id + '">' +
+        '<button class="me-acc-head' + (seen[i] ? ' is-seen' : '') + '" id="' + id + '-h" aria-expanded="false" aria-controls="' + id + '">' +
         '<span class="me-acc-title">' + rich(it.title) + '</span>' +
-        '<span class="me-seen-check" aria-hidden="true">✓</span></button>' +
-        '<div class="me-acc-body" id="' + id + '" role="region" hidden>' + itemAudioMarkup(it.audio_src) + block(it.body) + '</div></div>';
+        seenMarkup(!!seen[i], 'visto') + '</button>' +
+        '<div class="me-acc-body" id="' + id + '" role="region" aria-labelledby="' + id + '-h" hidden>' + itemAudioMarkup(it.audio_src) + block(it.body) + '</div></div>';
     });
     html += '</div>';
     el.innerHTML = html;
@@ -282,7 +358,7 @@
           bodies[j].hidden = !on;
         });
         if (!open) {
-          if (!seen[i]) { seen[i] = true; btn.classList.add('is-seen'); ctx.save({ seen: seen }); }
+          if (!seen[i]) { seen[i] = true; markSeen(btn); ctx.save({ seen: seen }); }
           revealItemAudio(ctx, audioEls[i]);
         }
       });
@@ -299,13 +375,13 @@
     var items = (data.config.items || []);
     var seen = (ctx.state && ctx.state.seen) || {}; // índice -> true (persistido)
     seen[0] = true; // la primera pestaña está visible desde el principio
-    var tablist = '<div class="me-tabs" role="tablist">';
+    var tablist = '<div class="me-tabs" role="tablist" aria-label="' + esc(data.prompt ? plainText(data.prompt) : 'Pestañas') + '">';
     var panels = '';
     items.forEach(function (it, i) {
       var sel = i === 0;
       tablist += '<button role="tab" id="tab-' + i + '" aria-controls="panel-' + i + '" aria-selected="' + sel + '" tabindex="' + (sel ? '0' : '-1') + '"' +
         (seen[i] ? ' class="is-seen"' : '') + '>' + rich(it.title) +
-        '<span class="me-seen-check" aria-hidden="true">✓</span></button>';
+        seenMarkup(!!seen[i], 'vista') + '</button>';
       panels += '<div role="tabpanel" id="panel-' + i + '" aria-labelledby="tab-' + i + '" ' + (sel ? '' : 'hidden') + '>' + itemAudioMarkup(it.audio_src) + block(it.body) + '</div>';
     });
     tablist += '</div>';
@@ -325,7 +401,7 @@
         tabPanels[j].hidden = !on;
         if (on) t.focus();
       });
-      if (!seen[i]) { seen[i] = true; tabs[i].classList.add('is-seen'); ctx.save({ seen: seen }); }
+      if (!seen[i]) { seen[i] = true; markSeen(tabs[i]); ctx.save({ seen: seen }); }
       revealItemAudio(ctx, audioEls[i]);
     }
     tabs.forEach(function (t, i) {
@@ -333,6 +409,8 @@
       t.addEventListener('keydown', function (e) {
         if (e.key === 'ArrowRight') { e.preventDefault(); activate((i + 1) % tabs.length); }
         if (e.key === 'ArrowLeft') { e.preventDefault(); activate((i - 1 + tabs.length) % tabs.length); }
+        if (e.key === 'Home') { e.preventDefault(); activate(0); }
+        if (e.key === 'End') { e.preventDefault(); activate(tabs.length - 1); }
       });
     });
     // Completada solo cuando se han visitado TODAS las pestañas (la primera
@@ -346,38 +424,63 @@
   register('flip_cards', function (el, data, ctx) {
     // Volteo 3D real (CSS rotateY): ambas caras viven en el DOM apiladas; la
     // visibilidad la resuelve backface-visibility y el lector de pantalla usa
-    // aria-hidden. La impresión aplana las dos caras vía print.css.
+    // aria-hidden + inert (la cara oculta no se alcanza con Tab). La impresión
+    // aplana las dos caras vía print.css.
+    // Estructura accesible: la tarjeta (.me-card) es un contenedor, NO un botón
+    // (el reverso puede llevar listas y enlaces, que no caben dentro de un
+    // <button>). El control es un <button class="me-card-toggle"> hermano de las
+    // caras, superpuesto a toda la tarjeta (su anillo de foco es el de la
+    // tarjeta) pero sin eventos de puntero: el clic con ratón cae en las caras y
+    // lo recoge el contenedor, así los enlaces del reverso funcionan.
     var cards = (data.config.cards || []);
     var seen = (ctx.state && ctx.state.seen) || {}; // índice -> true (persistido)
+    var uid = 'me-fc-' + String(data.id || '').replace(/[^A-Za-z0-9_-]/g, '_');
     var html = header(data) + '<div class="me-cards">';
     cards.forEach(function (c, i) {
-      html += '<button class="me-card' + (seen[i] ? ' is-seen' : '') + '" aria-pressed="false" data-i="' + i + '" title="Pulsa para girar la tarjeta">' +
-        '<span class="me-flip-inner">' +
-        '<span class="me-card-front">' + block(c.front) + '<span class="me-flip-tab" aria-hidden="true"></span></span>' +
-        '<span class="me-card-back" aria-hidden="true">' + block(c.back) + itemAudioMarkup(c.audio_src) + '</span></span></button>';
+      var front = plainText(c.front);
+      if (front.length > 120) front = front.slice(0, 117) + '…';
+      html += '<div class="me-card' + (seen[i] ? ' is-seen' : '') + '" data-i="' + i + '" title="Pulsa para girar la tarjeta">' +
+        '<button type="button" class="me-card-toggle" aria-expanded="false" aria-controls="' + uid + '-b' + i + '">' +
+        '<span class="sr-only">Girar la tarjeta' + (front ? ': ' + esc(front) : '') + '</span>' + seenMarkup(!!seen[i], 'vista') + '</button>' +
+        '<div class="me-flip-inner">' +
+        '<div class="me-card-front">' + block(c.front) + '<span class="me-flip-tab" aria-hidden="true"></span></div>' +
+        '<div class="me-card-back" id="' + uid + '-b' + i + '" aria-hidden="true" inert>' + block(c.back) + itemAudioMarkup(c.audio_src) + '</div></div></div>';
     });
     el.innerHTML = html + '</div>';
     var btns = [].slice.call(el.querySelectorAll('.me-card'));
     var audioEls = btns.map(function (b) { return wireItemAudio(b); });
     // Pulso en la primera para invitar al clic, solo si aún no se ha girado ninguna
     if (!Object.keys(seen).length && btns[0]) btns[0].classList.add('me-pulse');
-    function setFlip(btn, on) {
-      btn.setAttribute('aria-pressed', String(on));
-      btn.querySelector('.me-card-front').setAttribute('aria-hidden', String(on));
-      btn.querySelector('.me-card-back').setAttribute('aria-hidden', String(!on));
+    function setFace(face, visible) {
+      face.setAttribute('aria-hidden', String(!visible));
+      if (visible) face.removeAttribute('inert'); else face.setAttribute('inert', '');
+      // Respaldo sin soporte de `inert`: los enlaces de la cara oculta salen del orden de Tab.
+      face.querySelectorAll('a[href]').forEach(function (a) {
+        if (visible) a.removeAttribute('tabindex'); else a.setAttribute('tabindex', '-1');
+      });
     }
-    btns.forEach(function (btn, i) {
-      btn.addEventListener('click', function () {
-        var flipped = btn.getAttribute('aria-pressed') === 'true';
+    function setFlip(card, on) {
+      card.classList.toggle('is-flipped', on);
+      card.querySelector('.me-card-toggle').setAttribute('aria-expanded', String(on));
+      setFace(card.querySelector('.me-card-front'), !on);
+      setFace(card.querySelector('.me-card-back'), on);
+    }
+    btns.forEach(function (card) { setFlip(card, false); });
+    btns.forEach(function (card, i) {
+      card.addEventListener('click', function (e) {
+        if (e.target.closest('a[href]')) return; // un enlace del reverso no gira la tarjeta
+        var flipped = card.classList.contains('is-flipped');
         stopItemAudio();
         // Exclusivo: al girar una se devuelven las demás a su anverso
         btns.forEach(function (b) {
           b.classList.remove('me-pulse');
-          setFlip(b, b === btn && !flipped);
+          setFlip(b, b === card && !flipped);
         });
         if (!flipped) {
-          if (!seen[i]) { seen[i] = true; btn.classList.add('is-seen'); ctx.save({ seen: seen }); }
+          if (!seen[i]) { seen[i] = true; markSeen(card); ctx.save({ seen: seen }); }
           revealItemAudio(ctx, audioEls[i]);
+          var backTxt = plainText(cards[i].back);
+          if (backTxt) ctx.announce('Reverso: ' + backTxt);
         }
       });
     });
@@ -393,11 +496,12 @@
     var opts = data.type === 'true_false' ? (data.options || []) : shuffle(data.options || [], data.id);
     var name = 'opt-' + data.id;
     var maxAtt = attemptsOf(data); // 0 = ilimitados
-    var html = header(data) + '<fieldset class="me-choices"><legend class="sr-only">' + esc(data.prompt) + '</legend>';
+    var html = header(data) + '<fieldset class="me-choices"><legend class="sr-only">' + esc(plainText(data.prompt)) + '</legend>';
     opts.forEach(function (o) {
       html += '<label class="me-choice"><input type="radio" name="' + name + '" value="' + esc(o.id) + '"> <span>' + rich(o.text) + '</span></label>';
     });
-    html += '</fieldset><button class="me-btn me-check">Comprobar</button><span class="me-attempts" aria-live="polite"></span>' + feedbackBox(data);
+    // .me-attempts sin aria-live: su texto ya va en el ctx.announce de check().
+    html += '</fieldset><button class="me-btn me-check">Comprobar</button><span class="me-attempts"></span>' + feedbackBox(data);
     el.innerHTML = html;
     var attempts = 0, done = false, correct = false;
     var updateAttempts = attemptsHint(el, maxAtt);
@@ -411,9 +515,9 @@
 
     // Marca visual (color + icono) de la opción elegida al comprobar.
     function markChoice(input, ok) {
-      el.querySelectorAll('.me-choice').forEach(function (l) { l.classList.remove('is-right', 'is-wrong'); });
+      el.querySelectorAll('.me-choice').forEach(function (l) { l.classList.remove('is-right', 'is-wrong'); setMarkSr(l, ''); });
       var lbl = input && input.closest('.me-choice');
-      if (lbl) { lbl.classList.add(ok ? 'is-right' : 'is-wrong'); replay(lbl); }
+      if (lbl) { lbl.classList.add(ok ? 'is-right' : 'is-wrong'); setMarkSr(lbl, ok ? 'correcta' : 'incorrecta'); replay(lbl); }
     }
 
     if (ctx.state && ctx.state.value) {
@@ -442,9 +546,9 @@
       markChoice(sel, correct);
       done = correct || (maxAtt > 0 && attempts >= maxAtt);
       if (done) lock();
-      updateAttempts(attempts, correct);
+      var left = updateAttempts(attempts, correct);
       ctx.save({ value: sel.value, correct: correct, attempts: attempts });
-      ctx.announce(correct ? 'Respuesta correcta.' : (done ? 'Respuesta incorrecta. Sin más intentos.' : 'Respuesta incorrecta. Inténtalo de nuevo.'));
+      ctx.announce(correct ? 'Respuesta correcta.' : (done ? 'Respuesta incorrecta. Sin más intentos.' : 'Respuesta incorrecta. Inténtalo de nuevo.' + attemptsTail(left)));
       return { resolved: done, correct: correct };
     }
     el.querySelector('.me-check').addEventListener('click', check);
@@ -495,8 +599,9 @@
         ' <span class="me-sort-ctrl"><button type="button" class="me-up" aria-label="Subir «' + plain + '»">▲</button>' +
         '<button type="button" class="me-down" aria-label="Bajar «' + plain + '»">▼</button></span></li>';
     });
-    el.innerHTML = html + '</ol><p class="me-sort-tally" aria-live="polite" hidden></p>' +
-      '<button class="me-btn me-check">Comprobar</button><span class="me-attempts" aria-live="polite"></span>' + feedbackBox(data);
+    // Recuento e intentos sin aria-live: su texto ya va en el ctx.announce de check().
+    el.innerHTML = html + '</ol><p class="me-sort-tally" hidden></p>' +
+      '<button class="me-btn me-check">Comprobar</button><span class="me-attempts"></span>' + feedbackBox(data);
     var list = el.querySelector('.me-sort');
     var tally = el.querySelector('.me-sort-tally');
     var attempts = (ctx.state && ctx.state.attempts) || 0;
@@ -611,6 +716,7 @@
         var step = steps.filter(function (s) { return s.id === id; })[0] || {};
         li.classList.remove('is-right', 'is-wrong');
         li.classList.add(ok ? 'is-right' : 'is-wrong');
+        setMarkSr(li, ok ? 'bien colocado' : 'mal colocado');
         var old = li.querySelector('.me-sort-why'); if (old) old.remove();
         var why = (ok ? '' : 'Lo pusiste en la posición ' + (i + 1) + '; va en la ' + (want + 1) + '. ') +
           (step.explanation ? rich(step.explanation) : '');
@@ -649,12 +755,12 @@
       attempts++;
       done = correct || (maxAtt > 0 && attempts >= maxAtt);
       showFeedbackModal(el, correct, data, el.querySelector('.me-check'));
-      updateAttempts(attempts, correct);
+      var left = updateAttempts(attempts, correct);
       ctx.save({ order: order, correct: correct, attempts: attempts });
       if (done) lockSort();
       var tallyMsg = correct ? '' : ' ' + showTally();
       if (correct) tally.hidden = true;
-      ctx.announce(correct ? 'Orden correcto.' : (done ? 'Orden incorrecto.' + tallyMsg + ' Sin más intentos.' : 'Orden incorrecto.' + tallyMsg + ' Inténtalo de nuevo.'));
+      ctx.announce(correct ? 'Orden correcto.' : (done ? 'Orden incorrecto.' + tallyMsg + ' Sin más intentos.' : 'Orden incorrecto.' + tallyMsg + ' Inténtalo de nuevo.' + attemptsTail(left)));
       return { resolved: done, correct: correct };
     }
     el.querySelector('.me-check').addEventListener('click', check);
@@ -683,12 +789,14 @@
     }
     // Cada zona es un grupo (no un botón: dentro hay chips, que sí lo son) con su
     // botón real «Colocar aquí», visible solo mientras hay una pieza seleccionada.
-    function zoneHtml(cls, zoneId, idx, titleHtml, dropLabel, dropText) {
+    // Su nombre accesible EMPIEZA por el texto visible (2.5.3): el destino va
+    // como texto oculto detrás («Colocar aquí: «Categoría»»), no en aria-label.
+    function zoneHtml(cls, zoneId, idx, titleHtml, dropDest, dropText) {
       var tid = uid + '-t' + idx;
       return '<div class="' + cls + ' me-dnd-zone" data-zone="' + esc(zoneId) + '" role="group" aria-labelledby="' + tid + '">' +
         '<p class="me-dnd-title" id="' + tid + '">' + titleHtml + '</p>' +
         '<div class="me-dnd-list" data-zone-list="' + esc(zoneId) + '"></div>' +
-        '<button type="button" class="me-dnd-drop" aria-label="' + dropLabel + '">' + dropText + '</button></div>';
+        '<button type="button" class="me-dnd-drop">' + dropText + '<span class="sr-only">: «' + esc(dropDest) + '»</span></button></div>';
     }
 
     var hint = coarse
@@ -700,15 +808,16 @@
       '<p class="me-sort-hint">' + hint +
       '<span class="sr-only"> Con teclado: Intro para seleccionar un elemento y después el botón «Colocar aquí» de su destino.</span></p>' +
       '<div class="me-dnd' + (coarse ? ' is-touch' : '') + '">' +
-      zoneHtml('me-dnd-pool', '', 0, 'Sin asignar', 'Devolver a «Sin asignar»', 'Devolver aquí') +
+      zoneHtml('me-dnd-pool', '', 0, 'Sin asignar', 'Sin asignar', 'Devolver aquí') +
       '<div class="me-dnd-groups">';
     groups.forEach(function (g, i) {
-      html += zoneHtml('me-dnd-group', g.id, i + 1, rich(g.label), 'Colocar en «' + esc(stripTags(g.label)) + '»', 'Colocar aquí');
+      html += zoneHtml('me-dnd-group', g.id, i + 1, rich(g.label), stripTags(g.label), 'Colocar aquí');
     });
+    // .me-attempts sin aria-live: su texto ya va en el ctx.announce de check().
     html += '</div></div>' +
       '<div class="me-dnd-bar" hidden><span class="me-dnd-bar-text"></span>' +
       '<button type="button" class="me-dnd-cancel">Cancelar</button></div>' +
-      '<button class="me-btn me-check">Comprobar</button><span class="me-attempts" aria-live="polite"></span>' + feedbackBox(data);
+      '<button class="me-btn me-check">Comprobar</button><span class="me-attempts"></span>' + feedbackBox(data);
     el.innerHTML = html;
     var dnd = el.querySelector('.me-dnd');
     var bar = el.querySelector('.me-dnd-bar');
@@ -733,14 +842,17 @@
     // Al mover una pieza se borra su marca de la última comprobación (el resto la conserva).
     function place(id) {
       chips[id].classList.remove('is-right', 'is-wrong');
+      setMarkSr(chips[id], '');
       (listFor(assign[id] || '') || listFor('')).appendChild(chips[id]);
     }
-    // Tras Comprobar: cada pieza en su categoría → verde ✔; en otra o sin colocar → rojo ✖.
+    // Tras Comprobar: cada pieza en su categoría → verde ✔; en otra o sin colocar → rojo ✖
+    // (más el mismo resultado como texto oculto para lectores de pantalla).
     function markChips() {
       opts.forEach(function (o) {
         var ok = !!assign[o.id] && assign[o.id] === o.group;
         chips[o.id].classList.toggle('is-right', ok);
         chips[o.id].classList.toggle('is-wrong', !ok);
+        setMarkSr(chips[o.id], ok ? 'bien colocado' : 'mal colocado');
       });
     }
     opts.forEach(function (o) { place(o.id); });
@@ -861,17 +973,22 @@
     function anyAssigned() { return opts.some(function (o) { return !!assign[o.id]; }); }
     function check() {
       if (done) return { resolved: true, correct: correct };
+      // Comprobar es enfocable aunque esté aria-disabled: si falta respuesta, se dice qué falta.
+      if (!ready()) {
+        ctx.announce(force ? 'Coloca todos los elementos antes de comprobar.' : 'Coloca al menos un elemento antes de comprobar.');
+        return { resolved: false, correct: false };
+      }
       var all = true;
       opts.forEach(function (o) { if (!assign[o.id] || assign[o.id] !== o.group) all = false; });
       correct = all; attempts++;
       done = correct || (maxAtt > 0 && attempts >= maxAtt);
       showFeedbackModal(el, correct, data, el.querySelector('.me-check'));
       markChips();
-      updateAttempts(attempts, correct);
+      var left = updateAttempts(attempts, correct);
       ctx.save({ answers: assign, correct: correct, attempts: attempts });
       if (done) lockAssign();
       var nOk = opts.filter(function (o) { return !!assign[o.id] && assign[o.id] === o.group; }).length;
-      ctx.announce(correct ? 'Clasificación correcta.' : (nOk + ' de ' + opts.length + ' elementos bien colocados.' + (done ? ' Sin más intentos.' : ' Revisa los marcados en rojo e inténtalo de nuevo.')));
+      ctx.announce(correct ? 'Clasificación correcta.' : (nOk + ' de ' + opts.length + ' elementos bien colocados.' + (done ? ' Sin más intentos.' : ' Revisa los marcados con ✖ e inténtalo de nuevo.' + attemptsTail(left))));
       return { resolved: done, correct: correct };
     }
     el.querySelector('.me-check').addEventListener('click', check);
@@ -895,10 +1012,11 @@
     });
     el.innerHTML = html + '</div>' + feedbackBox(data);
     var correct = false, done = false;
+    // Opción elegida: color + ✔/✖ y, para lectores de pantalla, «(tu elección, correcta)».
     function markOption(id, ok) {
-      el.querySelectorAll('.me-option').forEach(function (x) { x.classList.remove('is-right', 'is-wrong'); });
+      el.querySelectorAll('.me-option').forEach(function (x) { x.classList.remove('is-right', 'is-wrong'); setMarkSr(x, ''); });
       var btn = el.querySelector('.me-option[data-id="' + id + '"]');
-      if (btn) btn.classList.add(ok ? 'is-right' : 'is-wrong');
+      if (btn) { btn.classList.add(ok ? 'is-right' : 'is-wrong'); setMarkSr(btn, 'tu elección, ' + (ok ? 'correcta' : 'incorrecta')); }
     }
     el.querySelectorAll('.me-option').forEach(function (b) {
       b.addEventListener('click', function () {
@@ -916,6 +1034,7 @@
         correct = !!so.correct; done = true;
         markOption(so.id, correct);
         var sb = el.querySelector('.me-feedback');
+        sb.removeAttribute('role'); sb.removeAttribute('aria-live'); // registro restaurado: no se anuncia al cargar
         sb.className = 'me-feedback ' + (correct ? 'is-ok' : 'is-error');
         sb.innerHTML = '<strong>' + (correct ? '✔ ' : '✖ ') + rich(so.feedback || (correct ? data.feedback.correct : data.feedback.incorrect)) + '</strong>' +
           (data.feedback.explanation ? '<p class="me-expl">' + rich(data.feedback.explanation) + '</p>' : '');
@@ -931,7 +1050,9 @@
     var pct = Math.round(ok / Math.max(1, total) * 100);
     var msg = pct === 100 ? '¡Perfecto!' : pct >= 70 ? 'Muy bien' : pct >= 50 ? 'Vas bien: repasa los comentarios de los fallos'
       : 'Repasa los comentarios de cada paso';
-    return '<div class="me-summary" role="status">' +
+    // tabindex=-1: recibe el foco al terminar el caso (sin role=status: el
+    // resultado ya se anuncia con ctx.announce y se lee al enfocarlo).
+    return '<div class="me-summary" tabindex="-1">' +
       '<div class="me-summary-ring" style="--pct:' + pct + '"><strong>' + ok + '/' + total + '</strong></div>' +
       '<div><p class="me-summary-msg">' + msg + '</p><p class="me-summary-sub">' + pct + ' % de aciertos</p></div></div>';
   }
@@ -978,15 +1099,20 @@
           '<p class="me-step-count">Decisión ' + (idx + 1) + ' de ' + n + '</p>' +
           '<div class="me-step-text">' + block(step.text) + '</div><div class="me-choices">';
         shuffle(step.options, data.id + ':' + (step.id || idx)).forEach(function (o) {
-          var mark = picked ? (o.id === picked.id ? (o.correct ? ' is-right' : ' is-wrong') : '') : '';
-          html += '<button type="button" class="me-btn me-option' + mark + '" data-id="' + esc(o.id) + '"' + (picked ? ' disabled' : '') + '>' + rich(o.text) + '</button>';
+          var mine = picked && o.id === picked.id;
+          var mark = mine ? (o.correct ? ' is-right' : ' is-wrong') : '';
+          html += '<button type="button" class="me-btn me-option' + mark + '" data-id="' + esc(o.id) + '"' + (picked ? ' disabled' : '') + '>' + rich(o.text) +
+            (mine ? '<span class="sr-only me-mark-sr"> (tu elección, ' + (o.correct ? 'correcta' : 'incorrecta') + ')</span>' : '') + '</button>';
         });
         html += '</div>';
         if (picked) {
           var fb = picked.feedback || (picked.correct ? data.feedback.correct : data.feedback.incorrect);
-          html += '<div class="me-feedback ' + (picked.correct ? 'is-ok' : 'is-error') + '" role="status">' +
+          var fbId = 'me-steps-fb-' + String(data.id || '').replace(/[^A-Za-z0-9_-]/g, '_');
+          // Sin role=status: el comentario es la descripción del botón «Siguiente»,
+          // que recibe el foco al elegir (y se lee entonces, una sola vez).
+          html += '<div class="me-feedback ' + (picked.correct ? 'is-ok' : 'is-error') + '" id="' + fbId + '">' +
             '<strong>' + (picked.correct ? '✔ ' : '✖ ') + rich(fb) + '</strong></div>' +
-            '<button type="button" class="me-btn me-primary me-steps-next">' + (idx === n - 1 ? 'Ver el resumen' : 'Siguiente decisión') + ' →</button>';
+            '<button type="button" class="me-btn me-primary me-steps-next" aria-describedby="' + fbId + '">' + (idx === n - 1 ? 'Ver el resumen' : 'Siguiente decisión') + ' →</button>';
         }
         html += '</div>';
       }
@@ -1001,6 +1127,8 @@
         var o = optOf(steps[idx], picks[idx]);
         paint();
         save();
+        // El comentario NO va en el anuncio: lo lee el lector al enfocar «Siguiente»
+        // (aria-describedby), así no se oye dos veces.
         ctx.announce(o && o.correct ? 'Decisión correcta.' : 'Decisión mejorable.');
         var next = el.querySelector('.me-steps-next'); if (next) next.focus();
         return;
@@ -1019,6 +1147,7 @@
         idx = 0;
         paint();
         save();
+        var first0 = el.querySelector('.me-option'); if (first0) first0.focus();
       }
     });
     paint();
@@ -1086,7 +1215,9 @@
     // (en su color) encima de cada burbuja.
     var people = (cfg.characters || []).filter(function (c) { return c && c.id; });
     var group = people.length > 1;
-    var AV_COLORS = ['#00897b', '#5e35b1', '#d81b60', '#f4511e', '#3949ab', '#7cb342'];
+    // Colores de personaje: todos ≥ 4.5:1 sobre el blanco de la burbuja (el
+    // nombre va escrito en ese color) y con el texto blanco del avatar.
+    var AV_COLORS = ['#00695c', '#5e35b1', '#d81b60', '#c2410c', '#3949ab', '#4e7d1e'];
     function colorOf(id) {
       var k = people.map(function (c) { return c.id; }).indexOf(id);
       return AV_COLORS[(k < 0 ? 0 : k) % AV_COLORS.length];
@@ -1134,7 +1265,10 @@
       var t = trail();
       var cur = t[t.length - 1];
       var atEnd = !choicesOf(cur).length;
-      html += '<div class="me-dt-phone">' + topBar() + '<ol class="me-dt-chat" aria-live="polite">';
+      // El contenedor con scroll es enfocable (2.1.1: se desplaza con el teclado)
+      // y es un registro (role=log) con nombre; la lista va dentro, sin aria-live
+      // propio (lo nuevo se anuncia con ctx.announce en afterReply).
+      html += '<div class="me-dt-phone">' + topBar() + '<div class="me-dt-chat" tabindex="0" role="log" aria-label="Conversación"><ol class="me-dt-list">';
       t.forEach(function (nd, i) {
         if (typing && i === t.length - 1) return; // aún «escribiendo»
         html += bubble(nd);
@@ -1146,10 +1280,10 @@
           '<span></span><span></span><span></span></li>';
       } else if (atEnd) {
         var oc = OUTCOME[outcomeOf(cur)];
-        html += '<li class="me-dt-end ' + oc.cls + '" role="status"><strong>' + oc.icon + ' ' + oc.label + '</strong>' +
+        html += '<li class="me-dt-end ' + oc.cls + '"><strong>' + oc.icon + ' ' + oc.label + '</strong>' +
           (cur.feedback ? '<div class="me-dt-text">' + block(cur.feedback) + '</div>' : '') + '</li>';
       }
-      html += '</ol><div class="me-dt-reply">';
+      html += '</ol></div><div class="me-dt-reply">';
       if (typing) {
         html += '<p class="me-dt-reply-label">…</p>';
       } else if (!atEnd) {
@@ -1172,9 +1306,20 @@
       chat.scrollTop = chat.scrollHeight; // como en una app de chat: lo último, abajo
     }
 
+    // Anuncia lo nuevo de la conversación (el chat se repinta entero, así que una
+    // región viva no lo leería fiable): lo que dice el personaje y, en un final,
+    // su etiqueta y el comentario final, en texto plano.
     function afterReply() {
       var t = trail(), cur = t[t.length - 1];
-      if (!choicesOf(cur).length) ctx.announce(OUTCOME[outcomeOf(cur)].label + '.');
+      var parts = [];
+      var said = plainText(cur.text);
+      if (said) { var who = chars[cur.speaker]; parts.push((who && who.name ? who.name + ': ' : '') + said); }
+      if (!choicesOf(cur).length) {
+        parts.push(OUTCOME[outcomeOf(cur)].label + '.');
+        var fbEnd = plainText(cur.feedback);
+        if (fbEnd) parts.push(fbEnd);
+      }
+      if (parts.length) ctx.announce(parts.join(' '));
       var nextBtn = el.querySelector('.me-dt-choice') || el.querySelector('.me-dt-restart');
       if (nextBtn) nextBtn.focus({ preventScroll: true });
     }
@@ -1356,13 +1501,16 @@
           '<input type="text" inputmode="decimal" class="me-calc-input" data-v="' + i + '" maxlength="16" value="' +
           (typeof v.value === 'number' ? esc(fmtNumber(v.value, 6)) : '') + '">' + unit(v.unit) + '</label>';
       });
-      html += '</div><div class="me-calc-out" aria-live="polite">';
+      // Sin aria-live: releería todos los resultados en cada tecla. Se anuncian
+      // con retardo (al dejar de escribir) desde refresh().
+      html += '</div><div class="me-calc-out">';
       results.forEach(function (r, i) {
         html += '<div class="me-calc-row"><span class="me-calc-label">' + rich(r.label || r.id) + '</span>' +
           '<output class="me-calc-value" data-r="' + i + '">—</output>' + unit(r.unit) + '</div>';
       });
       el.innerHTML = html + '</div></div>';
       var inputs = [].slice.call(el.querySelectorAll('.me-calc-input'));
+      var sayTimer = null;
       function refresh(fromUser) {
         var values = {}, complete = true;
         inputs.forEach(function (inp, i) {
@@ -1371,11 +1519,20 @@
           if (x === null) complete = false;
         });
         var out = compute(values);
+        var said = [];
         results.forEach(function (r, i) {
           var o = el.querySelector('.me-calc-value[data-r="' + i + '"]');
           o.textContent = out[r.id] === null ? '—' : fmtNumber(out[r.id], decimalsOf(r));
+          if (out[r.id] !== null) said.push(plainText(r.label || r.id) + ': ' + o.textContent + (r.unit ? ' ' + r.unit : ''));
         });
         if (fromUser && complete && !used) { used = true; ctx.save({ used: true }); }
+        // Anuncio con retardo: solo cuando el alumno deja de teclear 1,2 s.
+        if (fromUser) {
+          clearTimeout(sayTimer);
+          sayTimer = setTimeout(function () {
+            if (said.length && el.isConnected !== false) ctx.announce('Resultados. ' + said.join('. ') + '.');
+          }, 1200);
+        }
       }
       el.addEventListener('input', function () { refresh(true); });
       refresh(false);
@@ -1392,12 +1549,21 @@
       h += '<div><dt>' + rich(v.label || v.id) + '</dt><dd>' + esc(fmtNumber(given[v.id], 6)) + unit(v.unit) + '</dd></div>';
     });
     h += '</dl></div><div class="me-calc-in">';
+    // Nombre de cada caja = etiqueta + unidad (aria-labelledby, para que el estado
+    // y la solución, que viven en la misma <label>, no entren en el nombre) y
+    // descripción = «✔ Correcto»/«✖ Incorrecto» + solución (aria-describedby).
+    var cid = 'me-calc-' + String(data.id || '').replace(/[^A-Za-z0-9_-]/g, '_');
     results.forEach(function (r, i) {
-      h += '<label class="me-calc-row"><span class="me-calc-label">' + rich(r.label || r.id) + '</span>' +
-        '<input type="text" inputmode="decimal" class="me-calc-input" data-r="' + i + '" maxlength="16" autocomplete="off">' + unit(r.unit) +
-        '<span class="me-calc-sol" hidden></span></label>';
+      var p = cid + '-' + i;
+      h += '<label class="me-calc-row"><span class="me-calc-label" id="' + p + '-l">' + rich(r.label || r.id) + '</span>' +
+        '<input type="text" inputmode="decimal" class="me-calc-input" data-r="' + i + '" maxlength="16" autocomplete="off"' +
+        ' aria-labelledby="' + p + '-l' + (r.unit ? ' ' + p + '-u' : '') + '" aria-describedby="' + p + '-s ' + p + '-x">' +
+        ' <span class="me-calc-unit" id="' + p + '-u">' + esc(r.unit || '') + '</span>' +
+        '<span class="me-calc-status" id="' + p + '-s" hidden></span>' +
+        '<span class="me-calc-sol" id="' + p + '-x" hidden></span></label>';
     });
-    el.innerHTML = h + '</div></div><button class="me-btn me-check">Comprobar</button><span class="me-attempts" aria-live="polite"></span>' + feedbackBox(data);
+    // .me-attempts sin aria-live: su texto ya va en el ctx.announce de check().
+    el.innerHTML = h + '</div></div><button class="me-btn me-check">Comprobar</button><span class="me-attempts"></span>' + feedbackBox(data);
     var boxes = [].slice.call(el.querySelectorAll('.me-calc-input'));
     var attempts = st.attempts || 0, correct = false, done = false;
     var updateAttempts = attemptsHint(el, maxAtt);
@@ -1410,11 +1576,21 @@
       var tol = Math.max(0.5 * Math.pow(10, -decimalsOf(r)), Math.abs(exp) * 0.005) + 1e-9;
       return Math.abs(x - exp) <= tol;
     }
+    // Estado por fila en texto + icono (no solo color, 1.4.1) y aria-invalid.
+    function setStatus(box, ok) {
+      var stEl = box.parentNode.querySelector('.me-calc-status');
+      box.classList.remove('is-right', 'is-wrong');
+      if (ok == null) { box.removeAttribute('aria-invalid'); stEl.hidden = true; stEl.textContent = ''; return; }
+      box.classList.add(ok ? 'is-right' : 'is-wrong');
+      if (ok) box.removeAttribute('aria-invalid'); else box.setAttribute('aria-invalid', 'true');
+      stEl.className = 'me-calc-status ' + (ok ? 'is-ok' : 'is-bad');
+      stEl.textContent = ok ? '✔ Correcto' : '✖ Incorrecto';
+      stEl.hidden = false;
+    }
     function mark(showSolution) {
       results.forEach(function (r, i) {
         var ok = isRight(r, boxes[i].value);
-        boxes[i].classList.remove('is-right', 'is-wrong');
-        boxes[i].classList.add(ok ? 'is-right' : 'is-wrong');
+        setStatus(boxes[i], ok);
         var sol = boxes[i].parentNode.querySelector('.me-calc-sol');
         sol.hidden = !(showSolution && !ok && expected[r.id] !== null);
         if (!sol.hidden) sol.textContent = 'Solución: ' + fmtNumber(expected[r.id], decimalsOf(r)) + (r.unit ? ' ' + r.unit : '');
@@ -1438,7 +1614,7 @@
     if (!done) refreshCheck(false);
     el.addEventListener('input', function (e) {
       if (done || !e.target.classList.contains('me-calc-input')) return;
-      e.target.classList.remove('is-right', 'is-wrong');
+      setStatus(e.target, null);
       refreshCheck(true);
     });
     function check() {
@@ -1450,9 +1626,9 @@
       mark(done);
       showFeedbackModal(el, correct, data, el.querySelector('.me-check'));
       if (done) lock();
-      updateAttempts(attempts, correct);
+      var left = updateAttempts(attempts, correct);
       ctx.save({ values: boxes.map(function (b) { return clean(b.value); }), correct: correct, attempts: attempts });
-      ctx.announce(correct ? 'Resultado correcto.' : (done ? 'Resultado incorrecto. Sin más intentos.' : 'Resultado incorrecto. Inténtalo de nuevo.'));
+      ctx.announce(correct ? 'Resultado correcto.' : (done ? 'Resultado incorrecto. Sin más intentos.' : 'Resultado incorrecto. Inténtalo de nuevo.' + attemptsTail(left)));
       return { resolved: done, correct: correct };
     }
     el.querySelector('.me-check').addEventListener('click', check);
@@ -1516,13 +1692,19 @@
     // config: { image, alt, spots:[{id,x,y,w,h,label,correct,feedback,audio_src}] }
     var c = data.config || {};
     var html = header(data) + '<div class="me-hotspot-wrap"><img src="' + esc(assetUrl(c.image)) + '" alt="' + esc(c.alt || '') + '" class="me-hotspot-img">';
+    // Nombre accesible de cada zona: su etiqueta, o «Zona N» si el autor la dejó
+    // vacía (un botón sin nombre es inutilizable con lector de pantalla).
+    var spotName = {};
+    (c.spots || []).forEach(function (s, si) {
+      spotName[s.id] = String(stripTags(s.label || '')).trim() || ('Zona ' + (si + 1));
+    });
     (c.spots || []).forEach(function (s) {
       // El audio de la zona (si se generó) va DENTRO del botón, oculto —
       // wireItemAudio() lo localiza igual que en accordion/tabs. Suena solo al
       // clicar (abajo), nunca antes: aquí NO hay un «índice hablado» general
       // como en accordion — sería leer las opciones de la pregunta en voz alta
       // (ver buildTranscript.ts, hotspots no está en REVEALABLE_TYPES).
-      html += '<button class="me-hotspot" data-id="' + esc(s.id) + '" aria-label="' + esc(s.label) + '" ' +
+      html += '<button type="button" class="me-hotspot" data-id="' + esc(s.id) + '" aria-label="' + esc(spotName[s.id]) + '" ' +
         'style="left:' + s.x + '%;top:' + s.y + '%;width:' + (s.w || 8) + '%;height:' + (s.h || 8) + '%">' +
         itemAudioMarkup(s.audio_src) + '</button>';
     });
@@ -1542,8 +1724,12 @@
     function count(o) { return Object.keys(o).length; }
     function paint() {
       el.querySelectorAll('.me-hotspot').forEach(function (b) {
-        b.classList.toggle('is-right', !!found[b.dataset.id]);
-        b.classList.toggle('is-wrong', !!wrong[b.dataset.id]);
+        var id = b.dataset.id;
+        b.classList.toggle('is-right', !!found[id]);
+        b.classList.toggle('is-wrong', !!wrong[id]);
+        // El estado también en el nombre accesible (no solo color + icono CSS).
+        b.setAttribute('aria-label', (spotName[id] || '') +
+          (found[id] ? ', correcta' : wrong[id] ? ', incorrecta' : ''));
       });
       done = total ? count(found) >= total : (count(found) + count(wrong)) > 0;
       correct = done && count(wrong) === 0;
@@ -1617,8 +1803,10 @@
     } else if (c.src) {
       html += '<video class="me-video" controls preload="metadata"' + (c.poster ? ' poster="' + esc(assetUrl(c.poster)) + '"' : '') + '>' +
         '<source src="' + esc(assetUrl(c.src)) + '">';
-      (c.tracks || []).forEach(function (t) {
-        html += '<track kind="' + esc(t.kind || 'subtitles') + '" src="' + esc(assetUrl(t.src)) + '" srclang="' + esc(t.lang || 'es') + '" label="' + esc(t.label || 'Español') + '" default>';
+      // `default` solo en la primera pista: con varias marcadas el navegador
+      // elige una arbitraria (o ninguna) y el alumno no sabe cuál verá.
+      (c.tracks || []).forEach(function (t, ti) {
+        html += '<track kind="' + esc(t.kind || 'subtitles') + '" src="' + esc(assetUrl(t.src)) + '" srclang="' + esc(t.lang || 'es') + '" label="' + esc(t.label || 'Español') + '"' + (ti === 0 ? ' default' : '') + '>';
       });
       html += '</video>';
     }
@@ -1703,6 +1891,15 @@
     }
 
     var showing = false;
+    // Mientras la pregunta está abierta, el reproductor queda fuera del orden de
+    // tabulación y del árbol accesible (inert + tabindex=-1 de respaldo): con el
+    // overlay encima, el foco no debe poder caer en un vídeo tapado.
+    var mediaEl = videoEl || iframeEl;
+    function setMediaInert(on) {
+      if (!mediaEl) return;
+      if (on) { mediaEl.setAttribute('inert', ''); mediaEl.setAttribute('tabindex', '-1'); }
+      else { mediaEl.removeAttribute('inert'); mediaEl.removeAttribute('tabindex'); }
+    }
     function pendingAt(t) {
       for (var i = 0; i < questions.length; i++) {
         if (!answered[i] && t >= (questions[i].time || 0)) return i;
@@ -1715,12 +1912,17 @@
       if (i === -1) return;
       showing = true;
       pause();
+      setMediaInert(true);
       overlay.hidden = false;
       renderQuestion(i, overlay, function () {
         overlay.hidden = true;
         showing = false;
         // Otra pregunta en el mismo punto: se muestra antes de reanudar.
         if (pendingAt(currentTime()) !== -1) { maybeAsk(); return; }
+        setMediaInert(false);
+        // El botón «Continuar» desaparece con el overlay: el foco vuelve al
+        // reproductor en vez de perderse en <body>.
+        if (mediaEl && mediaEl.focus) mediaEl.focus();
         play();
       });
       overlay.querySelector('.me-iv-opt').focus();
@@ -1806,8 +2008,13 @@
     var body = '';
     var re = /\[\[(.+?)\]\]/g;
     var last = 0, m2;
+    var before = []; // contexto (últimas palabras previas) de cada hueco, para el lector
     while ((m2 = re.exec(text)) !== null) {
       body += rich(text.slice(last, m2.index)).replace(/\n/g, '<br>');
+      // Texto plano previo al hueco (los huecos anteriores cuentan como «…»):
+      // sus últimas palabras sirven de descripción accesible del hueco.
+      var plain = String(stripTags(text.slice(0, m2.index))).replace(/\[\[(.+?)\]\]/g, '…').replace(/\s+/g, ' ').trim();
+      before.push(plain.split(' ').slice(-6).join(' '));
       answers.push(m2[1].trim());
       body += '@@BLANK' + (answers.length - 1) + '@@';
       last = re.lastIndex;
@@ -1830,12 +2037,22 @@
     });
     answers.forEach(function (_, i) {
       var longest = alts[i].reduce(function (n, a) { return Math.max(n, a.length); }, 4);
-      body = body.replace('@@BLANK' + i + '@@', typed
-        ? '<input type="text" class="me-blank me-blank-input" data-i="' + i + '" aria-label="Hueco ' + (i + 1) + '"' +
+      // Nombre «Hueco N de M» + descripción con las palabras que lo preceden
+      // (span oculto: aria-describedby lee también nodos `hidden`). Tras el
+      // campo, la marca ✔/✖ visible + texto para lector (no solo color).
+      var lbl = ' aria-label="Hueco ' + (i + 1) + ' de ' + answers.length + '"';
+      var ctxId = meDomId(data, 'fb-ctx-' + i);
+      var desc = before[i] ? ' aria-describedby="' + ctxId + '"' : '';
+      var ctxSpan = before[i] ? '<span id="' + ctxId + '" hidden>Tras «' + esc(before[i]) + '»</span>' : '';
+      var mark = '<span class="me-blank-mark" data-i="' + i + '" hidden></span>';
+      var blankHtml = typed
+        ? '<input type="text" class="me-blank me-blank-input" data-i="' + i + '"' + lbl + desc +
           ' autocomplete="off" spellcheck="false" maxlength="' + Math.min(80, longest + 20) + '" size="' + Math.min(30, longest + 2) + '">' +
-          '<span class="me-blank-sol" hidden></span>'
-        : '<select class="me-blank" data-i="' + i + '" aria-label="Hueco ' + (i + 1) + '">' +
-          '<option value="">…</option>' + optionsHtml + '</select>');
+          '<span class="me-blank-sol" hidden></span>' + mark + ctxSpan
+        : '<select class="me-blank" data-i="' + i + '"' + lbl + desc + '>' +
+          '<option value="">…</option>' + optionsHtml + '</select>' + mark + ctxSpan;
+      // Reemplazo por función: el texto del autor puede contener «$&», «$1»…
+      body = body.replace('@@BLANK' + i + '@@', function () { return blankHtml; });
     });
 
     var maxAtt = attemptsOf(data);
@@ -1850,7 +2067,10 @@
     });
     el.addEventListener(typed ? 'input' : 'change', function (e) {
       if (!done && e.target.closest('.me-blank')) {
-        if (typed) e.target.classList.remove('is-right', 'is-wrong');
+        if (typed) {
+          e.target.classList.remove('is-right', 'is-wrong');
+          setBlankMark(e.target, null);
+        }
         refreshCheck(true);
       }
     });
@@ -1864,11 +2084,29 @@
       selects.forEach(function (s) { s.disabled = true; });
       var cb = el.querySelector('.me-check'); if (cb) cb.disabled = true;
     }
+    // Marca por hueco: ok true/false pinta ✔/✖ + texto oculto y aria-invalid;
+    // null la borra (el alumno vuelve a escribir en el hueco).
+    function setBlankMark(s, ok) {
+      var mk = el.querySelector('.me-blank-mark[data-i="' + s.getAttribute('data-i') + '"]');
+      if (ok === null) {
+        s.removeAttribute('aria-invalid');
+        if (mk) { mk.hidden = true; mk.innerHTML = ''; }
+        return;
+      }
+      s.setAttribute('aria-invalid', ok ? 'false' : 'true');
+      if (mk) {
+        mk.hidden = false;
+        mk.className = 'me-blank-mark ' + (ok ? 'is-ok' : 'is-error');
+        mk.innerHTML = '<span aria-hidden="true">' + (ok ? '✔' : '✖') + '</span>' +
+          '<span class="sr-only">' + (ok ? ' (correcto)' : ' (incorrecto)') + '</span>';
+      }
+    }
     function markBlanks() {
       selects.forEach(function (s, i) {
         var ok = isRight(i, s.value);
         s.classList.remove('is-right', 'is-wrong');
         s.classList.add(ok ? 'is-right' : 'is-wrong');
+        setBlankMark(s, ok);
         replay(s);
         // Modo escrito, ya resuelto: el hueco fallado muestra la respuesta esperada.
         var sol = typed && s.nextElementSibling;
@@ -1936,12 +2174,15 @@
     var html = header(data) + '<ol class="me-tl">';
     miles.forEach(function (mi, i) {
       var id = 'tl-' + i;
+      // La región del cuerpo toma su nombre del botón del hito (aria-labelledby);
+      // el ✓ de «visto» es visual, con su equivalente «(visto)» para lector.
       html += '<li class="me-tl-item">' +
-        '<button class="me-tl-head' + (seen[i] ? ' is-seen' : '') + '" aria-expanded="false" aria-controls="' + id + '">' +
+        '<button type="button" class="me-tl-head' + (seen[i] ? ' is-seen' : '') + '" id="' + id + '-head" aria-expanded="false" aria-controls="' + id + '">' +
         (mi.label ? '<span class="me-tl-label">' + rich(mi.label) + '</span>' : '') +
         '<span class="me-tl-title">' + rich(mi.title || '') + '</span>' +
-        '<span class="me-seen-check" aria-hidden="true">✓</span></button>' +
-        '<div class="me-tl-body" id="' + id + '" role="region" hidden>' + itemAudioMarkup(mi.audio_src) + block(mi.body || '') + '</div></li>';
+        '<span class="me-seen-check" aria-hidden="true">✓</span>' +
+        '<span class="sr-only me-tl-seen-sr">' + (seen[i] ? ' (visto)' : '') + '</span></button>' +
+        '<div class="me-tl-body" id="' + id + '" role="region" aria-labelledby="' + id + '-head" hidden>' + itemAudioMarkup(mi.audio_src) + block(mi.body || '') + '</div></li>';
     });
     html += '</ol>';
     el.innerHTML = html;
@@ -1962,7 +2203,11 @@
           bodies[j].hidden = !on;
         });
         if (!open) {
-          if (!seen[i]) { seen[i] = true; btn.classList.add('is-seen'); ctx.save({ seen: seen }); }
+          if (!seen[i]) {
+            seen[i] = true; btn.classList.add('is-seen'); ctx.save({ seen: seen });
+            var srSeen = btn.querySelector('.me-tl-seen-sr');
+            if (srSeen) srSeen.textContent = ' (visto)';
+          }
           revealItemAudio(ctx, audioEls[i]);
         }
       });
@@ -2002,49 +2247,60 @@
 
     function save() { ctx.save({ idx: idx, known: known, done: doneOnce }); }
 
-    function renderSummary() {
+    // Cada render reescribe el botón que tenía el foco: con `focus` (todas las
+    // transiciones salvo el primer pintado) se enfoca el nuevo control
+    // principal, descrito por el contenido que acaba de aparecer (anverso o
+    // resumen), o el propio reverso al revelar — así el foco no cae a <body>.
+    var frontId = meDomId(data, 'fc-front'), sumId = meDomId(data, 'fc-sum');
+    function renderSummary(focus) {
       var yes = known.filter(function (k) { return k; }).length;
       progress.textContent = '';
-      stage.innerHTML = '<div class="me-fc-summary"><p><strong>' + yes + ' de ' + cards.length +
+      stage.innerHTML = '<div class="me-fc-summary" id="' + sumId + '"><p><strong>' + yes + ' de ' + cards.length +
         '</strong> tarjetas sabidas.</p>' +
         (yes < cards.length ? '<p>Repite el repaso para afianzar las que fallaste.</p>' : '<p>¡Repaso completo!</p>') + '</div>';
-      controls.innerHTML = '<button class="me-btn" type="button">↻ Repetir repaso</button>';
-      controls.querySelector('button').addEventListener('click', function () {
-        idx = 0; known = []; save(); renderCard(false);
+      controls.innerHTML = '<button class="me-btn" type="button" aria-describedby="' + sumId + '">↻ Repetir repaso</button>';
+      var again = controls.querySelector('button');
+      again.addEventListener('click', function () {
+        idx = 0; known = []; save(); renderCard(false, true);
       });
+      if (focus) again.focus();
     }
 
     // Pulso-glow solo la primera vez (repaso sin empezar); no vuelve al repetir
     var pulseLeft = !st.idx && !(st.known || []).length;
 
-    function renderCard(revealed) {
+    function renderCard(revealed, focus) {
       // Corta el audio de la carta anterior en cualquier transición (nueva
       // carta o vuelta al anverso): el repaso no tiene un "seen" persistente
       // como accordion/tabs, así que cada "Mostrar respuesta" es su propio
       // revelado y suena de nuevo (repetir el repaso es justo repasar otra vez).
       stopItemAudio();
-      if (idx >= cards.length) { renderSummary(); return; }
+      if (idx >= cards.length) { renderSummary(focus); return; }
       var c = cards[idx];
       progress.textContent = 'Tarjeta ' + (idx + 1) + ' de ' + cards.length;
       stage.innerHTML = '<div class="me-fc-card' + (revealed ? ' is-revealed' : '') +
         (!revealed && idx === 0 && pulseLeft ? ' me-pulse' : '') + '">' +
         '<span class="me-flip-tab" aria-hidden="true"></span>' +
-        '<div class="me-fc-front">' + block(c.front) + '</div>' +
-        (revealed ? '<div class="me-fc-back">' + block(c.back) + itemAudioMarkup(c.audio_src) + '</div>' : '') + '</div>';
+        '<div class="me-fc-front" id="' + frontId + '">' + block(c.front) + '</div>' +
+        (revealed ? '<div class="me-fc-back" tabindex="-1">' + block(c.back) + itemAudioMarkup(c.audio_src) + '</div>' : '') + '</div>';
       if (!revealed) {
-        controls.innerHTML = '<button class="me-btn me-primary" type="button">Mostrar respuesta</button>';
-        var show = function () { pulseLeft = false; renderCard(true); };
-        controls.querySelector('button').addEventListener('click', show);
+        controls.innerHTML = '<button class="me-btn me-primary" type="button" aria-describedby="' + frontId + '">Mostrar respuesta</button>';
+        var show = function () { pulseLeft = false; renderCard(true, true); };
+        var showBtn = controls.querySelector('button');
+        showBtn.addEventListener('click', show);
         // La lengüeta «+» invita a tocar la carta: el clic también revela
         stage.querySelector('.me-fc-card').addEventListener('click', show);
+        if (focus) showBtn.focus();
       } else {
-        var backAudio = wireItemAudio(stage.querySelector('.me-fc-back'));
+        var backEl = stage.querySelector('.me-fc-back');
+        var backAudio = wireItemAudio(backEl);
         revealItemAudio(ctx, backAudio);
         controls.innerHTML = '<span class="me-fc-ask">¿La sabías?</span>' +
           '<button class="me-btn me-fc-yes" type="button">✔ Sí</button>' +
           '<button class="me-btn me-fc-no" type="button">✖ Aún no</button>';
         controls.querySelector('.me-fc-yes').addEventListener('click', function () { answer(true); });
         controls.querySelector('.me-fc-no').addEventListener('click', function () { answer(false); });
+        if (focus) backEl.focus();
       }
     }
     function answer(knew) {
@@ -2052,8 +2308,8 @@
       idx++;
       if (idx >= cards.length) doneOnce = true;
       save();
-      if (idx >= cards.length) renderSummary();
-      else renderCard(false);
+      if (idx >= cards.length) renderSummary(true);
+      else renderCard(false, true);
     }
 
     if (idx >= cards.length && known.length >= cards.length) renderSummary();
@@ -2219,8 +2475,12 @@
         '<button class="me-modal-close me-icon-btn" aria-label="Cerrar">✕</button></div>' +
         '<div class="me-icmodal-body">' +
         '<div class="me-icmodal-text">' + block(c.text || '') + itemAudioMarkup(c.audio_src) + '</div>' +
-        (c.image ? '<figure class="me-icmodal-media"><img class="me-zoomable" src="' + esc(assetUrl(c.image)) +
-          '" alt="' + esc(c.alt || '') + '" tabindex="0" role="button" aria-label="Ampliar imagen"></figure>' : '') +
+        // Ampliable solo con alt, y con el alt en el nombre accesible (misma
+        // pauta que zoomAttrs en renderer.js): sin alt es decorativa.
+        (c.image ? '<figure class="me-icmodal-media"><img src="' + esc(assetUrl(c.image)) +
+          '" alt="' + esc(c.alt || '') + '"' +
+          ((c.alt || '').trim() ? ' class="me-zoomable" tabindex="0" role="button" aria-label="Ampliar imagen: ' + esc(c.alt.trim()) + '"' : '') +
+          '></figure>' : '') +
         '</div></div>';
       var audioEntry = wireItemAudio(overlay.querySelector('.me-icmodal-text'));
       revealItemAudio(ctx, audioEntry);
@@ -2288,9 +2548,12 @@
     var box = el.querySelector('.me-ba');
     var range = el.querySelector('.me-ba-range');
     var handle = el.querySelector('.me-ba-handle');
+    var txtB = String(stripTags(labelB)).trim(), txtA = String(stripTags(labelA)).trim();
     function apply(p) {
       // La imagen «antes» se recorta por la derecha; el divisor sigue al valor.
       box.style.setProperty('--me-ba-pos', p + '%');
+      // El lector anuncia qué parte se ve de cada imagen, no un número suelto.
+      range.setAttribute('aria-valuetext', p + ' % ' + txtB + ', ' + (100 - p) + ' % ' + txtA);
     }
     apply(pos);
     range.addEventListener('input', function () {
@@ -2396,30 +2659,81 @@
     var found = (ctx.state && ctx.state.found) || []; // palabras normalizadas
     found = found.filter(function (w) { return placements[w]; });
 
-    var html = header(data) + '<div class="me-ws">' +
-      '<div class="me-ws-grid" role="group" aria-label="Tablero de la sopa de letras" style="--me-ws-size:' + size + '">';
+    // Teclado: «roving tabindex» — el tablero es UNA parada de Tab (la celda
+    // activa, tabindex=0) y las flechas/Inicio/Fin se mueven por la rejilla.
+    // Se mantiene role=group con <button>s (no role=grid): los botones ya
+    // anuncian nombre y estado pulsado sin depender de filas `display:contents`.
+    // El contenedor .me-ws-scroll da desplazamiento horizontal propio al
+    // tablero cuando las celdas no caben a ≥24 px (WCAG 2.5.8) en vez de
+    // encogerlas más.
+    var html = header(data) + '<div class="me-ws"><div class="me-ws-scroll">' +
+      '<div class="me-ws-grid" role="group" aria-label="Tablero de la sopa de letras, ' + size + ' por ' + size +
+      '. Usa las flechas para moverte y Intro para marcar la primera y la última letra." style="--me-ws-size:' + size + '">';
     for (var r3 = 0; r3 < size; r3++) for (var c3 = 0; c3 < size; c3++) {
       html += '<button type="button" class="me-ws-cell" data-r="' + r3 + '" data-c="' + c3 + '"' +
-        ' aria-label="Fila ' + (r3 + 1) + ', columna ' + (c3 + 1) + ': ' + grid[r3][c3] + '">' + grid[r3][c3] + '</button>';
+        ' tabindex="' + (r3 === 0 && c3 === 0 ? '0' : '-1') + '"' +
+        ' aria-label="' + cellLabel(r3, c3, false) + '">' + grid[r3][c3] + '</button>';
     }
-    html += '</div><ul class="me-ws-words" aria-label="Palabras a encontrar">';
+    html += '</div></div><ul class="me-ws-words" aria-label="Palabras a encontrar">';
     words.forEach(function (w) {
-      html += '<li class="me-ws-word' + (found.indexOf(w) !== -1 ? ' is-found' : '') + '" data-w="' + esc(w) + '">' + esc(wordMap[w]) + '</li>';
+      html += '<li class="me-ws-word' + (found.indexOf(w) !== -1 ? ' is-found' : '') + '" data-w="' + esc(w) + '">' + esc(wordMap[w]) +
+        '<span class="sr-only me-ws-word-sr">' + (found.indexOf(w) !== -1 ? ' (encontrada)' : '') + '</span></li>';
     });
     html += '</ul></div>' + feedbackBox(data);
     el.innerHTML = html;
 
+    function cellLabel(r5, c5, isFound) {
+      return 'Fila ' + (r5 + 1) + ', columna ' + (c5 + 1) + ': ' + grid[r5][c5] + (isFound ? ', encontrada' : '');
+    }
     var cellAt = function (r4, c4) { return el.querySelector('.me-ws-cell[data-r="' + r4 + '"][data-c="' + c4 + '"]'); };
     function markFound(w) {
-      (placements[w] || []).forEach(function (rc) { cellAt(rc[0], rc[1]).classList.add('is-found'); });
+      (placements[w] || []).forEach(function (rc) {
+        var cl = cellAt(rc[0], rc[1]);
+        cl.classList.add('is-found');
+        cl.setAttribute('aria-label', cellLabel(rc[0], rc[1], true));
+      });
       var li = el.querySelector('.me-ws-word[data-w="' + w + '"]');
-      if (li) li.classList.add('is-found');
+      if (li) {
+        li.classList.add('is-found');
+        var sr = li.querySelector('.me-ws-word-sr');
+        if (sr) sr.textContent = ' (encontrada)';
+      }
     }
     found.forEach(markFound);
 
+    var gridEl = el.querySelector('.me-ws-grid');
+    gridEl.addEventListener('keydown', function (e) {
+      var cell = e.target.closest('.me-ws-cell');
+      if (!cell) return;
+      var r6 = +cell.getAttribute('data-r'), c6 = +cell.getAttribute('data-c');
+      var nr = r6, nc = c6;
+      switch (e.key) {
+        case 'ArrowRight': nc = Math.min(size - 1, c6 + 1); break;
+        case 'ArrowLeft': nc = Math.max(0, c6 - 1); break;
+        case 'ArrowDown': nr = Math.min(size - 1, r6 + 1); break;
+        case 'ArrowUp': nr = Math.max(0, r6 - 1); break;
+        case 'Home': nc = 0; if (e.ctrlKey) nr = 0; break;
+        case 'End': nc = size - 1; if (e.ctrlKey) nr = size - 1; break;
+        default: return;
+      }
+      e.preventDefault();
+      var target = cellAt(nr, nc);
+      if (!target || target === cell) return;
+      cell.setAttribute('tabindex', '-1');
+      target.setAttribute('tabindex', '0');
+      target.focus();
+    });
+    // Un clic (ratón/táctil) también mueve la celda activa del roving tabindex.
+    gridEl.addEventListener('focusin', function (e) {
+      var cell = e.target.closest('.me-ws-cell');
+      if (!cell) return;
+      [].forEach.call(gridEl.querySelectorAll('.me-ws-cell[tabindex="0"]'), function (o) { if (o !== cell) o.setAttribute('tabindex', '-1'); });
+      cell.setAttribute('tabindex', '0');
+    });
+
     var first = null; // celda inicial seleccionada
     function clearPick() {
-      if (first) { first.classList.remove('is-picked'); first = null; }
+      if (first) { first.classList.remove('is-picked'); first.removeAttribute('aria-pressed'); first = null; }
     }
     function lineBetween(a, b) {
       // Devuelve las celdas de la recta a→b si es horizontal/vertical/diagonal.
@@ -2440,16 +2754,19 @@
       if (!first) {
         first = cell;
         cell.classList.add('is-picked');
-        ctx.announce('Letra inicial marcada. Toca la última letra de la palabra.');
+        cell.setAttribute('aria-pressed', 'true');
+        ctx.announce('Letra inicial ' + grid[pt.r][pt.c] + ' marcada. Elige la última letra de la palabra.');
         return;
       }
-      if (cell === first) { clearPick(); return; }
+      if (cell === first) { clearPick(); ctx.announce('Selección cancelada.'); return; }
       var a = { r: +first.getAttribute('data-r'), c: +first.getAttribute('data-c') };
       var cells = lineBetween(a, pt);
       clearPick();
       if (!cells) { ctx.announce('La selección debe ser una línea recta.'); return; }
       var s = cells.map(function (rc) { return grid[rc[0]][rc[1]]; }).join('');
       var rev = s.split('').reverse().join('');
+      // Las letras recorridas, una a una (el lector no deletrea una tira de mayúsculas).
+      var spelled = 'Letras marcadas: ' + s.split('').join(', ') + '. ';
       var hit = null;
       words.forEach(function (w) {
         if (found.indexOf(w) !== -1) return;
@@ -2459,10 +2776,10 @@
         found.push(hit);
         markFound(hit);
         ctx.save({ found: found });
-        ctx.announce('«' + wordMap[hit] + '» encontrada. ' + (words.length - found.length) + ' restantes.');
+        ctx.announce(spelled + '«' + wordMap[hit] + '» encontrada. ' + (words.length - found.length) + ' restantes.');
         if (wordDone()) showFeedback(el, true, data);
       } else {
-        ctx.announce('Ahí no hay ninguna palabra de la lista.');
+        ctx.announce(spelled + 'Ahí no hay ninguna palabra de la lista.');
       }
     });
 
@@ -2511,11 +2828,19 @@
       return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
     };
   }
+  // id de DOM estable y válido por interacción (para aria-describedby /
+  // aria-labelledby): `data.id` puede traer caracteres no aptos para un id.
+  function meDomId(data, suffix) {
+    return 'me-' + String(data && data.id != null ? data.id : 'x').replace(/[^A-Za-z0-9_-]/g, '_') + '-' + suffix;
+  }
+
   // Tarjeta de pregunta de opción única reutilizable (vídeo interactivo, imagen
   // oculta): pinta enunciado + opciones, 1 intento, feedback, persiste vía cb.
   function questionCard(box, q, prev, fallbackFb, onAnswer) {
+    // tabindex=-1 en el enunciado: el llamador puede llevar el foco a la
+    // pregunta nueva al avanzar (no es una parada de Tab).
     var h = '<div class="me-iv-q" role="group" aria-label="Pregunta">' +
-      '<p class="me-iv-prompt">' + rich(q.prompt) + '</p><div class="me-iv-opts">';
+      '<p class="me-iv-prompt" tabindex="-1">' + rich(q.prompt) + '</p><div class="me-iv-opts">';
     (q.options || []).forEach(function (o, j) {
       h += '<button type="button" class="me-iv-opt' +
         (prev && prev.choice === j ? (prev.correct ? ' is-right' : ' is-wrong') : '') +
@@ -2645,23 +2970,57 @@
     var values = (ctx.state && ctx.state.values) || {}; // 'r,c' -> letra
     var maxAtt = attemptsOf(data);
 
-    var html = header(data) + '<div class="me-cw">' +
-      '<div class="me-cw-grid" style="--me-cw-cols:' + cols + '" role="group" aria-label="Casillas del crucigrama">';
+    // Palabra(s) y posición de cada casilla, para su nombre accesible
+    // («3 vertical, letra 2 de 5; 1 horizontal, letra 4 de 7») y para enlazarla
+    // (aria-describedby) con el texto de su(s) pista(s).
+    function clueId(p) { return meDomId(data, 'cw-' + (p.dc === 1 ? 'a' : 'd') + p.num); }
+    var wordsAt = {}; // 'r,c' -> { across: {p, i}, down: {p, i} }
+    placed.forEach(function (p) {
+      cellsOf(p.word, p.r, p.c, p.dr, p.dc).forEach(function (rc, i) {
+        var k = rc[0] + ',' + rc[1];
+        if (!wordsAt[k]) wordsAt[k] = {};
+        wordsAt[k][p.dc === 1 ? 'across' : 'down'] = { p: p, i: i };
+      });
+    });
+    function wordName(p) { return p.num + (p.dc === 1 ? ' horizontal' : ' vertical'); }
+    function cellA11y(k) {
+      var w = wordsAt[k] || {};
+      var parts = [], ids = [];
+      ['across', 'down'].forEach(function (d) {
+        if (!w[d]) return;
+        parts.push(wordName(w[d].p) + ', letra ' + (w[d].i + 1) + ' de ' + w[d].p.word.length);
+        ids.push(clueId(w[d].p));
+      });
+      return ' aria-label="' + esc(parts.join('; ')) + '" aria-describedby="' + ids.join(' ') + '"';
+    }
+    // Pista como botón: sin enlaces dentro (contenido interactivo anidado).
+    function clueHtml(s) { return /\]\(/.test(s) ? esc(stripTags(s)) : rich(s); }
+
+    // .me-cw-scroll: desplazamiento horizontal propio del tablero si las
+    // casillas no caben a ≥24 px (ver CSS), en lugar de encogerlas más.
+    var html = header(data) + '<div class="me-cw"><div class="me-cw-scroll">' +
+      '<div class="me-cw-grid" style="--me-cw-cols:' + cols + '" role="group" aria-label="Casillas del crucigrama. ' +
+      'Flechas para moverte; Espacio o Intro cambia entre horizontal y vertical.">';
     for (var r = 0; r < rows; r++) for (var c2 = 0; c2 < cols; c2++) {
       var key2 = (r + minR) + ',' + (c2 + minC);
       if (grid[key2] == null) { html += '<span class="me-cw-void"></span>'; continue; }
       var k2 = r + ',' + c2;
-      html += '<span class="me-cw-box">' + (numAt[k2] ? '<i class="me-cw-num">' + numAt[k2] + '</i>' : '') +
+      html += '<span class="me-cw-box" data-k="' + k2 + '">' + (numAt[k2] ? '<i class="me-cw-num" aria-hidden="true">' + numAt[k2] + '</i>' : '') +
         '<input class="me-cw-cell" maxlength="2" data-k="' + k2 + '" value="' + esc(values[k2] || '') + '"' +
-        ' aria-label="Casilla fila ' + (r + 1) + ', columna ' + (c2 + 1) + '"></span>';
+        ' autocomplete="off" autocapitalize="characters" spellcheck="false"' + cellA11y(k2) + '>' +
+        '<span class="me-cw-mark" aria-hidden="true"></span></span>';
     }
-    html += '</div><div class="me-cw-clues">';
+    html += '</div></div><div class="me-cw-clues">';
     ['Horizontales', 'Verticales'].forEach(function (title, v) {
       var list = placed.filter(function (p) { return (v === 0 ? p.dc === 1 : p.dr === 1); });
       if (!list.length) return;
       html += '<p class="me-cw-clues-head">' + title + '</p><ol class="me-cw-clue-list">';
       list.forEach(function (p) {
-        html += '<li value="' + p.num + '" data-w="' + esc(p.word) + '">' + rich(p.clue) + ' <span class="me-cw-len">(' + p.word.length + ')</span></li>';
+        // La pista es un botón que lleva a la primera casilla de su palabra (en
+        // su dirección). El número ya lo pone la lista (<li value>).
+        html += '<li value="' + p.num + '" data-w="' + esc(p.word) + '">' +
+          '<button type="button" class="me-cw-clue" id="' + clueId(p) + '" data-start="' + p.r + ',' + p.c + '" data-dir="' + (p.dc === 1 ? 'across' : 'down') + '">' +
+          '<span class="sr-only">' + wordName(p) + ': </span>' + clueHtml(p.clue) + ' <span class="me-cw-len">(' + p.word.length + '<span class="sr-only"> letras</span>)</span></button></li>';
       });
       html += '</ol>';
     });
@@ -2697,18 +3056,70 @@
       return rc[0] + ',' + rc[1];
     }
     function cellAt(k) { return el.querySelector('.me-cw-cell[data-k="' + k + '"]'); }
+    // Solo cambia la dirección si la casilla NO admite la activa (p. ej. tras
+    // elegir vertical, entrar en un cruce la conserva).
     el.addEventListener('focusin', function (e) {
       var inp = e.target.closest('.me-cw-cell');
       if (!inp) return;
       var d = dirsOf(inp.getAttribute('data-k'));
       if (!d[curDir]) curDir = d.across ? 'across' : 'down';
     });
+    function goTo(inp) { if (inp) { inp.focus(); inp.select(); } }
+    // Pistas → primera casilla de su palabra, en su dirección.
+    el.querySelector('.me-cw-clues').addEventListener('click', function (e) {
+      var btn = e.target.closest('.me-cw-clue');
+      if (!btn) return;
+      curDir = btn.getAttribute('data-dir') === 'down' ? 'down' : 'across';
+      lastClickedKey = null;
+      goTo(cellAt(btn.getAttribute('data-start')));
+    });
+    function announceDir(k) {
+      var w = wordsAt[k] || {};
+      var cur = w[curDir];
+      if (!cur) return;
+      var both = w.across && w.down;
+      ctx.announce((both ? 'Dirección: ' + (curDir === 'across' ? 'horizontal' : 'vertical') + '. ' : 'Solo ' + (curDir === 'across' ? 'horizontal' : 'vertical') + '. ') +
+        wordName(cur.p) + ': ' + stripTags(cur.p.clue));
+    }
+    // Flechas: casilla más próxima en esa dirección (saltando huecos negros).
+    var ARROWS = { ArrowRight: [0, 1], ArrowLeft: [0, -1], ArrowDown: [1, 0], ArrowUp: [-1, 0] };
+    el.addEventListener('keydown', function (e) {
+      var inp = e.target.closest('.me-cw-cell');
+      if (!inp || e.altKey || e.ctrlKey || e.metaKey) return;
+      var k = inp.getAttribute('data-k');
+      if (ARROWS[e.key]) {
+        e.preventDefault();
+        var mv = ARROWS[e.key], rc = k.split(',').map(Number);
+        var reach = Math.max(rows, cols);
+        for (var s2 = 1; s2 <= reach; s2++) {
+          var tk = (rc[0] + mv[0] * s2) + ',' + (rc[1] + mv[1] * s2);
+          var t2 = cellAt(tk);
+          if (!t2) continue;
+          var want = mv[1] ? 'across' : 'down';
+          if (dirsOf(tk)[want]) curDir = want;
+          goTo(t2);
+          return;
+        }
+        return;
+      }
+      // Espacio / Intro alternan la dirección en un cruce (equivale al doble clic);
+      // fuera de un cruce solo informan de la palabra activa.
+      if (e.key === ' ' || e.key === 'Enter') {
+        e.preventDefault();
+        var d2 = dirsOf(k);
+        if (d2.across && d2.down) curDir = curDir === 'across' ? 'down' : 'across';
+        announceDir(k);
+      }
+    });
     el.addEventListener('click', function (e) {
       var inp = e.target.closest('.me-cw-cell');
       if (!inp) return;
       var k = inp.getAttribute('data-k');
       var d = dirsOf(k);
-      if (k === lastClickedKey && d.across && d.down) curDir = curDir === 'across' ? 'down' : 'across';
+      if (k === lastClickedKey && d.across && d.down) {
+        curDir = curDir === 'across' ? 'down' : 'across';
+        announceDir(k);
+      }
       lastClickedKey = k;
     });
     el.addEventListener('input', function (e) {
@@ -2752,6 +3163,18 @@
           if (!ok) inp.classList.add('is-wrong');
           else if (!inp.classList.contains('is-wrong')) inp.classList.add('is-right');
         });
+      });
+      // Resultado también fuera del color: icono ✔/✖ en la esquina de la casilla
+      // (.me-cw-mark, decorativo) y aria-invalid en el campo para el lector.
+      inputs.forEach(function (inp) {
+        var bad = inp.classList.contains('is-wrong'), good = inp.classList.contains('is-right');
+        var boxEl = inp.parentNode;
+        boxEl.classList.toggle('is-wrong', bad);
+        boxEl.classList.toggle('is-right', good);
+        if (bad || good) inp.setAttribute('aria-invalid', bad ? 'true' : 'false');
+        else inp.removeAttribute('aria-invalid');
+        var mk = boxEl.querySelector('.me-cw-mark');
+        if (mk) mk.textContent = bad ? '✖' : good ? '✔' : '';
       });
     }
     function okCount() { return placed.filter(wordOk).length; }
@@ -2864,24 +3287,45 @@
       for (var i = 0; i < questions.length; i++) if (!answers[i]) return i;
       return -1;
     }
-    function renderCurrent() {
+    // Sin avance automático (WCAG 2.2.1): tras responder, el feedback se queda
+    // y un botón «Siguiente» (que recibe el foco, como «Continuar» en el vídeo)
+    // pasa a la pregunta siguiente; al avanzar, el foco va al enunciado nuevo
+    // o al mensaje final. En el primer pintado no se mueve el foco.
+    function renderCurrent(focus) {
       var i = nextPending();
       refreshTiles();
       if (i === -1) {
         var st = counts();
-        qBox.innerHTML = '<p class="me-hi-end">' + (st.ok === questions.length
+        qBox.innerHTML = '<p class="me-hi-end" tabindex="-1">' + (st.ok === questions.length
           ? rich(data.feedback.correct || '¡Imagen desvelada al completo!')
           : 'Actividad terminada: ' + st.ok + ' de ' + questions.length + ' aciertos.') + '</p>';
+        if (focus) qBox.querySelector('.me-hi-end').focus();
         return;
       }
-      questionCard(qBox, questions[i], null, data.feedback, function (j, ok) {
+      var q = questions[i];
+      questionCard(qBox, q, null, data.feedback, function (j, ok) {
         answers[i] = { choice: j, correct: ok };
         ctx.save({ answers: answers });
-        ctx.announce(ok ? 'Correcto: se destapa parte de la imagen.' : 'Incorrecto.');
-        setTimeout(renderCurrent, 1200); // deja leer el feedback antes de avanzar
+        refreshTiles();
+        var o = q.options[j] || {};
+        var own = stripTags(o.feedback || (ok ? (data.feedback.correct || '') : (data.feedback.incorrect || '')));
+        ctx.announce((ok ? 'Correcto: se destapa parte de la imagen. ' : 'Incorrecto. ') + own);
+        var last = nextPending() === -1;
+        var nb = document.createElement('button');
+        nb.type = 'button';
+        nb.className = 'me-btn me-primary me-iv-continue me-hi-next';
+        nb.textContent = last ? 'Ver resultado' : 'Siguiente pregunta';
+        nb.addEventListener('click', function () { renderCurrent(true); });
+        var card = qBox.querySelector('.me-iv-q') || qBox;
+        card.appendChild(nb);
+        nb.focus();
       });
+      if (focus) {
+        var pr = qBox.querySelector('.me-iv-prompt');
+        if (pr) pr.focus();
+      }
     }
-    renderCurrent();
+    renderCurrent(false);
 
     return {
       result: function () {
@@ -2933,12 +3377,15 @@
 
     var res = (ctx.state && ctx.state.res) || {}; // origIdx -> {given, correct}
 
+    // Letras como lista: cada una lleva su estado en texto para lector
+    // («A: acertada») y un icono ✔/✖ visible además del color; la actual,
+    // aria-current.
     var html = header(data) + '<div class="me-az">' +
-      '<div class="me-az-letters" role="group" aria-label="Letras del rosco">';
+      '<ul class="me-az-letters" aria-label="Letras del rosco">';
     items.forEach(function (q, i) {
-      html += '<span class="me-az-letter" data-i="' + i + '">' + esc(q.letter) + '</span>';
+      html += '<li class="me-az-letter" data-i="' + i + '"></li>';
     });
-    html += '</div><div class="me-az-play"></div></div>';
+    html += '</ul><div class="me-az-play"></div></div>';
     el.innerHTML = html;
 
     var playBox = el.querySelector('.me-az-play');
@@ -2950,6 +3397,12 @@
         cEl.className = 'me-az-letter' +
           (r ? (r.correct ? ' is-right' : ' is-wrong') : '') +
           (i === currentI ? ' is-current' : '');
+        if (i === currentI) cEl.setAttribute('aria-current', 'true');
+        else cEl.removeAttribute('aria-current');
+        var stTxt = r ? (r.correct ? 'acertada' : 'fallada') : (i === currentI ? 'actual' : 'pendiente');
+        cEl.innerHTML = '<span aria-hidden="true">' + esc(q.letter) + '</span>' +
+          (r ? '<span class="me-az-ico" aria-hidden="true">' + (r.correct ? '✔' : '✖') + '</span>' : '') +
+          '<span class="sr-only">' + esc(q.letter) + ': ' + stTxt + '</span>';
       });
     }
     // `from`/el resultado son índices de PINTADO (posición en `items`), para
@@ -2976,11 +3429,15 @@
       items.forEach(function (q) { var r = res[q.origIdx]; if (r) { done2++; if (r.correct) ok++; } });
       return { done: done2, ok: ok };
     }
-    function renderPlay() {
+    // `focus`: falso en el primer pintado (no robar el foco al cargar la
+    // pantalla); en los siguientes, foco al campo de la letra nueva o al
+    // mensaje final.
+    function renderPlay(focus) {
       refreshChips(current);
       if (current === -1) {
         var st = counts();
-        playBox.innerHTML = '<p class="me-az-end">Rosco terminado: <strong>' + st.ok + ' de ' + items.length + '</strong> aciertos.</p>';
+        playBox.innerHTML = '<p class="me-az-end" tabindex="-1">Rosco terminado: <strong>' + st.ok + ' de ' + items.length + '</strong> aciertos.</p>';
+        if (focus) playBox.querySelector('.me-az-end').focus();
         return;
       }
       var q = items[current];
@@ -2998,10 +3455,10 @@
         '<div class="me-iv-fb" hidden></div>';
       var input = playBox.querySelector('.me-az-input');
       var fb = playBox.querySelector('.me-iv-fb');
-      input.focus();
+      if (focus) input.focus();
       function advance() {
         current = nextPending(current);
-        renderPlay();
+        renderPlay(true);
       }
       function answer() {
         var given = input.value.trim();
@@ -3031,7 +3488,15 @@
         playBox.querySelector('.me-az-send').disabled = true;
         playBox.querySelector('.me-az-pass').disabled = true;
         input.disabled = true;
-        setTimeout(advance, 1400);
+        // Sin avance temporizado (WCAG 2.2.1): la respuesta correcta queda a la
+        // vista hasta que el alumno pulsa «Siguiente letra» (que recibe el foco).
+        var nb = document.createElement('button');
+        nb.type = 'button';
+        nb.className = 'me-btn me-primary me-az-next';
+        nb.textContent = nextPending(current) === -1 ? 'Ver resultado' : 'Siguiente letra';
+        nb.addEventListener('click', advance);
+        playBox.appendChild(nb);
+        nb.focus();
       }
       playBox.querySelector('.me-az-send').addEventListener('click', answer);
       input.addEventListener('keydown', function (e) { if (e.key === 'Enter') answer(); });
@@ -3040,7 +3505,7 @@
         advance();
       });
     }
-    renderPlay();
+    renderPlay(false);
 
     return {
       result: function () {
@@ -3084,9 +3549,14 @@
       } while (order.every(function (p, i3) { return p === i3; }));
     }
 
-    var html = header(data) + '<div class="me-pz" role="group" aria-label="Puzzle">' +
+    // La imagen completa (alt del autor) se describe en texto oculto, enlazado
+    // al grupo: las piezas son trozos de fondo CSS sin texto alternativo propio.
+    var altId = meDomId(data, 'pz-alt');
+    var html = header(data) + '<div class="me-pz" role="group" aria-label="Puzzle de ' + cols + ' por ' + rows + ' piezas"' +
+      (c.alt ? ' aria-describedby="' + altId + '"' : '') + '>' +
+      (c.alt ? '<p class="sr-only" id="' + altId + '">Imagen del puzzle: ' + esc(c.alt) + '</p>' : '') +
       '<div class="me-pz-grid" style="--me-pz-cols:' + cols + '; --me-pz-rows:' + rows + '">';
-    for (var pos = 0; pos < n; pos++) html += '<button type="button" class="me-pz-piece" data-pos="' + pos + '"></button>';
+    for (var pos = 0; pos < n; pos++) html += '<button type="button" class="me-pz-piece" data-pos="' + pos + '" aria-pressed="false"></button>';
     html += '</div><p class="me-pz-status" aria-live="polite"></p></div>';
     el.innerHTML = html;
 
@@ -3101,9 +3571,15 @@
         var pr = Math.floor(piece / cols), pc = piece % cols;
         btn.style.backgroundImage = 'url("' + url + '")';
         btn.style.backgroundPosition = (cols > 1 ? (pc / (cols - 1)) * 100 : 0) + '% ' + (rows > 1 ? (pr / (rows - 1)) * 100 : 0) + '%';
-        btn.setAttribute('aria-label', 'Pieza en posición ' + (pos2 + 1));
+        btn.setAttribute('aria-label', pieceName(piece) + ', en la posición ' + (pos2 + 1) +
+          (piece === pos2 ? ', en su sitio' : ''));
         btn.classList.toggle('is-home', piece === pos2);
       });
+    }
+    // Identidad de un trozo por su sitio en la imagen resuelta
+    // («Trozo 4 de 9 (fila 2, columna 1)»).
+    function pieceName(piece) {
+      return 'Trozo ' + (piece + 1) + ' de ' + n + ' (fila ' + (Math.floor(piece / cols) + 1) + ', columna ' + (piece % cols + 1) + ')';
     }
     function solved() { return order.every(function (p, i4) { return p === i4; }); }
     function refreshStatus() {
@@ -3126,15 +3602,22 @@
       if (picked === -1) {
         picked = pos3;
         btn.classList.add('is-picked');
+        btn.setAttribute('aria-pressed', 'true');
+        ctx.announce(pieceName(order[pos3]) + ' seleccionado. Elige otra pieza para intercambiarlas.');
         return;
       }
       var a = picked; picked = -1;
       pieces[a].classList.remove('is-picked');
-      if (a === pos3) return;
+      pieces[a].setAttribute('aria-pressed', 'false');
+      if (a === pos3) { ctx.announce('Selección cancelada.'); return; }
       var tmp = order[a]; order[a] = order[pos3]; order[pos3] = tmp;
       paint();
       refreshStatus();
       if (solved()) { solvedOnce = true; finish(); }
+      else {
+        ctx.announce('Intercambiados. Posición ' + (a + 1) + ': ' + pieceName(order[a]) + (order[a] === a ? ', en su sitio' : '') +
+          '. Posición ' + (pos3 + 1) + ': ' + pieceName(order[pos3]) + (order[pos3] === pos3 ? ', en su sitio' : '') + '.');
+      }
       ctx.save({ order: order, solved: solvedOnce });
     });
 

@@ -110,7 +110,7 @@ Sintaxis soportada:
 - Bloque personalizado: `::: custom | #color | icono | título` … `:::`
 - Bloques con estructura: `::: stats`, `::: compare`, `::: dodont` (ver abajo).
 - Imagen en línea propia: `![alt](assets/img/… | https://…)` → `<figure class="me-md-img">`
-  ampliable con el lightbox. Ancho opcional en % con `![alt|50](ruta)` (clamp 10–100,
+  ampliable con el lightbox (solo si tiene alt, ver «Visor de imágenes»). Ancho opcional en % con `![alt|50](ruta)` (clamp 10–100,
   `style="width:NN%"`). Solo bloque (no inline) y solo rutas `assets/` o http(s).
   Botón 🖼 en la barra del editor y barra contextual «Imagen» (ver `editor-richtext.md`).
   **Misma sintaxis para vídeo de YouTube**: si la URL es un enlace de YouTube
@@ -232,6 +232,23 @@ Tres tipos de bloque que el autor rellena con markdown normal y la carcasa maque
   bloquea siempre; por eso el visor lleva `touch-action:none`. Con captura de puntero el
   `click` llega siempre al visor, así que el «toque en el fondo cierra» se decide en
   `pointerup` (puntero que empezó en el fondo y no se movió).
+  **Accesibilidad**: la imagen ampliable es `role=button` con nombre «Ampliar imagen: <alt>»
+  (`zoomAttrs` en renderer.js; mismo patrón en el modal de image_cards) — un aria-label
+  fijo taparía el alt. **Sin alt la imagen es decorativa: ni ampliable ni enfocable.** El
+  visor es un diálogo con `A11Y.trapFocus` (fondo inerte, Tab atrapado, Esc cierra solo el
+  diálogo de arriba, foco de vuelta a la imagen).
+- **Diálogos de la carcasa** (`A11Y.trapFocus`, accessibility.js): modal genérico
+  (Transcripción/Glosario/Recursos/Documentos/Ayuda), visor, `testDialog`, confirmación de
+  salida y despedida usan el mismo helper: guarda el control que abrió, vuelve inertes los
+  demás hijos de `<body>` (salvo la región de anuncios `data-me-live`), cicla el Tab, Esc
+  en captura (no llega a los diálogos de debajo) y devuelve el foco al cerrar (si ya no es
+  enfocable, `focusMain`). Con un diálogo abierto los atajos Alt+… no navegan.
+- **Anuncios y foco al cambiar de pantalla**: `#me-content` NO es región viva (releía la
+  pantalla entera); `goTo` anuncia con `A11Y.announce` y fija `document.title` =
+  «pantalla — curso». Si el foco estaba en la barra inferior (Anterior/Siguiente/progreso)
+  se queda ahí y se anuncia «Pantalla N de M: título»; si no, `focusMain` lo lleva al `<h1>`
+  (tabindex −1, sin anillo) y solo se anuncia «Pantalla N de M». `#me-content` conserva
+  `tabindex=0` (región con scroll).
 - **Vídeo embebido (YouTube)**: el marco `.me-video` fija la proporción con
   `aspect-ratio` y el `<iframe>` la llena en absoluto (`inset:0; height:100%` — sin alto
   explícito un iframe se queda en sus 150px por defecto, fallo histórico). Alto mínimo de
@@ -285,7 +302,7 @@ Tres tipos de bloque que el autor rellena con markdown normal y la carcasa maque
   tocar el fichero. Editor: sección **Marca y color** de ⚙ Ajustes → Interfaz
   (Apariencia) (`AppearanceSection`, `editor-ui.md`) — un selector de **paletas típicas**
   (`PALETTES` en `CourseSettingsEditor.tsx`: la corporativa de serie, «Mecohisa» —
-  `#8492b6`/`#f5ca00`, la de la empresa — y 4 combinaciones más) aplica ambos colores de
+  `#5f71a0`/`#f5ca00`, la de la empresa — y 4 combinaciones más) aplica ambos colores de
   un clic, y dos pickers libres debajo permiten desviarse de cualquier preset. Como son
   dos variables CSS y no un tema empaquetado, cualquier color que el autor elija llega a
   los mismos sitios que el turquesa/azul de serie — no hay que mantener una lista de
@@ -302,11 +319,15 @@ Tres tipos de bloque que el autor rellena con markdown normal y la carcasa maque
     estado on/off ya lo marca el icono (`volume-on`/`volume-off`) y `aria-pressed`; un
     color encima solo lo hacía destacar sin necesidad y además dependía de que el color
     de turno contrastara bien. `#me-btn-audio` no lleva regla de color propia.
+  - **Contraste del color de acción ≥ 4,5:1 con el blanco** (WCAG 1.4.3, AA): todas
+    las paletas lo cumplen (el azul de la empresa, `#8492b6` en origen con 3,1:1, se
+    oscureció a `#5f71a0`, 4,8:1, mismo tono y saturación) y el validador lo exige
+    (`THEME_LOW_CONTRAST`, ver `informes-validacion.md`) también para colores a mano.
   - Al elegir los dos colores de una paleta, el más oscuro/saturado de los dos conviene
     como **acción** (soporta texto blanco encima en botones, `.me-check`, `.me-flip-tab`…
     y ahora también estos símbolos) y el más claro como **estructura** (solo se usa en
     fondos tenues o se oscurece automáticamente, como en la portada de módulo) — con
-    «Mecohisa» el azul grisáceo `#8492b6` es la acción y el amarillo `#f5ca00` la
+    «Mecohisa» el azul grisáceo `#5f71a0` es la acción y el amarillo `#f5ca00` la
     estructura, no al revés, precisamente por esto.
   - Único cuidado restante: `.me-module-cover` deriva su fondo oscuro directamente de
     `--me-accent` (ver la portada de módulo, más abajo), así que un acento muy claro

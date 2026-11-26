@@ -348,6 +348,42 @@ export function InteractionConfigEditor({
             <input value={cfg.src || ''} onChange={(e) => setConfig({ src: e.target.value })} /></label>
           <label className="ed-field"><span>Transcripción</span>
             <textarea rows={3} value={cfg.transcript || ''} onChange={(e) => setConfig({ transcript: e.target.value })} /></label>
+          {String(cfg.src || '').trim() !== '' && (() => {
+            // Subtítulos del vídeo propio: mismas pistas VTT que el recurso visual
+            // (`config.tracks`, ya las pinta la carcasa) y la misma casilla «con voz»
+            // (`config.has_voice`, solo del editor: activa MEDIA_NO_SUBS). Opcionales:
+            // sin ellas el comportamiento es el de siempre.
+            type Track = { lang: string; label: string; src: string; kind: 'subtitles' | 'captions' }
+            const tracks: Track[] = cfg.tracks || []
+            const setTracks = (next: Track[]) => setConfig({ tracks: next })
+            return (
+              <>
+                <label className="ed-check">
+                  <input type="checkbox" checked={!!cfg.has_voice} onChange={(e) => setConfig({ has_voice: e.target.checked })} />
+                  <span>Contiene voz (exige subtítulos VTT)</span>
+                </label>
+                <div className="ed-options">
+                  <p className="ed-options-head">Subtítulos / pistas (VTT)</p>
+                  {tracks.map((t, i) => {
+                    const updateTrack = (next: Track) => setTracks(tracks.map((x, j) => (j === i ? next : x)))
+                    return (
+                      <div key={i} className="ed-option-row ed-config-row">
+                        <div className="ed-config-fields">
+                          <input style={{ maxWidth: 70 }} value={t.lang} placeholder="es" aria-label="Idioma" onChange={(e) => updateTrack({ ...t, lang: e.target.value })} />
+                          <input value={t.label} placeholder="Etiqueta (Español)" aria-label="Etiqueta" onChange={(e) => updateTrack({ ...t, label: e.target.value })} />
+                          <input value={t.src} placeholder="assets/media/….vtt" aria-label="Ruta del VTT" onChange={(e) => updateTrack({ ...t, src: e.target.value })} />
+                          <FileButton accept=".vtt,text/vtt" label="Subir VTT…" currentPath={t.src}
+                            makePath={() => `assets/media/${it.id}_${t.lang || 'es'}.vtt`} onUploaded={(p) => updateTrack({ ...t, src: p })} />
+                        </div>
+                        <button type="button" className="ed-icobtn ed-icobtn-danger" onClick={() => setTracks(tracks.filter((_, j) => j !== i))} title="Eliminar subtítulo" aria-label="Eliminar subtítulo"><Icon name="trash" size={13} /></button>
+                      </div>
+                    )
+                  })}
+                  <button type="button" onClick={() => setTracks([...tracks, { lang: 'es', label: 'Español', src: '', kind: 'subtitles' }])}><Icon name="plus" size={13} /> Añadir subtítulo</button>
+                </div>
+              </>
+            )
+          })()}
           <QuestionListEditor
             title="Preguntas del vídeo (pausan la reproducción en su segundo)"
             withTime

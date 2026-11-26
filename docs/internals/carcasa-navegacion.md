@@ -120,6 +120,14 @@
   que el ☰ de la topbar; `reflectMenuUI()` (app.js) sincroniza `aria-expanded` de ambos y
   el sentido de la flecha. Solo escritorio (en móvil el slide-over se maneja con el ☰ y
   la pestaña se oculta); tampoco sale en impresión.
+- **Menú plegado = inerte**: `reflectMenuUI()` pone `nav.inert` cuando está plegado (o el
+  slide-over móvil cerrado) y el CSS añade `visibility:hidden` diferida tras el
+  deslizamiento como respaldo; `index.html` arranca con `inert` (el menú arranca plegado).
+- **Estado accesible de cada pantalla** (`refreshMenuChecks`, también tras cada `save` de
+  una actividad y al vencer el tiempo mínimo): `aria-current="page"` en la actual, texto
+  sr-only «(completada)» junto al ✓ (`aria-hidden`), y las que `canNavigateTo` aún no deja
+  abrir llevan `aria-disabled` + `.is-locked` (atenuadas en `--me-muted`); siguen
+  enfocables y al pulsarlas se anuncia por qué no. No cambia ninguna regla de navegación.
 
 ## Barra inferior
 La estructura (`index.html`): `.me-toolbar` → `.me-toolbar-center` (960px, centrado) →
@@ -182,6 +190,21 @@ al final) y `.me-toolbar-nav` (Anterior, progreso, Siguiente).
   `refreshNavState()` (app.js) solo toca el texto del botón Siguiente («Siguiente» ↔
   «Fin» según la pantalla) a través de `.me-nav-btn-label` — un `textContent` directo
   sobre el botón borraría el icono en cada navegación (bug real detectado y corregido).
+  **Bloqueo con `aria-disabled`, nunca `disabled`** (`setNavDisabled`): un botón `disabled`
+  pierde el foco justo después de pulsarlo (llegar al final, quedar bloqueado); así sigue
+  enfocable y `goRelative` anuncia el motivo (`blockReason`, o «primera/última pantalla»).
+  Aspecto atenuado vía `.me-btn[aria-disabled="true"]`. Al navegar desde la barra el foco
+  se queda en el control usado (ver `arquitectura-runtime.md`).
+- **Cuenta atrás del tiempo mínimo** (`startMinTimer`/`refreshWait`): globo
+  `#me-next-wait` sobre Siguiente («Podrás continuar en 0:20»), refrescado cada segundo,
+  sin región viva (va en `aria-describedby` de Siguiente); al vencer se anuncia una vez
+  «Ya puedes continuar» si no queda otra cosa pendiente. Solo en pantallas obligatorias y
+  fuera del modo autor (mismas condiciones que el bloqueo).
+- **Reproductor**: el botón de sonido tiene rótulo fijo «Sonido de la narración» y
+  `aria-pressed` = sonido activado; el seek lleva `aria-valuetext` «1:23 de 4:10».
+- **Contraste de la barra de progreso** (1.4.11): los rellenos turquesa no se separan del
+  carril, así que lo visitado lleva franja inferior y borde final en acento + 50 % negro y
+  el marcador de posición el mismo tono (≥ 3:1 con todas las paletas del editor).
 - **Barra de progreso**: `min-width: 240px` en escritorio (hay margen de sobra en el
   hueco central autoestirado — antes 100px, se veía innecesariamente estrecha); el
   media query de móvil la recorta a 90px.

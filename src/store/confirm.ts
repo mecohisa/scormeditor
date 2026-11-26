@@ -1,4 +1,5 @@
 import { create } from 'zustand'
+import type { Issue } from '../validation/validators'
 
 /**
  * Diálogo de confirmación promisificado. Sustituye a `window.confirm` por un modal
@@ -21,6 +22,11 @@ export interface ConfirmOptions {
   danger?: boolean
   /** Aviso solo-informativo: oculta el botón Cancelar (queda solo «Aceptar»). */
   hideCancel?: boolean
+  /** Lista de issues del validador bajo el mensaje (p. ej. errores de
+   *  accesibilidad al exportar). Cada uno enlaza a su superficie de edición:
+   *  pulsarlo cierra el diálogo como «Cancelar» y salta allí. Con lista, Enter
+   *  no confirma (el foco empieza en Cancelar): confirmar exige un clic. */
+  issues?: Issue[]
 }
 
 /** Resolución cruda del modal: 'confirm' (Aceptar), 'cancel' (Cancelar/Esc/fuera)

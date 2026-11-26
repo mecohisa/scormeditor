@@ -46,6 +46,8 @@ export function useIssueTarget(): (i: Issue) => IssueTarget | null {
     }
     if (SETTINGS_CODES.has(i.code))
       return { label: 'Abrir ajustes', go: () => setSettingsModal('course') }
+    if (i.code === 'THEME_LOW_CONTRAST')
+      return { label: 'Abrir apariencia', go: () => setSettingsModal('appearance') }
     if (i.code === 'GLOSSARY_EMPTY')
       return { label: 'Abrir glosario', go: () => goToScreen('__glossary__') }
     if (i.code === 'BIBLIO_EMPTY')
@@ -56,10 +58,13 @@ export function useIssueTarget(): (i: Issue) => IssueTarget | null {
   }
 }
 
-/** Fila de issue con icono, mensaje, ubicación y enlace a su superficie de edición. */
-export function IssueItem({ issue }: { issue: Issue }) {
+/** Fila de issue con icono, mensaje, ubicación y enlace a su superficie de edición.
+ *  `onNavigate` se llama tras saltar al destino (p. ej. para cerrar el diálogo
+ *  de exportación que lista los issues). */
+export function IssueItem({ issue, onNavigate }: { issue: Issue; onNavigate?: () => void }) {
   const targetFor = useIssueTarget()
-  const target = targetFor(issue)
+  const found = targetFor(issue)
+  const target = found && onNavigate ? { ...found, go: () => { onNavigate(); found.go() } } : found
   return (
     <li
       className={`ed-issue sev-${issue.severity} ${target ? 'is-clickable' : ''}`}

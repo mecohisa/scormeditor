@@ -65,6 +65,48 @@ Reglas por pantalla / unidad / curso, p. ej.:
   `TRANSCRIPT_HIDDEN_AUDIO` (`warning`): quien no pueda oírla se queda sin alternativa
   textual. Además la pantalla queda fuera de la narración automática, así que tampoco
   saltan sus avisos `NARR_*` (de pantalla ni de ítems) — ver `tts-narracion.md`.
+- **Accesibilidad (UNE-EN 301 549:2022 = WCAG 2.1 A y AA)**, requisito para acreditar
+  formación en modalidad virtual. `A11Y_CODES` (`src/validation/accessibility.ts`) es la
+  **fuente única** de qué códigos son «de accesibilidad» y su criterio WCAG (con nivel):
+  la usan el diálogo de exportación, la sección «Accesibilidad» del Informe y la
+  declaración. Un código de accesibilidad nuevo se emite en `validators.ts` **y** se
+  registra ahí; si no, no cuenta. Las reglas que miran la pantalla entera viven en
+  `checkScreenA11y`; el análisis de markdown usa las **mismas expresiones que la
+  carcasa** (`renderer.js`/`rich()`) para no avisar de algo que no se pinta.
+  - Errores: `IMG_NO_ALT` (recurso visual, `image_cards`, `before_after`, `hidden_image`,
+    `puzzle` y la imagen base de `hotspots`), `MD_IMG_NO_ALT` (imagen `![](assets/…)` o
+    `![ |50](…)` en renglón propio sin alt, en `student_text`, transcripción y cualquier
+    texto de la interacción salvo el código de `html_embed`; con URL de YouTube es un
+    vídeo y el alt es su título), `HS_NO_LABEL` (zona de hotspots sin etiqueta: la
+    carcasa la llamaría «Zona N»), `VIDEO_NO_TRANSCRIPT`, `AUDIO_NO_TRANSCRIPT`,
+    `TRANSCRIPT_HIDDEN_VIDEO` (pantalla con vídeo y `transcript_hidden` sin
+    `config.transcript` de la interacción `video`, que sí se muestra), `MEDIA_NO_SUBS`
+    (recurso visual con `has_voice`, o interacción `video` con archivo y
+    `config.has_voice` sin `config.tracks`) y `THEME_LOW_CONTRAST` (`shell.primary_color`
+    < 4,5:1 con blanco; es la misma razón para texto blanco sobre el primario y para el
+    primario como enlace sobre blanco; `accent_color` no se mide porque la carcasa no lo
+    usa como color de texto; el mismo cálculo se ve en vivo en Ajustes → Interfaz).
+  - Avisos: `ALT_POOR` (alt = nombre de fichero, empieza por «imagen de»/«foto de»… o
+    > 250 caracteres), `LINK_TEXT_VAGUE` (texto «aquí», «pincha aquí», «enlace», «link»,
+    «más», «ver»… o una URL como texto), `HEADING_SKIP` (prudente: solo un `###` antes
+    del primer `##` cuando la pantalla sí usa `##`; un texto solo con `###` es estilo, y
+    el interior de los bloques `:::` se ignora), `YT_CAPTIONS_CHECK` (todo vídeo de
+    YouTube: recurso, interacción o en el texto), `VIDEO_AD_CHECK` (uno por pantalla con
+    vídeo, WCAG 1.2.5), `EMBED_A11Y` (fijo en `html_embed`), `TRANSCRIPT_HIDDEN_AUDIO` e
+    `IX_VISUAL_REQUIRED` (`puzzle`/`word_search`/`crossword` que puntúan —`scored` con
+    `score_source` ≠ `final_test`— o bloquean: pantalla `required` +
+    `require_interactions` y, además, navegación no libre o finalización por evaluación;
+    misma regla que `interactionOk`/`screenSatisfied` de `app.js`).
+  - Los avisos de comprobación (`YT_CAPTIONS_CHECK`, `VIDEO_AD_CHECK`, `EMBED_A11Y`) no
+    se pueden «resolver» desde los datos: no hay mecanismo para silenciarlos por pantalla
+    (decisión: no inventar campos), así que un curso con vídeo o HTML a medida queda
+    siempre como «parcialmente conforme» hasta que alguien lo revise a mano. Es lo
+    honesto para una autoevaluación.
+  - **Exportar SCORM** (`onExportScorm`, `Toolbar.tsx`): con errores de accesibilidad se
+    pide confirmación con `confirmDialog({ issues })` —«Este paquete no cumple la UNE-EN
+    301 549: N errores de accesibilidad», la lista enlazada (pulsar un issue cancela y
+    salta a su pantalla) y «Cancelar» / «Exportar igualmente». Con lista, el foco empieza
+    en Cancelar y Enter no confirma. Los avisos no frenan.
 - **Congruencia tipo ↔ recurso ↔ interacción** (complemento de las recetas de creación;
   ver `editor-pantallas.md`): avisos —nunca errores— para combinaciones que casi siempre
   son un despiste. `COVER_INTERACTION` (portada con actividad), `VIDEO_NO_MEDIA`
@@ -100,6 +142,7 @@ Validación e Informe):
 - `screenId` → `goToScreen(id)` del store (= `selectScreen` **+** `activeTab: 'editor'`);
   `'__final__'` abre el `FinalTestEditor`.
 - `unitId` → primera pantalla de la unidad (no hay editor de unidad).
+- `THEME_LOW_CONTRAST` → ventana Ajustes → Interfaz (Apariencia).
 - Códigos de origen de la nota (`SCORM_NO_ACTIVITIES`, `SCORM_MIXED_*`), de historial de
   estructuras (`LAYOUT_CHANGED`, `LAYOUT_IDS_REPLACED`) y de memoria de progreso
   (`SUSPEND_NEAR_LIMIT`, `SUSPEND_OVER_LIMIT`, ver `../suspend-data.md`) → abren la
@@ -114,6 +157,20 @@ recuentos, matriz de trazabilidad (con columna «Ubicación» módulo › unidad
 por fila), tabla de preguntas/respuestas (con columna «Origen» y `screenId`), checklists,
 riesgos (errores) y pendientes (avisos). Incluye pantallas, **tests de unidad** y test
 final; los tests de unidad enlazan a la primera pantalla de su unidad.
+
+Incluye además `accessibility` (hallazgos de accesibilidad agrupados por criterio WCAG,
+`groupByCriterion`) y `conformance` (situación calculada: «plenamente conforme» solo con
+0 errores y 0 avisos de accesibilidad; si no, «parcialmente conforme» — nunca
+«conforme» con errores). Es la sección 6 del informe.
+
+**Declaración de accesibilidad** (`generateA11yStatementHtml`, botón en esa sección):
+HTML autocontenido e imprimible, todo texto escapado (`escHtml`, anti-XSS). Pide
+entidad, contacto y versión (prellenada con «Versión publicada n.º N» según
+`scorm.layouts`); no se guardan en el proyecto. Contiene norma de referencia, situación,
+contenido no accesible (errores = falta de conformidad; avisos = pendiente de
+comprobación manual), medidas de la carcasa (texto fijo: revisarlo si cambia
+`src/runtime/`), método («autoevaluación con el validador…») y el aviso de que no es
+homologación ni acreditación.
 
 Ese modelo alimenta **dos renderizadores** (única fuente):
 - `ReportPanel` (`src/components/ReportPanel.tsx`): render **nativo React** con enlaces al

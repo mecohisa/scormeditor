@@ -603,6 +603,10 @@ button.ed-pill.info:hover:not(:disabled) { background: #e8f0fe; }
 .ed-confirm-title { margin: 0; font-size: 1.15rem; }
 .ed-confirm-msg { margin: 0 0 1.2rem; color: var(--c-text); line-height: 1.45; white-space: pre-line; }
 .ed-confirm-actions { display: flex; justify-content: flex-end; gap: .6rem; }
+/* Diálogo con lista de issues (exportación con errores de accesibilidad): más ancho y
+   con la lista en su propio scroll para que los botones queden siempre a la vista. */
+.ed-confirm.ed-confirm-wide { max-width: 640px; }
+.ed-confirm-issues { max-height: 45vh; overflow-y: auto; margin: 0 0 1.2rem; padding: 0; }
 .ed-confirm-actions button { padding: .5rem 1rem; }
 .ed-confirm-cancel { background: var(--c-surface); }
 @keyframes ed-confirm-pop { from { transform: translateY(8px) scale(.98); opacity: 0; } to { transform: none; opacity: 1; } }
