@@ -901,7 +901,7 @@ export const sampleCourse: Course = {
               "interaction": {
                 "id": "s201_i",
                 "type": "accordion",
-                "prompt": "Los seis bloques destacados de color fijo",
+                "prompt": "Los bloques destacados de color fijo",
                 "instructions": "Despliega cada uno para ver a qué bloques corresponde.",
                 "options": [],
                 "config": {
@@ -911,8 +911,12 @@ export const sampleCourse: Course = {
                       "body": "Comparten el turquesa corporativo (#6DC3C0)."
                     },
                     {
-                      "title": "⚠️ Atención · 💭 Reflexiona · 🧪 Caso práctico",
+                      "title": "💭 Reflexiona · 🧪 Caso práctico",
                       "body": "Comparten el naranja corporativo (#F4C910)."
+                    },
+                    {
+                      "title": "⚠️ Atención",
+                      "body": "Va en rojo (#D9473B) para que el aviso de un riesgo se distinga a primera vista."
                     },
                     {
                       "title": "ℹ️ Información",

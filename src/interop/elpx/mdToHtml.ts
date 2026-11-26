@@ -21,7 +21,7 @@ export type AssetResolver = (src: string) => string
 const CALLOUTS: Record<string, { color: string; icon: string; label: string }> = {
   tip: { color: '#0f9490', icon: '💡', label: 'Consejo' },
   info: { color: '#5265c4', icon: 'ℹ️', label: 'Información' },
-  warn: { color: '#c27b06', icon: '⚠️', label: 'Atención' },
+  warn: { color: '#b8372c', icon: '⚠️', label: 'Atención' },
   important: { color: '#c2417e', icon: '📌', label: 'Importante' },
   fact: { color: '#0f9490', icon: '🧠', label: '¿Sabías que…?' },
   reflect: { color: '#7787bf', icon: '💭', label: 'Reflexiona' },

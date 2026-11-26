@@ -9,7 +9,7 @@ export type CalloutMeta = { icon: string; label: string; color: string }
 export const CALLOUT_META: Record<string, CalloutMeta> = {
   tip: { icon: '💡', label: 'Consejo', color: '#6dc3c0' },
   info: { icon: 'ℹ️', label: 'Información', color: '#7787bf' },
-  warn: { icon: '⚠️', label: 'Atención', color: '#f4c910' },
+  warn: { icon: '⚠️', label: 'Atención', color: '#d9473b' },
   important: { icon: '📌', label: 'Importante', color: '#6dc3c0' },
   fact: { icon: '🧠', label: '¿Sabías que…?', color: '#6dc3c0' },
   reflect: { icon: '💭', label: 'Reflexiona', color: '#f4c910' },

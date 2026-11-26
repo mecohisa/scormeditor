@@ -303,11 +303,12 @@ body {
 .me-callout-body > :first-child { margin-top: 0; }
 .me-callout-body > :last-child { margin-bottom: 0; }
 /* Paleta corporativa de teleformación:
-   #6DC3C0 turquesa · #F4C910 naranja · #F4D6D2 rosa · #7787BF violeta. */
+   #6DC3C0 turquesa · #F4C910 naranja · #F4D6D2 rosa · #7787BF violeta.
+   Atención va en rojo (#D9473B), fuera de la paleta: es la única que avisa de un riesgo. */
 .me-callout-tip { border-left-color: #6dc3c0; background: color-mix(in srgb, #6dc3c0 18%, white); }
 .me-callout-fact { border-left-color: #6dc3c0; background: color-mix(in srgb, #6dc3c0 18%, white); }
 .me-callout-important { border-left-color: #6dc3c0; background: color-mix(in srgb, #6dc3c0 18%, white); }
-.me-callout-warn { border-left-color: #f4c910; background: color-mix(in srgb, #f4c910 22%, white); }
+.me-callout-warn { border-left-color: #d9473b; background: color-mix(in srgb, #d9473b 13%, white); }
 .me-callout-reflect { border-left-color: #f4c910; background: color-mix(in srgb, #f4c910 22%, white); }
 .me-callout-summary { border-left-color: #6dc3c0; background: color-mix(in srgb, #6dc3c0 18%, white); }
 .me-callout-case { border-left-color: #f4c910; background: color-mix(in srgb, #f4c910 22%, white); }

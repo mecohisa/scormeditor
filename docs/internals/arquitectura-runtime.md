@@ -140,7 +140,8 @@ Online.odt" en Google Drive; ver memoria `paleta-teleformacion`):
 | Color | Hex | Bloques |
 |---|---|---|
 | Turquesa | `#6DC3C0` | 💡 Consejo (`tip`), 🧠 ¿Sabías que…? (`fact`), 📌 Importante (`important`), 📝 Síntesis (`summary`) |
-| Naranja | `#F4C910` | ⚠️ Atención (`warn`), 💭 Reflexiona (`reflect`), 🧪 Caso práctico (`case`) |
+| Naranja | `#F4C910` | 💭 Reflexiona (`reflect`), 🧪 Caso práctico (`case`) |
+| Rojo | `#D9473B` | ⚠️ Atención (`warn`) — fuera de la paleta a propósito: es la única caja que avisa de un riesgo y debe distinguirse de las de acción |
 | Violeta | `#7787BF` | ℹ️ Información (`info`) |
 | Rosa | `#F4D6D2` | (color por defecto del bloque personalizado) |
 
@@ -442,7 +443,7 @@ Tres tipos de bloque que el autor rellena con markdown normal y la carcasa maque
     se funda con el amarillo.
   - El propio `<h1>` y el `.me-prose` (descripción/`student_text`) se pintan como una
     sola pieza visual —mismo amarillo corporativo de acción/actividad que los callouts
-    `::: warn`/`reflect`/`case` (`--me-warn`, `#F4C910`), bordes que se tocan sin hueco
+    `::: reflect`/`case` (`--me-warn`, `#F4C910`), bordes que se tocan sin hueco
     entre ambos—; el recurso visual (imagen/vídeo), si lo hay, queda **fuera** de la
     tarjeta.
 
